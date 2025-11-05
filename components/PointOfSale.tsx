@@ -4,6 +4,7 @@ import React, { useState, useMemo, useCallback } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant } from '../types';
 import Icon from './icons';
+import Calculator from './Calculator';
 
 const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, variant: ProductVariant) => void }> = ({ product, onAddToCart }) => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
@@ -45,6 +46,7 @@ const PointOfSale: React.FC = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showFavorites, setShowFavorites] = useState(false);
+  const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
 
   const handleAddToCart = useCallback((product: Product, variant: ProductVariant) => {
     setCart(prevCart => {
@@ -91,6 +93,7 @@ const PointOfSale: React.FC = () => {
 
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-8rem)] gap-6">
+      {isCalculatorOpen && <Calculator onClose={() => setIsCalculatorOpen(false)} />}
       {/* Product Grid */}
       <div className="flex-1 flex flex-col bg-gray-800/50 rounded-lg p-4">
         <div className="mb-4 flex flex-col sm:flex-row gap-4">
@@ -144,11 +147,14 @@ const PointOfSale: React.FC = () => {
               <div className="flex justify-between text-gray-400"><span>Tax (8%)</span><span>${tax.toFixed(2)}</span></div>
               <div className="flex justify-between font-bold text-2xl"><span>Total</span><span>${total.toFixed(2)}</span></div>
             </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
+            <div className="mt-4 grid grid-cols-3 gap-2">
                 <button className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-md flex items-center justify-center" onClick={() => setCart([])}>
                     <Icon name="trash" className="w-5 h-5 mr-2"/> Clear
                 </button>
                  <button className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-2 px-4 rounded-md">Hold</button>
+                 <button className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md flex items-center justify-center" onClick={() => setIsCalculatorOpen(true)}>
+                    <Icon name="calculator" className="w-5 h-5"/>
+                </button>
             </div>
             <button className="w-full mt-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-md text-xl">
               Pay Now

@@ -14,6 +14,12 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timerId = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timerId);
+  }, []);
 
   // Debounce search term update
   useEffect(() => {
@@ -56,6 +62,9 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
       </div>
       
       <div className="flex items-center space-x-4">
+        <div className="hidden md:block text-lg font-medium text-gray-300 font-mono tracking-wider tabular-nums">
+          {time.toLocaleTimeString()}
+        </div>
         <div className="relative">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3">
              {isSearching && localSearchTerm ? (
