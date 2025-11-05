@@ -1,5 +1,6 @@
 
 
+
 export interface Branch {
   id: string;
   name: string;
@@ -36,7 +37,10 @@ export interface Sale {
   items: CartItem[];
   total: number;
   branchId: string;
-  customer: string;
+  customer: {
+    name: string;
+    phone?: string;
+  };
 }
 
 export type StockLogAction = 'ADJUSTMENT' | 'TRANSFER';
@@ -54,6 +58,42 @@ export interface StockLog {
   toBranchId?: string; // For transfers
   branchId?: string; // For adjustments
   reason?: string; // For adjustments
+}
+
+export interface Truck {
+  id: string;
+  licensePlate: string;
+  driverName: string;
+  status: 'IDLE' | 'IN_TRANSIT' | 'MAINTENANCE';
+  currentLocation: {
+    lat: number;
+    lng: number;
+    address: string;
+  };
+  lastUpdate: Date;
+}
+
+export interface Shipment {
+  id: string;
+  shipmentCode: string;
+  origin: string;
+  destination: string;
+  truckId: string;
+  status: 'PENDING' | 'IN_TRANSIT' | 'DELIVERED' | 'DELAYED';
+  items: {
+    productId: string;
+    variantId: string;
+    productName: string;
+    quantity: number;
+  }[];
+  estimatedDelivery: Date;
+}
+
+export interface TrackerProvider {
+    id: string;
+    name: string;
+    apiKey: string;
+    apiEndpoint: string;
 }
 
 export interface SubscriptionPlan {
@@ -212,9 +252,13 @@ export interface AppContextType {
   pageContent: PageContent;
   paymentSettings: PaymentSettings;
   notificationSettings: NotificationSettings;
+  trucks: Truck[];
+  shipments: Shipment[];
+  trackerProviders: TrackerProvider[];
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
+  addSale: (saleData: Omit<Sale, 'id' | 'date'>) => Promise<{success: boolean, message: string}>;
   adjustStock: (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => void;
   transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;
   addProduct: (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => void;
@@ -231,5 +275,10 @@ export interface AppContextType {
   addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => void;
   updateSubscriptionPlan: (planId: string, planData: Partial<Omit<SubscriptionPlan, 'id'>>) => void;
   deleteSubscriptionPlan: (planId: string) => void;
+  addTruck: (truckData: Omit<Truck, 'id' | 'lastUpdate'>) => void;
+  updateTruck: (truckId: string, truckData: Partial<Omit<Truck, 'id'>>) => void;
+  addShipment: (shipmentData: Omit<Shipment, 'id'>) => void;
+  updateShipmentStatus: (shipmentId: string, status: Shipment['status']) => void;
+  updateTrackerProvider: (providerId: string, settings: Partial<Omit<TrackerProvider, 'id' | 'name'>>) => void;
   logout?: () => void;
 }

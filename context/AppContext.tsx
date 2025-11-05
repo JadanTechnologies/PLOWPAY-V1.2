@@ -1,7 +1,9 @@
 
 
+
+
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -113,6 +115,11 @@ const generateMockProducts = (): Product[] => {
 
 const generateMockSales = (products: Product[]): Sale[] => {
     const sales: Sale[] = [];
+    const customers = [
+        { name: 'John Doe', phone: '555-0101' },
+        { name: 'Jane Smith', phone: '555-0102' },
+        { name: 'Walk-in Customer' }
+    ];
     for (let i = 0; i < 50; i++) {
         const product = products[Math.floor(Math.random() * products.length)];
         const variant = product.variants[Math.floor(Math.random() * product.variants.length)];
@@ -131,7 +138,7 @@ const generateMockSales = (products: Product[]): Sale[] => {
             }],
             total: total,
             branchId: mockBranches[Math.floor(Math.random() * mockBranches.length)].id,
-            customer: ['John Doe', 'Jane Smith', 'Walk-in'][Math.floor(Math.random() * 3)]
+            customer: customers[Math.floor(Math.random() * customers.length)]
         });
     }
     return sales.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -140,8 +147,72 @@ const generateMockSales = (products: Product[]): Sale[] => {
 const mockProducts = generateMockProducts();
 const mockSales = generateMockSales(mockProducts);
 export const mockTenants = generateMockTenants();
-// FIX: Corrected function call to match its definition.
 const mockAdminUsers = generateMockAdminUsers();
+
+const mockTrackerProviders: TrackerProvider[] = [
+    { id: 'teltonika', name: 'Teltonika', apiKey: '', apiEndpoint: 'https://teltonika-api.com/v1' },
+    { id: 'other', name: 'Other Provider', apiKey: '', apiEndpoint: '' },
+];
+
+const mockTrucks: Truck[] = [
+    { 
+        id: 'truck-1', 
+        licensePlate: 'TRK-001', 
+        driverName: 'John Smith', 
+        status: 'IN_TRANSIT', 
+        currentLocation: { lat: 34.0522, lng: -118.2437, address: 'Los Angeles, CA' },
+        lastUpdate: new Date()
+    },
+    { 
+        id: 'truck-2', 
+        licensePlate: 'TRK-002', 
+        driverName: 'Maria Garcia', 
+        status: 'IDLE', 
+        currentLocation: { lat: 40.7128, lng: -74.0060, address: 'New York, NY' },
+        lastUpdate: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
+    },
+    { 
+        id: 'truck-3', 
+        licensePlate: 'TRK-003', 
+        driverName: 'Chen Wei', 
+        status: 'MAINTENANCE', 
+        currentLocation: { lat: 29.7604, lng: -95.3698, address: 'Houston, TX' },
+        lastUpdate: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
+    },
+];
+
+const mockShipments: Shipment[] = [
+    {
+        id: 'shp-001',
+        shipmentCode: 'SHP2024001',
+        origin: 'New York, NY',
+        destination: 'Los Angeles, CA',
+        truckId: 'truck-1',
+        status: 'IN_TRANSIT',
+        items: [{ productId: 'prod-1', variantId: 'var-1-0', productName: 'Laptop', quantity: 50 }],
+        estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 days from now
+    },
+    {
+        id: 'shp-002',
+        shipmentCode: 'SHP2024002',
+        origin: 'Houston, TX',
+        destination: 'Chicago, IL',
+        truckId: 'truck-2',
+        status: 'PENDING',
+        items: [{ productId: 'prod-5', variantId: 'var-5-0', productName: 'T-Shirt', quantity: 200 }],
+        estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) // 5 days from now
+    },
+     {
+        id: 'shp-003',
+        shipmentCode: 'SHP2024003',
+        origin: 'San Francisco, CA',
+        destination: 'Miami, FL',
+        truckId: 'truck-1',
+        status: 'IN_TRANSIT',
+        items: [{ productId: 'prod-2', variantId: 'var-2-0', productName: 'Smartphone', quantity: 100 }],
+        estimatedDelivery: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000) // 4 days from now
+    },
+];
 
 const mockBrandConfig: BrandConfig = {
     name: "FlowPay",
@@ -177,10 +248,10 @@ const mockNotificationSettings: NotificationSettings = {
     },
     sms: {
         twilio: {
-            enabled: false,
-            accountSid: '',
-            apiKey: '',
-            fromNumber: ''
+            enabled: true,
+            accountSid: 'ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+            apiKey: 'SKxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+            fromNumber: '+15017122661'
         }
     },
     push: {
@@ -199,19 +270,21 @@ interface AppContextProviderProps {
 
 export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children, onLogout = () => {} }) => {
     const [products, setProducts] = useState<Product[]>(mockProducts);
-    const [sales] = useState<Sale[]>(mockSales);
+    const [sales, setSales] = useState<Sale[]>(mockSales);
     const [branches] = useState<Branch[]>(mockBranches);
     const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
     const [tenants] = useState<Tenant[]>(mockTenants);
     const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
     const [adminRoles, setAdminRoles] = useState<AdminRole[]>(mockAdminRoles);
-    // Simulate a logged-in super admin user to enforce permissions
     const [currentAdminUser] = useState<AdminUser | null>(mockAdminUsers.find(u => u.email === 'admin@flowpay.com') || null);
     const [brandConfig, setBrandConfig] = useState<BrandConfig>(mockBrandConfig);
     const [pageContent, setPageContent] = useState<PageContent>(mockPageContent);
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(mockPaymentSettings);
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(mockNotificationSettings);
+    const [trucks, setTrucks] = useState<Truck[]>(mockTrucks);
+    const [shipments, setShipments] = useState<Shipment[]>(mockShipments);
+    const [trackerProviders, setTrackerProviders] = useState<TrackerProvider[]>(mockTrackerProviders);
     const [searchTerm, setSearchTerm] = useState('');
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
@@ -226,6 +299,44 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                 return branches.length;
         }
     };
+
+    const addSale = useCallback(async (saleData: Omit<Sale, 'id' | 'date'>): Promise<{success: boolean, message: string}> => {
+        // 1. Decrease stock
+        setProducts(currentProducts => {
+            const productsCopy = JSON.parse(JSON.stringify(currentProducts));
+            for (const item of saleData.items) {
+                const product = productsCopy.find((p: Product) => p.id === item.productId);
+                if (product) {
+                    const variant = product.variants.find((v: ProductVariant) => v.id === item.variantId);
+                    if (variant && variant.stockByBranch[saleData.branchId] !== undefined) {
+                        variant.stockByBranch[saleData.branchId] -= item.quantity;
+                    }
+                }
+            }
+            return productsCopy;
+        });
+    
+        // 2. Create sale record
+        const newSale: Sale = {
+            ...saleData,
+            id: `sale-${Date.now()}`,
+            date: new Date(),
+        };
+        setSales(prev => [newSale, ...prev]);
+    
+        // 3. Handle notification
+        let notificationMessage = '';
+        if (notificationSettings.sms.twilio.enabled && saleData.customer.phone) {
+             if (!notificationSettings.sms.twilio.accountSid || !notificationSettings.sms.twilio.apiKey || !notificationSettings.sms.twilio.fromNumber) {
+                 notificationMessage = ' Twilio is enabled but not configured.';
+            } else {
+                console.log(`Simulating Twilio SMS to ${saleData.customer.phone} from ${notificationSettings.sms.twilio.fromNumber}: Order confirmation for $${saleData.total.toFixed(2)}.`);
+                notificationMessage = ` SMS confirmation sent to ${saleData.customer.phone}.`;
+            }
+        }
+        
+        return { success: true, message: `Sale completed!${notificationMessage}` };
+    }, [notificationSettings]);
     
     const adjustStock = useCallback((productId: string, variantId: string, branchId: string, newStock: number, reason: string) => {
         let logEntry: StockLog | null = null;
@@ -425,6 +536,45 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         setSubscriptionPlans(prev => prev.filter(plan => plan.id !== planId));
     }, [tenants]);
 
+    const addTruck = useCallback((truckData: Omit<Truck, 'id' | 'lastUpdate'>) => {
+        setTrucks(prev => [
+            ...prev,
+            {
+                ...truckData,
+                id: `truck-${Date.now()}`,
+                lastUpdate: new Date(),
+            }
+        ]);
+    }, []);
+
+    const updateTruck = useCallback((truckId: string, truckData: Partial<Omit<Truck, 'id'>>) => {
+        setTrucks(prev => prev.map(truck => 
+            truck.id === truckId ? { ...truck, ...truckData, lastUpdate: new Date() } : truck
+        ));
+    }, []);
+
+    const addShipment = useCallback((shipmentData: Omit<Shipment, 'id'>) => {
+        setShipments(prev => [
+            ...prev,
+            {
+                ...shipmentData,
+                id: `shp-${Date.now()}`,
+            }
+        ]);
+    }, []);
+
+    const updateShipmentStatus = useCallback((shipmentId: string, status: Shipment['status']) => {
+        setShipments(prev => prev.map(shipment => 
+            shipment.id === shipmentId ? { ...shipment, status } : shipment
+        ));
+    }, []);
+    
+    const updateTrackerProvider = useCallback((providerId: string, settings: Partial<Omit<TrackerProvider, 'id' | 'name'>>) => {
+        setTrackerProviders(prev => prev.map(provider => 
+            provider.id === providerId ? { ...provider, ...settings } : provider
+        ));
+    }, []);
+
 
     const value: AppContextType = {
         products,
@@ -441,9 +591,13 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         pageContent,
         paymentSettings,
         notificationSettings,
+        trucks,
+        shipments,
+        trackerProviders,
         searchTerm,
         setSearchTerm,
         getMetric,
+        addSale,
         adjustStock,
         transferStock,
         addProduct,
@@ -460,6 +614,11 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addSubscriptionPlan,
         updateSubscriptionPlan,
         deleteSubscriptionPlan,
+        addTruck,
+        updateTruck,
+        addShipment,
+        updateShipmentStatus,
+        updateTrackerProvider,
         logout: onLogout,
     };
 

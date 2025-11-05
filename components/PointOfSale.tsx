@@ -1,6 +1,6 @@
 
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant } from '../types';
 import Icon from './icons';
@@ -41,12 +41,27 @@ const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, 
   );
 };
 
+
 const PointOfSale: React.FC = () => {
-  const { products, searchTerm } = useAppContext();
+  const { products, searchTerm, addSale, branches } = useAppContext();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showFavorites, setShowFavorites] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+
+  const defaultCustomer = { name: 'Walk-in Customer', phone: '' };
+  const [customer, setCustomer] = useState(defaultCustomer);
+  const [isEditingCustomer, setIsEditingCustomer] = useState(false);
+  
+  const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [saleStatus, setSaleStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (saleStatus) {
+      const timer = setTimeout(() => setSaleStatus(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [saleStatus]);
 
   const handleAddToCart = useCallback((product: Product, variant: ProductVariant) => {
     setCart(prevCart => {
@@ -91,9 +106,64 @@ const PointOfSale: React.FC = () => {
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
 
+  const handleConfirmPayment = async () => {
+      if (cart.length === 0) return;
+      
+      const saleData = {
+          items: cart,
+          total: total,
+          branchId: branches[0]?.id || 'branch-1', // Default to first branch
+          customer: customer
+      };
+
+      const result = await addSale(saleData);
+      
+      if(result.success) {
+          setSaleStatus({ message: result.message, type: 'success' });
+          setCart([]);
+          setCustomer(defaultCustomer);
+          setIsEditingCustomer(false);
+          setPaymentModalOpen(false);
+      } else {
+          setSaleStatus({ message: result.message, type: 'error' });
+      }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row h-[calc(100vh-8rem)] gap-6">
       {isCalculatorOpen && <Calculator onClose={() => setIsCalculatorOpen(false)} />}
+      
+      {/* Payment Modal */}
+      {isPaymentModalOpen && (
+          <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+              <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-sm">
+                  <h3 className="text-2xl font-bold mb-4 text-white text-center">Confirm Payment</h3>
+                  <div className="bg-gray-900/50 p-4 rounded-md space-y-2">
+                      <div className="flex justify-between text-lg">
+                          <span>Customer:</span>
+                          <span className="font-semibold">{customer.name}</span>
+                      </div>
+                       {customer.phone && <div className="flex justify-between text-lg">
+                          <span>Phone:</span>
+                          <span className="font-semibold">{customer.phone}</span>
+                      </div>}
+                      <div className="flex justify-between font-bold text-3xl text-indigo-400 pt-2 border-t border-gray-700">
+                          <span>Total:</span>
+                          <span>${total.toFixed(2)}</span>
+                      </div>
+                  </div>
+                   <div className="mt-6 flex flex-col gap-3">
+                      <button onClick={handleConfirmPayment} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-md text-xl">
+                          Confirm Payment
+                      </button>
+                      <button onClick={() => setPaymentModalOpen(false)} className="w-full bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md">
+                          Cancel
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
+      
       {/* Product Grid */}
       <div className="flex-1 flex flex-col bg-gray-800/50 rounded-lg p-4">
         <div className="mb-4 flex flex-col sm:flex-row gap-4">
@@ -118,6 +188,41 @@ const PointOfSale: React.FC = () => {
       {/* Cart Section */}
       <div className="w-full lg:w-1/3 xl:w-1/4 bg-gray-800 rounded-lg p-4 flex flex-col">
         <h2 className="text-2xl font-bold border-b border-gray-700 pb-2 mb-4">Current Order</h2>
+        
+         {/* Sale Status Message */}
+        {saleStatus && (
+            <div className={`p-3 rounded-md mb-4 text-sm ${saleStatus.type === 'success' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                {saleStatus.message}
+            </div>
+        )}
+        
+        {/* Customer Details */}
+        <div className="p-3 bg-gray-900/50 rounded-md mb-4">
+            {isEditingCustomer ? (
+                <div className="space-y-3">
+                    <div>
+                        <label className="text-xs text-gray-400">Customer Name</label>
+                        <input type="text" value={customer.name} onChange={e => setCustomer({...customer, name: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-md py-1 px-2 text-sm" />
+                    </div>
+                    <div>
+                        <label className="text-xs text-gray-400">Phone Number (for SMS confirmation)</label>
+                        <input type="tel" value={customer.phone} onChange={e => setCustomer({...customer, phone: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-md py-1 px-2 text-sm" placeholder="Optional"/>
+                    </div>
+                    <button onClick={() => setIsEditingCustomer(false)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm py-1 rounded-md">Done</button>
+                </div>
+            ) : (
+                <div className="flex justify-between items-center">
+                    <div>
+                        <h3 className="font-semibold">{customer.name}</h3>
+                        {customer.phone && <p className="text-sm text-gray-400">{customer.phone}</p>}
+                    </div>
+                    <button onClick={() => setIsEditingCustomer(true)} className="text-sm text-indigo-400 hover:text-indigo-300 font-semibold">
+                       {customer.name === 'Walk-in Customer' ? 'Add Customer' : 'Edit'}
+                    </button>
+                </div>
+            )}
+        </div>
+
         <div className="flex-1 overflow-y-auto -mr-2 pr-2">
           {cart.length === 0 ? (
             <p className="text-gray-400 text-center mt-8">Your cart is empty.</p>
@@ -156,7 +261,7 @@ const PointOfSale: React.FC = () => {
                     <Icon name="calculator" className="w-5 h-5"/>
                 </button>
             </div>
-            <button className="w-full mt-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-md text-xl">
+            <button onClick={() => setPaymentModalOpen(true)} className="w-full mt-2 bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-md text-xl">
               Pay Now
             </button>
           </div>

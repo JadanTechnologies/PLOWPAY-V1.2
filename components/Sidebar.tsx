@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Page } from '../App';
 import Icon from './icons';
@@ -50,6 +51,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
     { page: 'DASHBOARD', icon: 'dashboard', label: 'Dashboard' },
     { page: 'POS', icon: 'pos', label: 'Point of Sale' },
     { page: 'INVENTORY', icon: 'inventory', label: 'Inventory' },
+    { page: 'LOGISTICS', icon: 'truck', label: 'Logistics' },
     { page: 'REPORTS', icon: 'reports', label: 'Reports' },
     { page: 'SETTINGS', icon: 'settings', label: 'Settings' },
   ];

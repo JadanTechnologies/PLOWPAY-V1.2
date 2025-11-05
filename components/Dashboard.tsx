@@ -89,7 +89,7 @@ const Dashboard: React.FC = () => {
               {sales.slice(0, 5).map((sale: Sale, index: number) => (
                 <tr key={sale.id} className={`border-b border-gray-700 ${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-800/50'}`}>
                   <td className="p-3 whitespace-nowrap">{sale.id}</td>
-                  <td className="p-3 whitespace-nowrap">{sale.customer}</td>
+                  <td className="p-3 whitespace-nowrap">{sale.customer.name}</td>
                   {/* FIX: Use `branchId` to find and display the branch name. */}
                   <td className="p-3 whitespace-nowrap">{branches.find(b => b.id === sale.branchId)?.name}</td>
                   <td className="p-3 whitespace-nowrap">{sale.date.toLocaleDateString()}</td>
