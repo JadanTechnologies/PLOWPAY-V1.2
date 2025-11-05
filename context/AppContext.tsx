@@ -1,7 +1,7 @@
 
 
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserRole, AdminUserStatus, BrandConfig, PageContent, FaqItem } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -18,12 +18,28 @@ const mockSubscriptionPlans: SubscriptionPlan[] = [
     { id: 'plan_premium', name: 'Premium', price: 149 },
 ];
 
+export const allPermissions: Permission[] = [
+    'viewPlatformDashboard',
+    'manageTenants',
+    'manageSubscriptions',
+    'manageTeam',
+    'manageRoles',
+    'manageSystemSettings'
+];
+
+const mockAdminRoles: AdminRole[] = [
+    { id: 'role-admin', name: 'Admin', permissions: [...allPermissions] },
+    { id: 'role-support', name: 'Support', permissions: ['viewPlatformDashboard', 'manageTenants'] },
+    { id: 'role-developer', name: 'Developer', permissions: ['viewPlatformDashboard', 'manageSystemSettings'] }
+];
+
+
 const generateMockAdminUsers = (): AdminUser[] => {
     return [
-        { id: 'admin-1', name: 'Super Admin', email: 'admin@flowpay.com', role: 'ADMIN', status: 'ACTIVE', joinDate: new Date('2023-01-15') },
-        { id: 'admin-2', name: 'Jane Smith', email: 'jane.s@flowpay.com', role: 'SUPPORT', status: 'ACTIVE', joinDate: new Date('2023-05-20') },
-        { id: 'admin-3', name: 'Mike Johnson', email: 'mike.j@flowpay.com', role: 'DEVELOPER', status: 'ACTIVE', joinDate: new Date('2023-08-01') },
-        { id: 'admin-4', name: 'Emily Davis', email: 'emily.d@flowpay.com', role: 'SUPPORT', status: 'SUSPENDED', joinDate: new Date('2023-10-11') },
+        { id: 'admin-1', name: 'Super Admin', email: 'admin@flowpay.com', roleId: 'role-admin', status: 'ACTIVE', joinDate: new Date('2023-01-15') },
+        { id: 'admin-2', name: 'Jane Smith (Support)', email: 'jane.s@flowpay.com', roleId: 'role-support', status: 'ACTIVE', joinDate: new Date('2023-05-20') },
+        { id: 'admin-3', name: 'Mike Johnson (Developer)', email: 'mike.j@flowpay.com', roleId: 'role-developer', status: 'ACTIVE', joinDate: new Date('2023-08-01') },
+        { id: 'admin-4', name: 'Emily Davis (Support)', email: 'emily.d@flowpay.com', roleId: 'role-support', status: 'SUSPENDED', joinDate: new Date('2023-10-11') },
     ];
 };
 
@@ -156,6 +172,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [tenants] = useState<Tenant[]>(mockTenants);
     const [subscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
+    const [adminRoles, setAdminRoles] = useState<AdminRole[]>(mockAdminRoles);
+    // Simulate a logged-in super admin user to enforce permissions
+    const [currentAdminUser] = useState<AdminUser | null>(mockAdminUsers.find(u => u.email === 'admin@flowpay.com') || null);
     const [brandConfig, setBrandConfig] = useState<BrandConfig>(mockBrandConfig);
     const [pageContent, setPageContent] = useState<PageContent>(mockPageContent);
     const [searchTerm, setSearchTerm] = useState('');
@@ -291,6 +310,12 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             user.id === userId ? { ...user, ...userData } : user
         ));
     }, []);
+    
+    const updateAdminRole = useCallback((roleId: string, permissions: Permission[]) => {
+        setAdminRoles(prev => prev.map(role => 
+            role.id === roleId ? { ...role, permissions } : role
+        ));
+    }, []);
 
     const updateBrandConfig = useCallback((newConfig: Partial<BrandConfig>) => {
         setBrandConfig(prev => ({ ...prev, ...newConfig }));
@@ -313,6 +338,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         tenants,
         subscriptionPlans,
         adminUsers,
+        adminRoles,
+        allPermissions,
+        currentAdminUser,
         brandConfig,
         pageContent,
         searchTerm,
@@ -323,6 +351,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addProduct,
         addAdminUser,
         updateAdminUser,
+        updateAdminRole,
         updateBrandConfig,
         updatePageContent,
         updateFaqs,

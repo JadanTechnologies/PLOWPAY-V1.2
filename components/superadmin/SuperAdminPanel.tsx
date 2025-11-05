@@ -7,9 +7,11 @@ import Header from '../Header';
 import PlatformDashboard from './PlatformDashboard';
 import TenantManagement from './TenantManagement';
 import TeamManagement from './TeamManagement';
+import RoleManagement from './RoleManagement';
 import { useAppContext } from '../../hooks/useAppContext';
 import { BrandConfig, PageContent, FaqItem } from '../../types';
 import Icon from '../icons';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const Settings: React.FC = () => {
     type SettingsTab = 'branding' | 'content' | 'faqs';
@@ -130,9 +132,18 @@ const Settings: React.FC = () => {
     );
 }
 
+const AccessDenied: React.FC = () => (
+    <div className="p-6 bg-gray-800 rounded-lg shadow-md text-center">
+        <Icon name="lock-closed" className="w-16 h-16 text-rose-500 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold text-white mb-2">Access Denied</h2>
+        <p className="text-gray-400">You do not have the required permissions to view this page.</p>
+    </div>
+);
+
 const SuperAdminPanel: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<SuperAdminPage>('PLATFORM_DASHBOARD');
     const [isSidebarOpen, setSidebarOpen] = useState(true);
+    const { hasPermission } = usePermissions();
 
     const handleSetPage = useCallback((page: SuperAdminPage) => {
         setCurrentPage(page);
@@ -141,22 +152,24 @@ const SuperAdminPanel: React.FC = () => {
     const renderPage = () => {
         switch (currentPage) {
             case 'PLATFORM_DASHBOARD':
-                return <PlatformDashboard />;
+                return hasPermission('viewPlatformDashboard') ? <PlatformDashboard /> : <AccessDenied />;
             case 'TENANTS':
-                return <TenantManagement />;
+                return hasPermission('manageTenants') ? <TenantManagement /> : <AccessDenied />;
             case 'SUBSCRIPTIONS':
-                return (
+                return hasPermission('manageSubscriptions') ? (
                     <div className="p-6 bg-gray-800 rounded-lg shadow-md">
                         <h3 className="text-lg font-semibold text-white">Subscription Management</h3>
                         <p className="text-gray-400 mt-4">Subscription plan management will be available here.</p>
                     </div>
-                );
+                ) : <AccessDenied />;
             case 'TEAM_MANAGEMENT':
-                return <TeamManagement />;
+                return hasPermission('manageTeam') ? <TeamManagement /> : <AccessDenied />;
+            case 'ROLE_MANAGEMENT':
+                return hasPermission('manageRoles') ? <RoleManagement /> : <AccessDenied />;
             case 'SETTINGS':
-                 return <Settings />;
+                 return hasPermission('manageSystemSettings') ? <Settings /> : <AccessDenied />;
             default:
-                return <PlatformDashboard />;
+                return hasPermission('viewPlatformDashboard') ? <PlatformDashboard /> : <AccessDenied />;
         }
     };
     
@@ -165,6 +178,7 @@ const SuperAdminPanel: React.FC = () => {
         TENANTS: 'Tenant Management',
         SUBSCRIPTIONS: 'Subscription Plans',
         TEAM_MANAGEMENT: 'Team Management',
+        ROLE_MANAGEMENT: 'Role Management',
         SETTINGS: 'System Settings',
     };
 

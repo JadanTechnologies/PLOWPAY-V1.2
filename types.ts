@@ -74,14 +74,27 @@ export interface Tenant {
   joinDate: Date;
 }
 
-export type AdminUserRole = 'ADMIN' | 'SUPPORT' | 'DEVELOPER';
 export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED';
+
+export type Permission = 
+  | 'viewPlatformDashboard'
+  | 'manageTenants'
+  | 'manageSubscriptions'
+  | 'manageTeam'
+  | 'manageRoles'
+  | 'manageSystemSettings';
+
+export interface AdminRole {
+    id: string;
+    name: string;
+    permissions: Permission[];
+}
 
 export interface AdminUser {
   id: string;
   name: string;
   email: string;
-  role: AdminUserRole;
+  roleId: string;
   status: AdminUserStatus;
   joinDate: Date;
 }
@@ -116,6 +129,9 @@ export interface AppContextType {
   tenants: Tenant[];
   subscriptionPlans: SubscriptionPlan[];
   adminUsers: AdminUser[];
+  adminRoles: AdminRole[];
+  allPermissions: Permission[];
+  currentAdminUser: AdminUser | null;
   brandConfig: BrandConfig;
   pageContent: PageContent;
   searchTerm: string;
@@ -126,6 +142,7 @@ export interface AppContextType {
   addProduct: (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => void;
   addAdminUser: (userData: Omit<AdminUser, 'id' | 'joinDate' | 'status'>) => void;
   updateAdminUser: (userId: string, userData: Partial<Omit<AdminUser, 'id' | 'joinDate'>>) => void;
+  updateAdminRole: (roleId: string, permissions: Permission[]) => void;
   updateBrandConfig: (newConfig: Partial<BrandConfig>) => void;
   updatePageContent: (newPageContent: Partial<Omit<PageContent, 'faqs'>>) => void;
   updateFaqs: (newFaqs: FaqItem[]) => void;

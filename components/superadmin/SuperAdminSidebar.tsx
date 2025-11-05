@@ -1,6 +1,8 @@
+
 import React from 'react';
 import { SuperAdminPage } from '../../App';
 import Icon from '../icons';
+import { usePermissions } from '../../hooks/usePermissions';
 
 interface SidebarProps {
   currentPage: SuperAdminPage;
@@ -45,13 +47,16 @@ const NavItem: React.FC<{
 
 
 const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOpen }) => {
+  const { hasPermission } = usePermissions();
+
   const navItems = [
-    { page: 'PLATFORM_DASHBOARD', icon: 'chart-pie', label: 'Dashboard' },
-    { page: 'TENANTS', icon: 'briefcase', label: 'Tenants' },
-    { page: 'SUBSCRIPTIONS', icon: 'credit-card', label: 'Subscriptions' },
-    { page: 'TEAM_MANAGEMENT', icon: 'users', label: 'Team Management' },
-    { page: 'SETTINGS', icon: 'settings', label: 'System Settings' },
-  ];
+    { page: 'PLATFORM_DASHBOARD', icon: 'chart-pie', label: 'Dashboard', permission: 'viewPlatformDashboard' },
+    { page: 'TENANTS', icon: 'briefcase', label: 'Tenants', permission: 'manageTenants' },
+    { page: 'SUBSCRIPTIONS', icon: 'credit-card', label: 'Subscriptions', permission: 'manageSubscriptions' },
+    { page: 'TEAM_MANAGEMENT', icon: 'users', label: 'Team', permission: 'manageTeam' },
+    { page: 'ROLE_MANAGEMENT', icon: 'lock-closed', label: 'Roles', permission: 'manageRoles' },
+    { page: 'SETTINGS', icon: 'settings', label: 'Settings', permission: 'manageSystemSettings' },
+  ] as const;
 
   return (
     <div
@@ -72,6 +77,7 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
       <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
         <ul>
             {navItems.map(item => (
+              hasPermission(item.permission) && (
                 <NavItem 
                     key={item.page}
                     page={item.page as SuperAdminPage}
@@ -81,6 +87,7 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
                     setPage={setPage}
                     isSidebarOpen={isOpen}
                 />
+              )
             ))}
         </ul>
       </nav>

@@ -1,21 +1,26 @@
+
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
-import { AdminUser, AdminUserRole, AdminUserStatus } from '../../types';
+import { AdminUser, AdminUserStatus } from '../../types';
 import Icon from '../icons';
+import { usePermissions } from '../../hooks/usePermissions';
 
 const TeamManagement: React.FC = () => {
-    const { adminUsers, addAdminUser, updateAdminUser } = useAppContext();
+    const { adminUsers, adminRoles, addAdminUser, updateAdminUser } = useAppContext();
+    const { hasPermission } = usePermissions();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
-    const [formData, setFormData] = useState({ name: '', email: '', role: 'SUPPORT' as AdminUserRole });
+    const [formData, setFormData] = useState({ name: '', email: '', roleId: adminRoles[1]?.id || '' });
+
+    const roleMap = new Map(adminRoles.map(r => [r.id, r.name]));
 
     const openModal = (user: AdminUser | null = null) => {
         if (user) {
             setEditingUser(user);
-            setFormData({ name: user.name, email: user.email, role: user.role });
+            setFormData({ name: user.name, email: user.email, roleId: user.roleId });
         } else {
             setEditingUser(null);
-            setFormData({ name: '', email: '', role: 'SUPPORT' });
+            setFormData({ name: '', email: '', roleId: adminRoles.find(r => r.name === 'Support')?.id || adminRoles[0]?.id || '' });
         }
         setIsModalOpen(true);
     };
@@ -33,9 +38,9 @@ const TeamManagement: React.FC = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingUser) {
-            updateAdminUser(editingUser.id, { name: formData.name, email: formData.email, role: formData.role });
+            updateAdminUser(editingUser.id, { name: formData.name, email: formData.email, roleId: formData.roleId });
         } else {
-            addAdminUser({ name: formData.name, email: formData.email, role: formData.role });
+            addAdminUser({ name: formData.name, email: formData.email, roleId: formData.roleId });
         }
         closeModal();
     };
@@ -56,15 +61,19 @@ const TeamManagement: React.FC = () => {
             </span>
         );
     };
+    
+    const canManage = hasPermission('manageTeam');
 
     return (
         <div className="p-6 bg-gray-800 rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Team Management</h2>
-                <button onClick={() => openModal()} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
-                    <Icon name="plus" className="w-5 h-5 mr-2" />
-                    Add Team Member
-                </button>
+                {canManage && (
+                    <button onClick={() => openModal()} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
+                        <Icon name="plus" className="w-5 h-5 mr-2" />
+                        Add Team Member
+                    </button>
+                )}
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -75,7 +84,7 @@ const TeamManagement: React.FC = () => {
                             <th className="p-3 text-sm font-semibold tracking-wide">Role</th>
                             <th className="p-3 text-sm font-semibold tracking-wide text-center">Status</th>
                             <th className="p-3 text-sm font-semibold tracking-wide">Join Date</th>
-                            <th className="p-3 text-sm font-semibold tracking-wide text-center">Actions</th>
+                            {canManage && <th className="p-3 text-sm font-semibold tracking-wide text-center">Actions</th>}
                         </tr>
                     </thead>
                     <tbody>
@@ -83,15 +92,17 @@ const TeamManagement: React.FC = () => {
                             <tr key={user.id} className="border-b border-gray-700 hover:bg-gray-700/50">
                                 <td className="p-3 whitespace-nowrap font-medium">{user.name}</td>
                                 <td className="p-3 whitespace-nowrap text-gray-400">{user.email}</td>
-                                <td className="p-3 whitespace-nowrap">{user.role}</td>
+                                <td className="p-3 whitespace-nowrap">{roleMap.get(user.roleId) || 'Unknown Role'}</td>
                                 <td className="p-3 whitespace-nowrap text-center">{getStatusBadge(user.status)}</td>
                                 <td className="p-3 whitespace-nowrap text-gray-400">{user.joinDate.toLocaleDateString()}</td>
-                                <td className="p-3 text-center whitespace-nowrap space-x-2">
-                                     <button onClick={() => openModal(user)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Edit</button>
-                                     <button onClick={() => toggleUserStatus(user)} className={`${user.status === 'ACTIVE' ? 'text-rose-400 hover:text-rose-300' : 'text-green-400 hover:text-green-300'} font-semibold px-2 py-1 rounded-md text-sm`}>
-                                        {user.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
-                                     </button>
-                                </td>
+                                {canManage && (
+                                    <td className="p-3 text-center whitespace-nowrap space-x-2">
+                                         <button onClick={() => openModal(user)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Edit</button>
+                                         <button onClick={() => toggleUserStatus(user)} className={`${user.status === 'ACTIVE' ? 'text-rose-400 hover:text-rose-300' : 'text-green-400 hover:text-green-300'} font-semibold px-2 py-1 rounded-md text-sm`}>
+                                            {user.status === 'ACTIVE' ? 'Suspend' : 'Activate'}
+                                         </button>
+                                    </td>
+                                )}
                             </tr>
                         ))}
                     </tbody>
@@ -101,7 +112,7 @@ const TeamManagement: React.FC = () => {
                 )}
             </div>
 
-            {isModalOpen && (
+            {isModalOpen && canManage && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
                     <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
                         <h3 className="text-xl font-bold mb-4 text-white">{editingUser ? 'Edit Team Member' : 'Add Team Member'}</h3>
@@ -115,11 +126,11 @@ const TeamManagement: React.FC = () => {
                                 <input type="email" id="email" name="email" value={formData.email} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
                             </div>
                              <div>
-                                <label htmlFor="role" className="block text-sm font-medium text-gray-400">Role</label>
-                                <select id="role" name="role" value={formData.role} onChange={handleFormChange} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                                    <option value="ADMIN">Admin</option>
-                                    <option value="SUPPORT">Support</option>
-                                    <option value="DEVELOPER">Developer</option>
+                                <label htmlFor="roleId" className="block text-sm font-medium text-gray-400">Role</label>
+                                <select id="roleId" name="roleId" value={formData.roleId} onChange={handleFormChange} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                                    {adminRoles.map(role => (
+                                        <option key={role.id} value={role.id}>{role.name}</option>
+                                    ))}
                                 </select>
                             </div>
                             <div className="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-700">
