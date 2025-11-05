@@ -21,7 +21,7 @@ const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void 
     );
 };
 
-const PaymentSettingsPage: React.FC = () => {
+const PaymentSettings: React.FC = () => {
     const { paymentSettings, updatePaymentSettings } = useAppContext();
     const [formState, setFormState] = useState<PaymentSettings>(paymentSettings);
 
@@ -139,4 +139,4 @@ const PaymentSettingsPage: React.FC = () => {
     );
 };
 
-export default PaymentSettingsPage;
+export default PaymentSettings;

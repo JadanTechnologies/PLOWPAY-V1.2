@@ -352,6 +352,34 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         ));
     }, []);
 
+    const addAdminRole = useCallback((roleData: Omit<AdminRole, 'id'>) => {
+        setAdminRoles(prev => [
+            ...prev,
+            {
+                ...roleData,
+                id: `role-${roleData.name.toLowerCase().replace(/\s/g, '_')}-${Date.now()}`
+            }
+        ]);
+    }, []);
+
+    const deleteAdminRole = useCallback((roleId: string) => {
+        const roleToDelete = adminRoles.find(r => r.id === roleId);
+        if (!roleToDelete) return;
+
+        if (['Admin', 'Support', 'Developer'].includes(roleToDelete.name)) {
+            alert(`Cannot delete the core "${roleToDelete.name}" role.`);
+            return;
+        }
+
+        const isRoleInUse = adminUsers.some(user => user.roleId === roleId);
+        if (isRoleInUse) {
+            alert("Cannot delete a role that is currently assigned to one or more team members.");
+            return;
+        }
+        
+        setAdminRoles(prev => prev.filter(role => role.id !== roleId));
+    }, [adminUsers, adminRoles]);
+
     const updateBrandConfig = useCallback((newConfig: Partial<BrandConfig>) => {
         setBrandConfig(prev => ({ ...prev, ...newConfig }));
     }, []);
@@ -422,6 +450,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addAdminUser,
         updateAdminUser,
         updateAdminRole,
+        addAdminRole,
+        deleteAdminRole,
         updateBrandConfig,
         updatePageContent,
         updateFaqs,

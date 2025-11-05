@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
-import { NotificationSettings, SmsSettings } from '../../types';
+import { NotificationSettings, PushSettings, SmsSettings } from '../../types';
 import Icon from '../icons';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
@@ -23,7 +23,7 @@ const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void 
 };
 
 
-const NotificationSettingsPage: React.FC = () => {
+const NotificationSettingsComponent: React.FC = () => {
     const { notificationSettings, updateNotificationSettings } = useAppContext();
     const [formState, setFormState] = useState<NotificationSettings>(notificationSettings);
 
@@ -67,6 +67,32 @@ const NotificationSettingsPage: React.FC = () => {
                 ...prev.sms,
                 [provider]: {
                     ...prev.sms[provider],
+                    [field]: value
+                }
+            }
+        }));
+    };
+
+    const handlePushToggle = (provider: keyof PushSettings) => {
+        setFormState(prev => ({
+            ...prev,
+            push: {
+                ...prev.push,
+                [provider]: {
+                    ...prev.push[provider],
+                    enabled: !prev.push[provider].enabled
+                }
+            }
+        }));
+    };
+
+    const handlePushChange = (provider: keyof PushSettings, field: string, value: string) => {
+        setFormState(prev => ({
+            ...prev,
+            push: {
+                ...prev.push,
+                [provider]: {
+                    ...prev.push[provider],
                     [field]: value
                 }
             }
@@ -173,11 +199,11 @@ const NotificationSettingsPage: React.FC = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-400">Auth Token</label>
+                            <label className="block text-sm font-medium text-gray-400">API Key</label>
                             <input 
                                 type="password" 
-                                value={formState.sms.twilio.authToken} 
-                                onChange={e => handleSmsChange('twilio', 'authToken', e.target.value)} 
+                                value={formState.sms.twilio.apiKey} 
+                                onChange={e => handleSmsChange('twilio', 'apiKey', e.target.value)} 
                                 disabled={!formState.sms.twilio.enabled} 
                                 className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
                             />
@@ -197,14 +223,47 @@ const NotificationSettingsPage: React.FC = () => {
                 </div>
             </div>
             
-             {/* Placeholder for Push Notification Settings */}
-            <div className="bg-gray-800 rounded-lg shadow-md p-6 opacity-50">
-                <h3 className="text-xl font-bold text-white">Push Notifications</h3>
-                 <p className="text-gray-400 mt-2">Configuration for services like Firebase Cloud Messaging will be available here soon.</p>
+            {/* Push Notification Settings */}
+            <div className="bg-gray-800 rounded-lg shadow-md p-6">
+                <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-3 flex items-center">
+                    <Icon name="notification" className="w-6 h-6 mr-3 text-cyan-400" />
+                    Push Notifications
+                </h3>
+                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="text-lg font-semibold text-white">Firebase Cloud Messaging (FCM)</h4>
+                        <Toggle 
+                            enabled={formState.push.firebase.enabled} 
+                            onChange={() => handlePushToggle('firebase')} 
+                        />
+                    </div>
+                    <div className={`space-y-4 transition-opacity duration-300 ${formState.push.firebase.enabled ? 'opacity-100' : 'opacity-50'}`}>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400">Server Key</label>
+                            <input 
+                                type="password" 
+                                value={formState.push.firebase.serverKey} 
+                                onChange={e => handlePushChange('firebase', 'serverKey', e.target.value)} 
+                                disabled={!formState.push.firebase.enabled} 
+                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400">VAPID Key (Web Push)</label>
+                            <input 
+                                type="text" 
+                                value={formState.push.firebase.vapidKey} 
+                                onChange={e => handlePushChange('firebase', 'vapidKey', e.target.value)} 
+                                disabled={!formState.push.firebase.enabled} 
+                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </div>
     );
 };
 
-export default NotificationSettingsPage;
+export default NotificationSettingsComponent;

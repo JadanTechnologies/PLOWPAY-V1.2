@@ -221,6 +221,8 @@ export interface AppContextType {
   addAdminUser: (userData: Omit<AdminUser, 'id' | 'joinDate' | 'status'>) => void;
   updateAdminUser: (userId: string, userData: Partial<Omit<AdminUser, 'id' | 'joinDate'>>) => void;
   updateAdminRole: (roleId: string, permissions: Permission[]) => void;
+  addAdminRole: (roleData: Omit<AdminRole, 'id'>) => void;
+  deleteAdminRole: (roleId: string) => void;
   updateBrandConfig: (newConfig: Partial<BrandConfig>) => void;
   updatePageContent: (newPageContent: Partial<Omit<PageContent, 'faqs'>>) => void;
   updateFaqs: (newFaqs: FaqItem[]) => void;
