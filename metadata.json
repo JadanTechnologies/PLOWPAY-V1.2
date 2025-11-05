@@ -1,0 +1,5 @@
+{
+  "name": "FlowPay - Multi-Tenant SaaS POS",
+  "description": "A comprehensive multi-tenant SaaS platform for businesses, featuring a Point of Sale (POS) system, inventory management, and a super admin panel. Built with React, TypeScript, and Tailwind CSS for a modern, responsive, and intuitive user experience.",
+  "requestFramePermissions": []
+}
