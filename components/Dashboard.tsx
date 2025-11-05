@@ -18,7 +18,8 @@ const MetricCard: React.FC<{ title: string; value: string; iconName: string; ico
 );
 
 const Dashboard: React.FC = () => {
-  const { sales, getMetric } = useAppContext();
+  // FIX: Destructure `branches` from context to look up branch names.
+  const { sales, getMetric, branches } = useAppContext();
 
   const totalRevenue = getMetric('totalRevenue');
   const salesVolume = getMetric('salesVolume');
@@ -89,7 +90,8 @@ const Dashboard: React.FC = () => {
                 <tr key={sale.id} className={`border-b border-gray-700 ${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-800/50'}`}>
                   <td className="p-3 whitespace-nowrap">{sale.id}</td>
                   <td className="p-3 whitespace-nowrap">{sale.customer}</td>
-                  <td className="p-3 whitespace-nowrap">{sale.branch}</td>
+                  {/* FIX: Use `branchId` to find and display the branch name. */}
+                  <td className="p-3 whitespace-nowrap">{branches.find(b => b.id === sale.branchId)?.name}</td>
                   <td className="p-3 whitespace-nowrap">{sale.date.toLocaleDateString()}</td>
                   <td className="p-3 whitespace-nowrap text-right font-medium">${sale.total.toFixed(2)}</td>
                 </tr>

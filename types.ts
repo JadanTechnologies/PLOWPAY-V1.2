@@ -1,10 +1,14 @@
+export interface Branch {
+  id: string;
+  name: string;
+}
 
 export interface ProductVariant {
   id: string;
   name: string; // e.g., 'Large', 'Red'
   sku: string;
   price: number;
-  stock: number;
+  stockByBranch: { [branchId: string]: number };
 }
 
 export interface Product {
@@ -31,13 +35,15 @@ export interface Sale {
   date: Date;
   items: CartItem[];
   total: number;
-  branch: string;
+  branchId: string;
   customer: string;
 }
 
 export interface AppContextType {
   products: Product[];
   sales: Sale[];
+  branches: Branch[];
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
-  adjustStock: (productId: string, variantId: string, newStock: number) => void;
+  adjustStock: (productId: string, variantId: string, branchId: string, newStock: number) => void;
+  transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;
 }

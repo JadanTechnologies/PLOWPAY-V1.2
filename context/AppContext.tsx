@@ -1,8 +1,14 @@
-
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
+
+const mockBranches: Branch[] = [
+    { id: 'branch-1', name: 'Downtown' },
+    { id: 'branch-2', name: 'Uptown' },
+    { id: 'branch-3', name: 'Westside' },
+    { id: 'branch-4', name: 'Eastside' },
+];
 
 const generateMockProducts = (): Product[] => {
     const categories = ['Electronics', 'Apparel', 'Groceries', 'Books'];
@@ -29,13 +35,19 @@ const generateMockProducts = (): Product[] => {
                 name: name,
                 category: category,
                 isFavorite: Math.random() > 0.7,
-                variants: variants[category as keyof typeof variants].map((variant, index) => ({
-                    id: `var-${productId}-${index}`,
-                    name: variant.name,
-                    price: variant.price,
-                    sku: `${name.substring(0,3).toUpperCase()}-${index}`,
-                    stock: Math.floor(Math.random() * 100)
-                }))
+                variants: variants[category as keyof typeof variants].map((variant, index) => {
+                    const stockByBranch: { [branchId: string]: number } = {};
+                    mockBranches.forEach(branch => {
+                        stockByBranch[branch.id] = Math.floor(Math.random() * 100);
+                    });
+                    return {
+                        id: `var-${productId}-${index}`,
+                        name: variant.name,
+                        price: variant.price,
+                        sku: `${name.substring(0,3).toUpperCase()}-${index}`,
+                        stockByBranch: stockByBranch,
+                    }
+                })
             };
             products.push(product);
         });
@@ -63,7 +75,7 @@ const generateMockSales = (products: Product[]): Sale[] => {
                 price: variant.price
             }],
             total: total,
-            branch: ['Downtown', 'Uptown'][Math.floor(Math.random() * 2)],
+            branchId: mockBranches[Math.floor(Math.random() * mockBranches.length)].id,
             customer: ['John Doe', 'Jane Smith', 'Walk-in'][Math.floor(Math.random() * 3)]
         });
     }
@@ -76,6 +88,7 @@ const mockSales = generateMockSales(mockProducts);
 export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [products, setProducts] = useState<Product[]>(mockProducts);
     const [sales] = useState<Sale[]>(mockSales);
+    const [branches] = useState<Branch[]>(mockBranches);
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
         switch (metric) {
@@ -86,17 +99,18 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
             case 'newCustomers':
                 return 32; // mock
             case 'activeBranches':
-                return 4; // mock
+                return branches.length;
         }
     };
     
-    const adjustStock = useCallback((productId: string, variantId: string, newStock: number) => {
+    const adjustStock = useCallback((productId: string, variantId: string, branchId: string, newStock: number) => {
         setProducts(prevProducts => {
             return prevProducts.map(product => {
                 if (product.id === productId) {
                     const newVariants = product.variants.map(variant => {
                         if (variant.id === variantId) {
-                            return { ...variant, stock: newStock };
+                            const newStockByBranch = { ...variant.stockByBranch, [branchId]: newStock };
+                            return { ...variant, stockByBranch: newStockByBranch };
                         }
                         return variant;
                     });
@@ -107,11 +121,42 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         });
     }, []);
 
+    const transferStock = useCallback((productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => {
+        setProducts(prevProducts => {
+            return prevProducts.map(p => {
+                if (p.id === productId) {
+                    return {
+                        ...p,
+                        variants: p.variants.map(v => {
+                            if (v.id === variantId) {
+                                const fromStock = v.stockByBranch[fromBranchId] ?? 0;
+                                const toStock = v.stockByBranch[toBranchId] ?? 0;
+                                
+                                if (fromStock >= quantity) {
+                                    const newStockByBranch = {
+                                        ...v.stockByBranch,
+                                        [fromBranchId]: fromStock - quantity,
+                                        [toBranchId]: toStock + quantity,
+                                    };
+                                    return { ...v, stockByBranch: newStockByBranch };
+                                }
+                            }
+                            return v;
+                        })
+                    };
+                }
+                return p;
+            });
+        });
+    }, []);
+
     const value = {
         products,
         sales,
+        branches,
         getMetric,
         adjustStock,
+        transferStock,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
