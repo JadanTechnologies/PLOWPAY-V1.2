@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
@@ -19,6 +20,20 @@ const SuperAdminPanel: React.FC = () => {
                 return <PlatformDashboard />;
             case 'TENANTS':
                 return <TenantManagement />;
+            case 'SUBSCRIPTIONS':
+                return (
+                    <div className="p-6 bg-gray-800 rounded-lg shadow-md">
+                        <h3 className="text-lg font-semibold text-white">Subscription Management</h3>
+                        <p className="text-gray-400 mt-4">Subscription plan management will be available here.</p>
+                    </div>
+                );
+            case 'SETTINGS':
+                 return (
+                    <div className="p-6 bg-gray-800 rounded-lg shadow-md">
+                        <h3 className="text-lg font-semibold text-white">System Settings</h3>
+                        <p className="text-gray-400 mt-4">Global system settings will be managed from this page.</p>
+                    </div>
+                );
             default:
                 return <PlatformDashboard />;
         }
@@ -28,6 +43,7 @@ const SuperAdminPanel: React.FC = () => {
         PLATFORM_DASHBOARD: 'Platform Dashboard',
         TENANTS: 'Tenant Management',
         SUBSCRIPTIONS: 'Subscription Plans',
+        SETTINGS: 'System Settings',
     };
 
     return (

@@ -5,7 +5,7 @@ import TenantApp from './components/TenantApp';
 import SuperAdminPanel from './components/superadmin/SuperAdminPanel';
 
 export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'REPORTS' | 'SETTINGS';
-export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS';
+export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'SETTINGS';
 
 
 const App: React.FC = () => {
