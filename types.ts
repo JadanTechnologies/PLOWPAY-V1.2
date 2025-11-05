@@ -54,12 +54,32 @@ export interface StockLog {
   reason?: string; // For adjustments
 }
 
+export interface SubscriptionPlan {
+  id: string;
+  name: 'Basic' | 'Pro' | 'Premium';
+  price: number; // per month
+}
+
+export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'TRIAL';
+
+export interface Tenant {
+  id: string;
+  businessName: string;
+  ownerName: string;
+  email: string;
+  status: TenantStatus;
+  planId: string;
+  joinDate: Date;
+}
+
 
 export interface AppContextType {
   products: Product[];
   sales: Sale[];
   branches: Branch[];
   stockLogs: StockLog[];
+  tenants: Tenant[];
+  subscriptionPlans: SubscriptionPlan[];
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
   adjustStock: (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => void;
   transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;

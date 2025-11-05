@@ -1,5 +1,5 @@
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -9,6 +9,32 @@ const mockBranches: Branch[] = [
     { id: 'branch-3', name: 'Westside' },
     { id: 'branch-4', name: 'Eastside' },
 ];
+
+const mockSubscriptionPlans: SubscriptionPlan[] = [
+    { id: 'plan_basic', name: 'Basic', price: 29 },
+    { id: 'plan_pro', name: 'Pro', price: 79 },
+    { id: 'plan_premium', name: 'Premium', price: 149 },
+];
+
+const generateMockTenants = (): Tenant[] => {
+    const tenants: Tenant[] = [];
+    const businessNames = ['Innovate Inc.', 'Quantum Solutions', 'Stellar Goods', 'Apex Retail', 'Zenith Supplies', 'Synergy Corp', 'Momentum Trading', 'Odyssey Services'];
+    const ownerNames = ['Alice Johnson', 'Bob Williams', 'Charlie Brown', 'Diana Miller', 'Ethan Davis', 'Fiona Garcia', 'George Rodriguez', 'Helen Martinez'];
+    const statuses: TenantStatus[] = ['ACTIVE', 'TRIAL', 'SUSPENDED'];
+
+    for (let i = 0; i < 8; i++) {
+        tenants.push({
+            id: `tenant-${i+1}`,
+            businessName: businessNames[i],
+            ownerName: ownerNames[i],
+            email: `${ownerNames[i].split(' ')[0].toLowerCase()}@example.com`,
+            status: statuses[i % statuses.length],
+            planId: mockSubscriptionPlans[i % mockSubscriptionPlans.length].id,
+            joinDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+        });
+    }
+    return tenants.sort((a,b) => b.joinDate.getTime() - a.joinDate.getTime());
+};
 
 const generateMockProducts = (): Product[] => {
     const categories = ['Electronics', 'Apparel', 'Groceries', 'Books'];
@@ -84,12 +110,15 @@ const generateMockSales = (products: Product[]): Sale[] => {
 
 const mockProducts = generateMockProducts();
 const mockSales = generateMockSales(mockProducts);
+const mockTenants = generateMockTenants();
 
 export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [products, setProducts] = useState<Product[]>(mockProducts);
     const [sales] = useState<Sale[]>(mockSales);
     const [branches] = useState<Branch[]>(mockBranches);
     const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
+    const [tenants] = useState<Tenant[]>(mockTenants);
+    const [subscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
         switch (metric) {
@@ -210,10 +239,12 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         sales,
         branches,
         stockLogs,
+        tenants,
+        subscriptionPlans,
         getMetric,
         adjustStock,
         transferStock,
-        addProduct,
+addProduct,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

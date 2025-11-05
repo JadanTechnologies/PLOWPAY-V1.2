@@ -1,53 +1,38 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { AppContextProvider } from './context/AppContext';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import Dashboard from './components/Dashboard';
-import PointOfSale from './components/PointOfSale';
-import Inventory from './components/Inventory';
+import TenantApp from './components/TenantApp';
+import SuperAdminPanel from './components/superadmin/SuperAdminPanel';
 
 export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'REPORTS' | 'SETTINGS';
+export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS';
+
 
 const App: React.FC = () => {
-  const [currentPage, setCurrentPage] = useState<Page>('DASHBOARD');
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
-
-  const handleSetPage = useCallback((page: Page) => {
-    setCurrentPage(page);
-  }, []);
-  
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'DASHBOARD':
-        return <Dashboard />;
-      case 'POS':
-        return <PointOfSale />;
-      case 'INVENTORY':
-        return <Inventory />;
-      default:
-        return <Dashboard />;
-    }
-  };
+  const [userRole, setUserRole] = useState<'TENANT' | 'SUPER_ADMIN'>('TENANT');
 
   return (
     <AppContextProvider>
-      <div className="flex h-screen bg-gray-900 text-gray-200">
-        <Sidebar 
-          currentPage={currentPage} 
-          setPage={handleSetPage} 
-          isOpen={isSidebarOpen}
-          setIsOpen={setSidebarOpen}
-        />
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <Header 
-            pageTitle={currentPage} 
-            toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
-          />
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-900 p-4 sm:p-6 lg:p-8">
-            {renderPage()}
-          </main>
+      <div className="relative">
+        <div className="absolute top-4 right-4 z-50">
+          <label htmlFor="role-toggle" className="flex items-center cursor-pointer">
+            <span className="mr-3 text-sm font-medium text-gray-300">Tenant View</span>
+            <div className="relative">
+              <input type="checkbox" id="role-toggle" className="sr-only" checked={userRole === 'SUPER_ADMIN'} onChange={() => setUserRole(role => role === 'TENANT' ? 'SUPER_ADMIN' : 'TENANT')} />
+              <div className="block bg-gray-600 w-14 h-8 rounded-full"></div>
+              <div className="dot absolute left-1 top-1 bg-white w-6 h-6 rounded-full transition"></div>
+            </div>
+            <span className="ml-3 text-sm font-medium text-gray-300">Super Admin</span>
+          </label>
+           <style>{`
+            input:checked ~ .dot {
+              transform: translateX(100%);
+              background-color: #34D399;
+            }
+          `}</style>
         </div>
+        
+        {userRole === 'TENANT' ? <TenantApp /> : <SuperAdminPanel />}
       </div>
     </AppContextProvider>
   );
