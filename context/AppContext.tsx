@@ -1,5 +1,5 @@
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockTransfer } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -89,6 +89,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     const [products, setProducts] = useState<Product[]>(mockProducts);
     const [sales] = useState<Sale[]>(mockSales);
     const [branches] = useState<Branch[]>(mockBranches);
+    const [stockTransfers, setStockTransfers] = useState<StockTransfer[]>([]);
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
         switch (metric) {
@@ -122,31 +123,68 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     }, []);
 
     const transferStock = useCallback((productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => {
+        let productName = '';
+        let variantName = '';
+        let transferSuccess = false;
+
         setProducts(prevProducts => {
-            return prevProducts.map(p => {
+            const updatedProducts = prevProducts.map(p => {
                 if (p.id === productId) {
-                    return {
-                        ...p,
-                        variants: p.variants.map(v => {
-                            if (v.id === variantId) {
-                                const fromStock = v.stockByBranch[fromBranchId] ?? 0;
-                                const toStock = v.stockByBranch[toBranchId] ?? 0;
-                                
-                                if (fromStock >= quantity) {
-                                    const newStockByBranch = {
-                                        ...v.stockByBranch,
-                                        [fromBranchId]: fromStock - quantity,
-                                        [toBranchId]: toStock + quantity,
-                                    };
-                                    return { ...v, stockByBranch: newStockByBranch };
-                                }
+                    productName = p.name;
+                    const updatedVariants = p.variants.map(v => {
+                        if (v.id === variantId) {
+                            variantName = v.name;
+                            const fromStock = v.stockByBranch[fromBranchId] ?? 0;
+                            const toStock = v.stockByBranch[toBranchId] ?? 0;
+                            
+                            if (fromStock >= quantity) {
+                                transferSuccess = true;
+                                const newStockByBranch = {
+                                    ...v.stockByBranch,
+                                    [fromBranchId]: fromStock - quantity,
+                                    [toBranchId]: toStock + quantity,
+                                };
+                                return { ...v, stockByBranch: newStockByBranch };
                             }
-                            return v;
-                        })
-                    };
+                        }
+                        return v;
+                    });
+                    return { ...p, variants: updatedVariants };
                 }
                 return p;
             });
+            return updatedProducts;
+        });
+        
+        if (transferSuccess) {
+            const newTransfer: StockTransfer = {
+                id: `trans-${Date.now()}`,
+                productId,
+                variantId,
+                productName,
+                variantName,
+                fromBranchId,
+                toBranchId,
+                quantity,
+                date: new Date(),
+            };
+            setStockTransfers(prev => [newTransfer, ...prev]);
+        }
+    }, []);
+    
+    const addProduct = useCallback((productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => {
+        setProducts(prevProducts => {
+            const newProductId = `prod-${Date.now()}`;
+            const newProduct: Product = {
+                ...productData,
+                id: newProductId,
+                isFavorite: false,
+                variants: productData.variants.map((v, index) => ({
+                    ...v,
+                    id: `var-${newProductId}-${index}`
+                })),
+            };
+            return [...prevProducts, newProduct];
         });
     }, []);
 
@@ -154,9 +192,11 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         products,
         sales,
         branches,
+        stockTransfers,
         getMetric,
         adjustStock,
         transferStock,
+        addProduct,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

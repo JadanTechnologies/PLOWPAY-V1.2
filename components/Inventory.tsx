@@ -3,9 +3,12 @@ import { useAppContext } from '../hooks/useAppContext';
 import { Product, ProductVariant } from '../types';
 import Icon from './icons';
 
+type NewVariant = Omit<ProductVariant, 'id'>;
+
 const Inventory: React.FC = () => {
-    const { products, branches, adjustStock, transferStock } = useAppContext();
+    const { products, branches, adjustStock, transferStock, addProduct, stockTransfers } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeTab, setActiveTab] = useState<'inventory' | 'history'>('inventory');
     
     // Adjust Modal State
     const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
@@ -21,6 +24,13 @@ const Inventory: React.FC = () => {
     const [transferToBranchId, setTransferToBranchId] = useState<string>('');
     const [transferQuantity, setTransferQuantity] = useState('');
 
+    // Add Product Modal State
+    const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+    const [newProductName, setNewProductName] = useState('');
+    const [newProductCategory, setNewProductCategory] = useState('');
+    const [newProductVariants, setNewProductVariants] = useState<NewVariant[]>([
+        { name: '', sku: '', price: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }
+    ]);
 
     const filteredProducts = products.filter(p => 
         p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -83,6 +93,54 @@ const Inventory: React.FC = () => {
         }
     };
 
+    const resetAddProductForm = () => {
+        setNewProductName('');
+        setNewProductCategory('');
+        setNewProductVariants([{ name: '', sku: '', price: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }]);
+    };
+
+    const closeAddProductModal = () => {
+        setIsAddProductModalOpen(false);
+        resetAddProductForm();
+    };
+
+    const handleAddProduct = () => {
+        if (!newProductName || !newProductCategory || newProductVariants.some(v => !v.name || !v.sku)) {
+            alert('Please fill out all required product and variant fields.');
+            return;
+        }
+        addProduct({
+            name: newProductName,
+            category: newProductCategory,
+            variants: newProductVariants
+        });
+        closeAddProductModal();
+    };
+
+    const handleVariantChange = (index: number, field: keyof Omit<NewVariant, 'stockByBranch'>, value: string | number) => {
+        const updatedVariants = [...newProductVariants];
+        (updatedVariants[index] as any)[field] = value;
+        setNewProductVariants(updatedVariants);
+    };
+
+    const handleVariantStockChange = (variantIndex: number, branchId: string, value: string) => {
+        const updatedVariants = [...newProductVariants];
+        updatedVariants[variantIndex].stockByBranch[branchId] = Number(value);
+        setNewProductVariants(updatedVariants);
+    }
+
+    const addVariantRow = () => {
+        setNewProductVariants([...newProductVariants, { name: '', sku: '', price: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }]);
+    };
+
+    const removeVariantRow = (index: number) => {
+        if (newProductVariants.length > 1) {
+            const updatedVariants = newProductVariants.filter((_, i) => i !== index);
+            setNewProductVariants(updatedVariants);
+        }
+    };
+
+
     const availableFromBranches = useMemo(() => {
         if (!selectedVariant) return [];
         return branches.filter(b => (selectedVariant.stockByBranch[b.id] || 0) > 0);
@@ -96,6 +154,8 @@ const Inventory: React.FC = () => {
         if (!selectedVariant || !transferFromBranchId) return 0;
         return selectedVariant.stockByBranch[transferFromBranchId] || 0;
     }, [selectedVariant, transferFromBranchId]);
+    
+    const branchMap = useMemo(() => new Map(branches.map(b => [b.id, b.name])), [branches]);
 
     return (
         <div className="space-y-6">
@@ -115,63 +175,172 @@ const Inventory: React.FC = () => {
                                 className="w-full sm:w-64 py-2 pl-10 pr-4 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
                             />
                         </div>
-                        <button className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
+                        <button onClick={() => setIsAddProductModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
                             <Icon name="plus" className="w-5 h-5 mr-2" />
                             Add Product
                         </button>
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="border-b border-gray-700">
-                            <tr>
-                                <th className="p-3 text-sm font-semibold tracking-wide">Product Name</th>
-                                <th className="p-3 text-sm font-semibold tracking-wide">Category</th>
-                                <th className="p-3 text-sm font-semibold tracking-wide">Variant</th>
-                                <th className="p-3 text-sm font-semibold tracking-wide">SKU</th>
-                                <th className="p-3 text-sm font-semibold tracking-wide text-right">Price</th>
-                                {branches.map(branch => (
-                                    <th key={branch.id} className="p-3 text-sm font-semibold tracking-wide text-right">{branch.name}</th>
-                                ))}
-                                <th className="p-3 text-sm font-semibold tracking-wide text-center">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredProducts.flatMap((product) => 
-                                product.variants.map((variant, vIndex) => (
-                                    <tr key={`${product.id}-${variant.id}`} className="border-b border-gray-700 hover:bg-gray-700/50">
-                                        {vIndex === 0 && (
-                                            <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap font-medium border-r border-gray-700">{product.name}</td>
-                                        )}
-                                        {vIndex === 0 && (
-                                            <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap border-r border-gray-700">{product.category}</td>
-                                        )}
-                                        <td className="p-3 whitespace-nowrap">{variant.name}</td>
-                                        <td className="p-3 whitespace-nowrap text-gray-400">{variant.sku}</td>
-                                        <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">${variant.price.toFixed(2)}</td>
-                                        {branches.map(branch => {
-                                            const stock = variant.stockByBranch[branch.id] || 0;
-                                            return (
-                                                <td key={branch.id} className={`p-3 whitespace-nowrap text-right font-bold ${stock < 10 ? 'text-red-500' : 'text-green-500'}`}>
-                                                    {stock}
-                                                </td>
-                                            );
-                                        })}
-                                        <td className="p-3 text-center whitespace-nowrap space-x-2">
-                                            <button onClick={() => openAdjustModal(product, variant)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Adjust</button>
-                                            <button onClick={() => openTransferModal(product, variant)} className="text-indigo-400 hover:text-indigo-300 font-semibold px-2 py-1 rounded-md text-sm">Transfer</button>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
+                <div className="border-b border-gray-700 mb-4">
+                    <nav className="flex space-x-4">
+                        <button onClick={() => setActiveTab('inventory')} className={`px-3 py-2 font-medium text-sm rounded-t-md ${activeTab === 'inventory' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+                            Current Inventory
+                        </button>
+                        <button onClick={() => setActiveTab('history')} className={`px-3 py-2 font-medium text-sm rounded-t-md ${activeTab === 'history' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+                            Transfer History
+                        </button>
+                    </nav>
                 </div>
-                {filteredProducts.length === 0 && (
-                     <p className="text-center text-gray-400 py-8">No products found.</p>
+                
+                {activeTab === 'inventory' && (
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="border-b border-gray-700">
+                                <tr>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">Product Name</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">Category</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">Variant</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">SKU</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide text-right">Price</th>
+                                    {branches.map(branch => (
+                                        <th key={branch.id} className="p-3 text-sm font-semibold tracking-wide text-right">{branch.name}</th>
+                                    ))}
+                                    <th className="p-3 text-sm font-semibold tracking-wide text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredProducts.flatMap((product) => 
+                                    product.variants.map((variant, vIndex) => (
+                                        <tr key={`${product.id}-${variant.id}`} className="border-b border-gray-700 hover:bg-gray-700/50">
+                                            {vIndex === 0 && (
+                                                <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap font-medium border-r border-gray-700">{product.name}</td>
+                                            )}
+                                            {vIndex === 0 && (
+                                                <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap border-r border-gray-700">{product.category}</td>
+                                            )}
+                                            <td className="p-3 whitespace-nowrap">{variant.name}</td>
+                                            <td className="p-3 whitespace-nowrap text-gray-400">{variant.sku}</td>
+                                            <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">${variant.price.toFixed(2)}</td>
+                                            {branches.map(branch => {
+                                                const stock = variant.stockByBranch[branch.id] || 0;
+                                                return (
+                                                    <td key={branch.id} className={`p-3 whitespace-nowrap text-right font-bold ${stock < 10 ? 'text-red-500' : 'text-green-500'}`}>
+                                                        {stock}
+                                                    </td>
+                                                );
+                                            })}
+                                            <td className="p-3 text-center whitespace-nowrap space-x-2">
+                                                <button onClick={() => openAdjustModal(product, variant)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Adjust</button>
+                                                <button onClick={() => openTransferModal(product, variant)} className="text-indigo-400 hover:text-indigo-300 font-semibold px-2 py-1 rounded-md text-sm">Transfer</button>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                         {filteredProducts.length === 0 && (
+                            <p className="text-center text-gray-400 py-8">No products found.</p>
+                        )}
+                    </div>
+                )}
+
+                {activeTab === 'history' && (
+                     <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="border-b border-gray-700">
+                                <tr>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">Date</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">Product</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">Variant</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide text-right">Quantity</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">From</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">To</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {stockTransfers.map(transfer => (
+                                    <tr key={transfer.id} className="border-b border-gray-700 hover:bg-gray-700/50">
+                                        <td className="p-3 whitespace-nowrap">{transfer.date.toLocaleString()}</td>
+                                        <td className="p-3 whitespace-nowrap">{transfer.productName}</td>
+                                        <td className="p-3 whitespace-nowrap text-gray-400">{transfer.variantName}</td>
+                                        <td className="p-3 whitespace-nowrap text-right font-bold">{transfer.quantity}</td>
+                                        <td className="p-3 whitespace-nowrap text-yellow-400">{branchMap.get(transfer.fromBranchId)}</td>
+                                        <td className="p-3 whitespace-nowrap text-green-400">{branchMap.get(transfer.toBranchId)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                        {stockTransfers.length === 0 && (
+                            <p className="text-center text-gray-400 py-8">No stock transfer history found.</p>
+                        )}
+                    </div>
                 )}
             </div>
+
+            {/* Add Product Modal */}
+            {isAddProductModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
+                    <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] flex flex-col">
+                        <h3 className="text-xl font-bold mb-4 text-white">Add New Product</h3>
+                        <div className="overflow-y-auto pr-2 flex-grow">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label htmlFor="prodName" className="block text-sm font-medium text-gray-400">Product Name</label>
+                                    <input type="text" id="prodName" value={newProductName} onChange={e => setNewProductName(e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                                <div>
+                                    <label htmlFor="prodCat" className="block text-sm font-medium text-gray-400">Category</label>
+                                    <input type="text" id="prodCat" value={newProductCategory} onChange={e => setNewProductCategory(e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                </div>
+                            </div>
+
+                            <h4 className="text-lg font-semibold mb-2 text-white">Variants</h4>
+                            <div className="space-y-4">
+                                {newProductVariants.map((variant, index) => (
+                                    <div key={index} className="bg-gray-900 p-4 rounded-md border border-gray-700">
+                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-400">Variant Name</label>
+                                                <input type="text" value={variant.name} onChange={e => handleVariantChange(index, 'name', e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-400">SKU</label>
+                                                <input type="text" value={variant.sku} onChange={e => handleVariantChange(index, 'sku', e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-400">Price</label>
+                                                <input type="number" value={variant.price} onChange={e => handleVariantChange(index, 'price', parseFloat(e.target.value))} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                            </div>
+                                        </div>
+                                        <p className="text-sm font-medium text-gray-400 mb-2">Initial Stock</p>
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                                            {branches.map(branch => (
+                                                <div key={branch.id}>
+                                                    <label className="block text-xs text-gray-500">{branch.name}</label>
+                                                    <input type="number" value={variant.stockByBranch[branch.id] || 0} onChange={e => handleVariantStockChange(index, branch.id, e.target.value)} className="w-full mt-1 py-1 px-2 text-white text-sm bg-gray-700 border border-gray-600 rounded-md"/>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {newProductVariants.length > 1 && (
+                                            <div className="text-right mt-2">
+                                                <button onClick={() => removeVariantRow(index)} className="text-red-500 hover:text-red-400 text-sm font-semibold">Remove Variant</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={addVariantRow} className="mt-4 text-indigo-400 hover:text-indigo-300 font-semibold text-sm">+ Add Another Variant</button>
+                        </div>
+
+                        <div className="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-700">
+                            <button type="button" onClick={closeAddProductModal} className="px-4 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-500 font-semibold">Cancel</button>
+                            <button type="button" onClick={handleAddProduct} className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 font-semibold">Save Product</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Stock Adjustment Modal */}
             {isAdjustModalOpen && selectedProduct && selectedVariant && (
