@@ -215,5 +215,8 @@ export interface AppContextType {
   updateFaqs: (newFaqs: FaqItem[]) => void;
   updatePaymentSettings: (newSettings: PaymentSettings) => void;
   updateNotificationSettings: (newSettings: NotificationSettings) => void;
+  addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => void;
+  updateSubscriptionPlan: (planId: string, planData: Partial<Omit<SubscriptionPlan, 'id'>>) => void;
+  deleteSubscriptionPlan: (planId: string) => void;
   logout?: () => void;
 }

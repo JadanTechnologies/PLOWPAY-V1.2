@@ -1,6 +1,5 @@
 
 
-
 import React, { useState, useCallback } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
@@ -11,6 +10,7 @@ import TeamManagement from './TeamManagement';
 import RoleManagement from './RoleManagement';
 import PaymentSettings from './PaymentSettings';
 import NotificationSettings from './NotificationSettings';
+import SubscriptionManagement from './SubscriptionManagement';
 import { useAppContext } from '../../hooks/useAppContext';
 import { BrandConfig, PageContent, FaqItem } from '../../types';
 import Icon from '../icons';
@@ -159,12 +159,7 @@ const SuperAdminPanel: React.FC = () => {
             case 'TENANTS':
                 return hasPermission('manageTenants') ? <TenantManagement /> : <AccessDenied />;
             case 'SUBSCRIPTIONS':
-                return hasPermission('manageSubscriptions') ? (
-                    <div className="p-6 bg-gray-800 rounded-lg shadow-md">
-                        <h3 className="text-lg font-semibold text-white">Subscription Management</h3>
-                        <p className="text-gray-400 mt-4">Subscription plan management will be available here.</p>
-                    </div>
-                ) : <AccessDenied />;
+                return hasPermission('manageSubscriptions') ? <SubscriptionManagement /> : <AccessDenied />;
             case 'TEAM_MANAGEMENT':
                 return hasPermission('manageTeam') ? <TeamManagement /> : <AccessDenied />;
             case 'ROLE_MANAGEMENT':

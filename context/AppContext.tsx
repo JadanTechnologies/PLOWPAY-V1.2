@@ -195,7 +195,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [branches] = useState<Branch[]>(mockBranches);
     const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
     const [tenants] = useState<Tenant[]>(mockTenants);
-    const [subscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
+    const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
     const [adminRoles, setAdminRoles] = useState<AdminRole[]>(mockAdminRoles);
     // Simulate a logged-in super admin user to enforce permissions
@@ -364,6 +364,31 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         setNotificationSettings(newSettings);
     }, []);
 
+    const addSubscriptionPlan = useCallback((planData: Omit<SubscriptionPlan, 'id'>) => {
+        setSubscriptionPlans(prev => [
+            ...prev,
+            {
+                ...planData,
+                id: `plan_${planData.name.toLowerCase()}_${Date.now()}`
+            }
+        ]);
+    }, []);
+
+    const updateSubscriptionPlan = useCallback((planId: string, planData: Partial<Omit<SubscriptionPlan, 'id'>>) => {
+        setSubscriptionPlans(prev => prev.map(plan =>
+            plan.id === planId ? { ...plan, ...planData } : plan
+        ));
+    }, []);
+
+    const deleteSubscriptionPlan = useCallback((planId: string) => {
+        const isPlanInUse = tenants.some(tenant => tenant.planId === planId);
+        if (isPlanInUse) {
+            alert("Cannot delete a subscription plan that is currently assigned to one or more tenants.");
+            return;
+        }
+        setSubscriptionPlans(prev => prev.filter(plan => plan.id !== planId));
+    }, [tenants]);
+
 
     const value: AppContextType = {
         products,
@@ -394,6 +419,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updateFaqs,
         updatePaymentSettings,
         updateNotificationSettings,
+        addSubscriptionPlan,
+        updateSubscriptionPlan,
+        deleteSubscriptionPlan,
         logout: onLogout,
     };
 
