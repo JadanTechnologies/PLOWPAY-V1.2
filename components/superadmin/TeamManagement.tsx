@@ -1,9 +1,21 @@
 
+
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
-import { AdminUser, AdminUserStatus } from '../../types';
+import { AdminUser, AdminUserStatus, Permission } from '../../types';
 import Icon from '../icons';
 import { usePermissions } from '../../hooks/usePermissions';
+
+const permissionLabels: Record<Permission, string> = {
+    viewPlatformDashboard: 'View Platform Dashboard',
+    manageTenants: 'Manage Tenants',
+    manageSubscriptions: 'Manage Subscriptions',
+    manageTeam: 'Manage Team Members',
+    manageRoles: 'Manage Roles & Permissions',
+    manageSystemSettings: 'Manage System Settings',
+    managePaymentGateways: 'Manage Payment Gateways',
+    manageNotificationSettings: 'Manage Notification Settings',
+};
 
 const TeamManagement: React.FC = () => {
     const { adminUsers, adminRoles, addAdminUser, updateAdminUser } = useAppContext();
@@ -133,6 +145,19 @@ const TeamManagement: React.FC = () => {
                                     ))}
                                 </select>
                             </div>
+                             {formData.roleId && (
+                                <div className="p-3 bg-gray-900/50 rounded-md border border-gray-700">
+                                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Role Permissions:</h4>
+                                    <ul className="text-xs text-gray-400 grid grid-cols-1 sm:grid-cols-2 gap-1">
+                                        {adminRoles.find(r => r.id === formData.roleId)?.permissions.map(p => (
+                                            <li key={p} className="flex items-center truncate">
+                                                <Icon name="check" className="w-4 h-4 mr-2 text-cyan-400 flex-shrink-0" />
+                                                <span className="truncate" title={permissionLabels[p] || p}>{permissionLabels[p] || p}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            )}
                             <div className="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-700">
                                 <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-500 font-semibold">Cancel</button>
                                 <button type="submit" className="px-4 py-2 rounded-md bg-cyan-600 text-white hover:bg-cyan-500 font-semibold">

@@ -140,6 +140,7 @@ const generateMockSales = (products: Product[]): Sale[] => {
 const mockProducts = generateMockProducts();
 const mockSales = generateMockSales(mockProducts);
 export const mockTenants = generateMockTenants();
+// FIX: Corrected function call to match its definition.
 const mockAdminUsers = generateMockAdminUsers();
 
 const mockBrandConfig: BrandConfig = {
@@ -180,6 +181,13 @@ const mockNotificationSettings: NotificationSettings = {
             accountSid: '',
             apiKey: '',
             fromNumber: ''
+        }
+    },
+    push: {
+        firebase: {
+            enabled: false,
+            serverKey: '',
+            vapidKey: ''
         }
     }
 };

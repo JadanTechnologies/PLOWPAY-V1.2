@@ -180,9 +180,20 @@ export interface SmsSettings {
     twilio: TwilioSettings;
 }
 
+export interface FirebaseSettings {
+    enabled: boolean;
+    serverKey: string;
+    vapidKey: string;
+}
+
+export interface PushSettings {
+    firebase: FirebaseSettings;
+}
+
 export interface NotificationSettings {
     email: EmailSettings;
     sms: SmsSettings;
+    push: PushSettings;
 }
 
 
