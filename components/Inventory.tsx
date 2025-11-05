@@ -75,7 +75,6 @@ const Inventory: React.FC = () => {
         if(selectedProduct && selectedVariant && transferFromBranchId && transferToBranchId && transferQuantity) {
             const quantity = parseInt(transferQuantity, 10);
             if(quantity > 0 && quantity <= (selectedVariant.stockByBranch[transferFromBranchId] || 0)) {
-                // FIX: Corrected a typo in the variable name from `toBranchId` to `transferToBranchId`.
                 transferStock(selectedProduct.id, selectedVariant.id, transferFromBranchId, transferToBranchId, quantity);
                 closeTransferModal();
             } else {
@@ -132,33 +131,39 @@ const Inventory: React.FC = () => {
                                 <th className="p-3 text-sm font-semibold tracking-wide">Variant</th>
                                 <th className="p-3 text-sm font-semibold tracking-wide">SKU</th>
                                 <th className="p-3 text-sm font-semibold tracking-wide text-right">Price</th>
-                                <th className="p-3 text-sm font-semibold tracking-wide text-right">Total Stock</th>
+                                {branches.map(branch => (
+                                    <th key={branch.id} className="p-3 text-sm font-semibold tracking-wide text-right">{branch.name}</th>
+                                ))}
                                 <th className="p-3 text-sm font-semibold tracking-wide text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredProducts.flatMap((product) => 
-                                product.variants.map((variant, vIndex) => {
-                                    const totalStock = Object.values(variant.stockByBranch).reduce((sum, count) => sum + count, 0);
-                                    return (
-                                        <tr key={`${product.id}-${variant.id}`} className="border-b border-gray-700 hover:bg-gray-700/50">
-                                            {vIndex === 0 && (
-                                                <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap font-medium border-r border-gray-700">{product.name}</td>
-                                            )}
-                                            {vIndex === 0 && (
-                                                <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap border-r border-gray-700">{product.category}</td>
-                                            )}
-                                            <td className="p-3 whitespace-nowrap">{variant.name}</td>
-                                            <td className="p-3 whitespace-nowrap text-gray-400">{variant.sku}</td>
-                                            <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">${variant.price.toFixed(2)}</td>
-                                            <td className={`p-3 whitespace-nowrap text-right font-bold ${totalStock < 10 ? 'text-red-500' : 'text-green-500'}`}>{totalStock}</td>
-                                            <td className="p-3 text-center whitespace-nowrap space-x-2">
-                                                <button onClick={() => openAdjustModal(product, variant)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Adjust</button>
-                                                <button onClick={() => openTransferModal(product, variant)} className="text-indigo-400 hover:text-indigo-300 font-semibold px-2 py-1 rounded-md text-sm">Transfer</button>
-                                            </td>
-                                        </tr>
-                                    )
-                                })
+                                product.variants.map((variant, vIndex) => (
+                                    <tr key={`${product.id}-${variant.id}`} className="border-b border-gray-700 hover:bg-gray-700/50">
+                                        {vIndex === 0 && (
+                                            <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap font-medium border-r border-gray-700">{product.name}</td>
+                                        )}
+                                        {vIndex === 0 && (
+                                            <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap border-r border-gray-700">{product.category}</td>
+                                        )}
+                                        <td className="p-3 whitespace-nowrap">{variant.name}</td>
+                                        <td className="p-3 whitespace-nowrap text-gray-400">{variant.sku}</td>
+                                        <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">${variant.price.toFixed(2)}</td>
+                                        {branches.map(branch => {
+                                            const stock = variant.stockByBranch[branch.id] || 0;
+                                            return (
+                                                <td key={branch.id} className={`p-3 whitespace-nowrap text-right font-bold ${stock < 10 ? 'text-red-500' : 'text-green-500'}`}>
+                                                    {stock}
+                                                </td>
+                                            );
+                                        })}
+                                        <td className="p-3 text-center whitespace-nowrap space-x-2">
+                                            <button onClick={() => openAdjustModal(product, variant)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Adjust</button>
+                                            <button onClick={() => openTransferModal(product, variant)} className="text-indigo-400 hover:text-indigo-300 font-semibold px-2 py-1 rounded-md text-sm">Transfer</button>
+                                        </td>
+                                    </tr>
+                                ))
                             )}
                         </tbody>
                     </table>
