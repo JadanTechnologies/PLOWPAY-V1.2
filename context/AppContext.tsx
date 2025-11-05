@@ -178,7 +178,7 @@ const mockNotificationSettings: NotificationSettings = {
         twilio: {
             enabled: false,
             accountSid: '',
-            authToken: '',
+            apiKey: '',
             fromNumber: ''
         }
     }

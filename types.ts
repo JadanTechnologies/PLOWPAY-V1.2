@@ -172,7 +172,7 @@ export interface EmailSettings {
 export interface TwilioSettings {
     enabled: boolean;
     accountSid: string;
-    authToken: string;
+    apiKey: string;
     fromNumber: string;
 }
 

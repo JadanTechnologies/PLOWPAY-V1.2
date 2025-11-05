@@ -173,11 +173,11 @@ const NotificationSettings: React.FC = () => {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-400">Auth Token</label>
+                            <label className="block text-sm font-medium text-gray-400">API Key</label>
                             <input 
                                 type="password" 
-                                value={formState.sms.twilio.authToken} 
-                                onChange={e => handleSmsChange('twilio', 'authToken', e.target.value)} 
+                                value={formState.sms.twilio.apiKey} 
+                                onChange={e => handleSmsChange('twilio', 'apiKey', e.target.value)} 
                                 disabled={!formState.sms.twilio.enabled} 
                                 className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
                             />
