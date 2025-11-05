@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
 import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus } from '../types';
 
@@ -112,7 +113,12 @@ const mockProducts = generateMockProducts();
 const mockSales = generateMockSales(mockProducts);
 const mockTenants = generateMockTenants();
 
-export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+interface AppContextProviderProps {
+    children: ReactNode;
+    onLogout?: () => void;
+}
+
+export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children, onLogout = () => {} }) => {
     const [products, setProducts] = useState<Product[]>(mockProducts);
     const [sales] = useState<Sale[]>(mockSales);
     const [branches] = useState<Branch[]>(mockBranches);
@@ -234,7 +240,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         });
     }, []);
 
-    const value = {
+    const value: AppContextType = {
         products,
         sales,
         branches,
@@ -244,7 +250,8 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         getMetric,
         adjustStock,
         transferStock,
-addProduct,
+        addProduct,
+        logout: onLogout,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

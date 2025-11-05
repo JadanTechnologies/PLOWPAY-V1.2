@@ -1,3 +1,4 @@
+
 export interface Branch {
   id: string;
   name: string;
@@ -84,4 +85,5 @@ export interface AppContextType {
   adjustStock: (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => void;
   transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;
   addProduct: (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => void;
+  logout?: () => void;
 }

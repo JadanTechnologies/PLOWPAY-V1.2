@@ -1,6 +1,7 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Icon from './icons';
+import { useAppContext } from '../hooks/useAppContext';
 
 interface HeaderProps {
   pageTitle: string;
@@ -8,11 +9,18 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
-  const formattedTitle = pageTitle
-    .toLowerCase()
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+  const { logout } = useAppContext();
+  const [isProfileOpen, setProfileOpen] = useState(false);
+
+  // Guard against undefined pageTitle and handle pre-formatted titles
+  const title = pageTitle || '';
+  const formattedTitle = title.includes(' ')
+    ? title
+    : title
+        .toLowerCase()
+        .split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
 
   return (
     <header className="flex items-center justify-between h-16 px-4 bg-gray-800 border-b border-gray-700 shadow-md">
@@ -40,7 +48,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
         </button>
 
         <div className="relative">
-          <button className="flex items-center space-x-2 focus:outline-none">
+          <button onClick={() => setProfileOpen(!isProfileOpen)} className="flex items-center space-x-2 focus:outline-none">
             <img 
               className="w-10 h-10 rounded-full" 
               src="https://picsum.photos/100/100" 
@@ -51,6 +59,17 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
               <div className="text-sm text-gray-400">Tenant Business</div>
             </div>
           </button>
+          {isProfileOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg py-1 z-50">
+              <a href="#" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600">Profile</a>
+              <a href="#" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600">Settings</a>
+              <div className="border-t border-gray-600 my-1"></div>
+              <button onClick={logout} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-400 hover:bg-gray-600">
+                <Icon name="logout" className="w-5 h-5 mr-2" />
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
