@@ -1,4 +1,5 @@
 
+
 export interface Branch {
   id: string;
   name: string;
@@ -85,6 +86,27 @@ export interface AdminUser {
   joinDate: Date;
 }
 
+export interface BrandConfig {
+  name: string;
+  logoUrl: string; 
+  faviconUrl: string;
+}
+
+export interface FaqItem {
+  id: string;
+  question: string;
+  answer: string;
+}
+
+export interface PageContent {
+  about: string;
+  contact: string;
+  terms: string;
+  privacy: string;
+  refund: string;
+  faqs: FaqItem[];
+}
+
 
 export interface AppContextType {
   products: Product[];
@@ -94,11 +116,16 @@ export interface AppContextType {
   tenants: Tenant[];
   subscriptionPlans: SubscriptionPlan[];
   adminUsers: AdminUser[];
+  brandConfig: BrandConfig;
+  pageContent: PageContent;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
   adjustStock: (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => void;
   transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;
   addProduct: (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => void;
   addAdminUser: (userData: Omit<AdminUser, 'id' | 'joinDate' | 'status'>) => void;
   updateAdminUser: (userId: string, userData: Partial<Omit<AdminUser, 'id' | 'joinDate'>>) => void;
+  updateBrandConfig: (newConfig: Partial<BrandConfig>) => void;
+  updatePageContent: (newPageContent: Partial<Omit<PageContent, 'faqs'>>) => void;
+  updateFaqs: (newFaqs: FaqItem[]) => void;
   logout?: () => void;
 }

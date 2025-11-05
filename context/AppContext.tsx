@@ -1,6 +1,7 @@
 
+
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserRole, AdminUserStatus } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserRole, AdminUserStatus, BrandConfig, PageContent, FaqItem } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -123,6 +124,25 @@ const mockSales = generateMockSales(mockProducts);
 export const mockTenants = generateMockTenants();
 const mockAdminUsers = generateMockAdminUsers();
 
+const mockBrandConfig: BrandConfig = {
+    name: "FlowPay",
+    logoUrl: "", // Empty string will use default SVG
+    faviconUrl: "/vite.svg",
+};
+
+const mockPageContent: PageContent = {
+    about: "## About FlowPay\n\nFlowPay is a comprehensive multi-tenant SaaS platform for businesses, featuring a Point of Sale (POS) system, inventory management, and a super admin panel. Built with modern technologies for an intuitive user experience.",
+    contact: "## Contact Us\n\nFor support, please email us at support@flowpay.com. For sales inquiries, contact sales@flowpay.com.",
+    terms: "## Terms of Service\n\nBy using FlowPay, you agree to our terms and conditions. Please read them carefully. These terms govern your use of our services...",
+    privacy: "## Privacy Policy\n\nYour privacy is important to us. This policy explains what information we collect and how we use it...",
+    refund: "## Refund Policy\n\nWe offer a 30-day money-back guarantee on all our subscription plans. If you are not satisfied, you can request a full refund within 30 days of purchase.",
+    faqs: [
+        { id: 'faq-1', question: "What is FlowPay?", answer: "FlowPay is an all-in-one SaaS platform for retail businesses, offering POS, inventory, and analytics." },
+        { id: 'faq-2', question: "Is there a free trial?", answer: "Yes, we offer a 14-day free trial for all our plans. No credit card required." },
+        { id: 'faq-3', question: "Can I use my own hardware?", answer: "Absolutely. FlowPay is a web-based application and works on any device with a modern browser, including desktops, tablets, and smartphones." },
+    ]
+};
+
 interface AppContextProviderProps {
     children: ReactNode;
     onLogout?: () => void;
@@ -136,6 +156,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [tenants] = useState<Tenant[]>(mockTenants);
     const [subscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
+    const [brandConfig, setBrandConfig] = useState<BrandConfig>(mockBrandConfig);
+    const [pageContent, setPageContent] = useState<PageContent>(mockPageContent);
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
         switch (metric) {
@@ -269,6 +291,18 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         ));
     }, []);
 
+    const updateBrandConfig = useCallback((newConfig: Partial<BrandConfig>) => {
+        setBrandConfig(prev => ({ ...prev, ...newConfig }));
+    }, []);
+
+    const updatePageContent = useCallback((newPageContent: Partial<Omit<PageContent, 'faqs'>>) => {
+        setPageContent(prev => ({ ...prev, ...newPageContent }));
+    }, []);
+    
+    const updateFaqs = useCallback((newFaqs: FaqItem[]) => {
+        setPageContent(prev => ({ ...prev, faqs: newFaqs }));
+    }, []);
+
 
     const value: AppContextType = {
         products,
@@ -278,12 +312,17 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         tenants,
         subscriptionPlans,
         adminUsers,
+        brandConfig,
+        pageContent,
         getMetric,
         adjustStock,
         transferStock,
         addProduct,
         addAdminUser,
         updateAdminUser,
+        updateBrandConfig,
+        updatePageContent,
+        updateFaqs,
         logout: onLogout,
     };
 

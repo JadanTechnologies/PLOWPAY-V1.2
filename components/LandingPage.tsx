@@ -1,12 +1,17 @@
 
+
 import React from 'react';
 import Icon from './icons';
+import { View } from '../App';
+import { useAppContext } from '../hooks/useAppContext';
+
 
 interface LandingPageProps {
-  onLogin: () => void;
+  onNavigate: (view: View) => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
+  const { brandConfig } = useAppContext();
 
   const features = [
     {
@@ -57,18 +62,23 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <svg className="w-8 h-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.825-1.106-2.156 0-2.981.54-.403 1.25-.624 1.968-.624a4.58 4.58 0 0 1 .844.119" />
-              </svg>
-              <span className="ml-2 text-2xl font-bold text-white">FlowPay</span>
+              {brandConfig.logoUrl ? (
+                <img src={brandConfig.logoUrl} alt={`${brandConfig.name} Logo`} className="h-8 w-auto" />
+              ) : (
+                <svg className="w-8 h-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.825-1.106-2.156 0-2.981.54-.403 1.25-.624 1.968-.624a4.58 4.58 0 0 1 .844.119" />
+                </svg>
+              )}
+              <span className="ml-2 text-2xl font-bold text-white">{brandConfig.name}</span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
               <a href="#features" className="hover:text-indigo-400 transition-colors">Features</a>
               <a href="#pricing" className="hover:text-indigo-400 transition-colors">Pricing</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigate('faq'); }} className="hover:text-indigo-400 transition-colors">FAQs</a>
             </div>
             <div className="flex items-center space-x-4">
-              <button onClick={onLogin} className="text-gray-300 hover:text-white transition-colors">Log In</button>
-              <button onClick={onLogin} className="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-indigo-500 transition-colors">
+              <button onClick={() => onNavigate('login')} className="text-gray-300 hover:text-white transition-colors">Log In</button>
+              <button onClick={() => onNavigate('login')} className="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-indigo-500 transition-colors">
                 Get Started
               </button>
             </div>
@@ -85,10 +95,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
               <span className="block text-indigo-400">Run Your Retail Business</span>
             </h1>
             <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-400">
-              From point of sale to inventory management, FlowPay provides the tools you need to streamline operations, delight customers, and grow your business.
+              From point of sale to inventory management, {brandConfig.name} provides the tools you need to streamline operations, delight customers, and grow your business.
             </p>
             <div className="mt-8 flex justify-center space-x-4">
-              <button onClick={onLogin} className="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-md hover:bg-indigo-500 transition-transform transform hover:scale-105">
+              <button onClick={() => onNavigate('login')} className="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-md hover:bg-indigo-500 transition-transform transform hover:scale-105">
                 Get Started for Free
               </button>
               <button className="bg-gray-700 text-white font-semibold px-6 py-3 rounded-md hover:bg-gray-600 transition-transform transform hover:scale-105">
@@ -103,7 +113,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-white">Everything You Need to Sell</h2>
-              <p className="mt-4 text-lg text-gray-400">FlowPay is packed with powerful features to manage your entire business.</p>
+              <p className="mt-4 text-lg text-gray-400">{brandConfig.name} is packed with powerful features to manage your entire business.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {features.map((feature, index) => (
@@ -143,7 +153,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                       </li>
                     ))}
                   </ul>
-                  <button onClick={onLogin} className={`w-full mt-8 py-3 px-6 rounded-lg font-semibold transition-colors ${plan.popular ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-gray-700 text-white hover:bg-gray-600'}`}>
+                  <button onClick={() => onNavigate('login')} className={`w-full mt-8 py-3 px-6 rounded-lg font-semibold transition-colors ${plan.popular ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-gray-700 text-white hover:bg-gray-600'}`}>
                     Choose Plan
                   </button>
                 </div>
@@ -158,7 +168,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                 <h2 className="text-3xl font-bold text-white">Loved by Businesses Like Yours</h2>
                 <div className="mt-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 text-left">
                     <div className="bg-gray-800 p-6 rounded-lg">
-                        <p className="text-gray-300">"FlowPay has been a game-changer for our inventory management. We've reduced stockouts by 40% and can finally trust our numbers."</p>
+                        <p className="text-gray-300">"{brandConfig.name} has been a game-changer for our inventory management. We've reduced stockouts by 40% and can finally trust our numbers."</p>
                         <div className="flex items-center mt-4">
                             <img className="w-12 h-12 rounded-full mr-4" src="https://picsum.photos/seed/person1/100" alt="Sarah L."/>
                             <div>
@@ -178,7 +188,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                         </div>
                     </div>
                     <div className="bg-gray-800 p-6 rounded-lg">
-                        <p className="text-gray-300">"As a multi-branch business, having a single source of truth for sales and stock is essential. FlowPay delivers exactly that, beautifully."</p>
+                        <p className="text-gray-300">"As a multi-branch business, having a single source of truth for sales and stock is essential. {brandConfig.name} delivers exactly that, beautifully."</p>
                          <div className="flex items-center mt-4">
                             <img className="w-12 h-12 rounded-full mr-4" src="https://picsum.photos/seed/person3/100" alt="Chen W."/>
                             <div>
@@ -202,15 +212,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
                 <ul className="mt-4 space-y-2">
                     <li><a href="#features" className="text-gray-400 hover:text-white">Features</a></li>
                     <li><a href="#pricing" className="text-gray-400 hover:text-white">Pricing</a></li>
-                    <li><a href="#" className="text-gray-400 hover:text-white">Updates</a></li>
+                    <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigate('faq'); }} className="text-gray-400 hover:text-white">FAQs</a></li>
                 </ul>
             </div>
             <div>
                 <h4 className="font-semibold text-white">Company</h4>
                 <ul className="mt-4 space-y-2">
-                    <li><a href="#" className="text-gray-400 hover:text-white">About</a></li>
-                    <li><a href="#" className="text-gray-400 hover:text-white">Careers</a></li>
-                    <li><a href="#" className="text-gray-400 hover:text-white">Contact</a></li>
+                    <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigate('about'); }} className="text-gray-400 hover:text-white">About</a></li>
+                    <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigate('contact'); }} className="text-gray-400 hover:text-white">Contact</a></li>
                 </ul>
             </div>
              <div>
@@ -224,13 +233,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onLogin }) => {
              <div>
                 <h4 className="font-semibold text-white">Legal</h4>
                 <ul className="mt-4 space-y-2">
-                    <li><a href="#" className="text-gray-400 hover:text-white">Privacy Policy</a></li>
-                    <li><a href="#" className="text-gray-400 hover:text-white">Terms of Service</a></li>
+                    <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigate('privacy'); }} className="text-gray-400 hover:text-white">Privacy Policy</a></li>
+                    <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigate('terms'); }} className="text-gray-400 hover:text-white">Terms of Service</a></li>
+                    <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigate('refund'); }} className="text-gray-400 hover:text-white">Refund Policy</a></li>
                 </ul>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-gray-500">&copy; {new Date().getFullYear()} FlowPay, Inc. All rights reserved.</p>
+            <p className="text-gray-500">&copy; {new Date().getFullYear()} {brandConfig.name}, Inc. All rights reserved.</p>
             <div className="flex space-x-4 mt-4 sm:mt-0">
                 <a href="#" className="text-gray-500 hover:text-white"><Icon name="twitter" className="w-5 h-5" /></a>
                 <a href="#" className="text-gray-500 hover:text-white"><Icon name="linkedin" className="w-5 h-5" /></a>
