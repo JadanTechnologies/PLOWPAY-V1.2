@@ -37,25 +37,31 @@ export interface Sale {
   customer: string;
 }
 
-export interface StockTransfer {
+export type StockLogAction = 'ADJUSTMENT' | 'TRANSFER';
+
+export interface StockLog {
   id: string;
+  date: Date;
   productId: string;
   variantId: string;
   productName: string;
   variantName: string;
-  fromBranchId: string;
-  toBranchId: string;
-  quantity: number;
-  date: Date;
+  action: StockLogAction;
+  quantity: number; // For adjustments, this is the change (+/-). For transfers, the amount moved.
+  fromBranchId?: string; // For transfers
+  toBranchId?: string; // For transfers
+  branchId?: string; // For adjustments
+  reason?: string; // For adjustments
 }
+
 
 export interface AppContextType {
   products: Product[];
   sales: Sale[];
   branches: Branch[];
-  stockTransfers: StockTransfer[];
+  stockLogs: StockLog[];
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
-  adjustStock: (productId: string, variantId: string, branchId: string, newStock: number) => void;
+  adjustStock: (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => void;
   transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;
   addProduct: (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => void;
 }

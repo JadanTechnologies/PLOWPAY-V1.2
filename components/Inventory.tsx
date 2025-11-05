@@ -1,12 +1,12 @@
 import React, {useState, useMemo} from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import { Product, ProductVariant } from '../types';
+import { Product, ProductVariant, StockLog } from '../types';
 import Icon from './icons';
 
 type NewVariant = Omit<ProductVariant, 'id'>;
 
 const Inventory: React.FC = () => {
-    const { products, branches, adjustStock, transferStock, addProduct, stockTransfers } = useAppContext();
+    const { products, branches, adjustStock, transferStock, addProduct, stockLogs } = useAppContext();
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState<'inventory' | 'history'>('inventory');
     
@@ -58,7 +58,7 @@ const Inventory: React.FC = () => {
         if (selectedProduct && selectedVariant && newStockValue !== '' && adjustmentBranchId) {
             const newStock = parseInt(newStockValue, 10);
             if (!isNaN(newStock) && newStock >= 0) {
-                adjustStock(selectedProduct.id, selectedVariant.id, adjustmentBranchId, newStock);
+                adjustStock(selectedProduct.id, selectedVariant.id, adjustmentBranchId, newStock, adjustmentReason);
                 closeAdjustModal();
             } else {
                 alert("Please enter a valid, non-negative number for the stock.");
@@ -188,7 +188,7 @@ const Inventory: React.FC = () => {
                             Current Inventory
                         </button>
                         <button onClick={() => setActiveTab('history')} className={`px-3 py-2 font-medium text-sm rounded-t-md ${activeTab === 'history' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-                            Transfer History
+                            History
                         </button>
                     </nav>
                 </div>
@@ -246,33 +246,60 @@ const Inventory: React.FC = () => {
                 )}
 
                 {activeTab === 'history' && (
-                     <div className="overflow-x-auto">
+                    <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead className="border-b border-gray-700">
                                 <tr>
                                     <th className="p-3 text-sm font-semibold tracking-wide">Date</th>
                                     <th className="p-3 text-sm font-semibold tracking-wide">Product</th>
-                                    <th className="p-3 text-sm font-semibold tracking-wide">Variant</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">Action</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">Details</th>
                                     <th className="p-3 text-sm font-semibold tracking-wide text-right">Quantity</th>
-                                    <th className="p-3 text-sm font-semibold tracking-wide">From</th>
-                                    <th className="p-3 text-sm font-semibold tracking-wide">To</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {stockTransfers.map(transfer => (
-                                    <tr key={transfer.id} className="border-b border-gray-700 hover:bg-gray-700/50">
-                                        <td className="p-3 whitespace-nowrap">{transfer.date.toLocaleString()}</td>
-                                        <td className="p-3 whitespace-nowrap">{transfer.productName}</td>
-                                        <td className="p-3 whitespace-nowrap text-gray-400">{transfer.variantName}</td>
-                                        <td className="p-3 whitespace-nowrap text-right font-bold">{transfer.quantity}</td>
-                                        <td className="p-3 whitespace-nowrap text-yellow-400">{branchMap.get(transfer.fromBranchId)}</td>
-                                        <td className="p-3 whitespace-nowrap text-green-400">{branchMap.get(transfer.toBranchId)}</td>
+                                {stockLogs.map(log => (
+                                    <tr key={log.id} className="border-b border-gray-700 hover:bg-gray-700/50">
+                                        <td className="p-3 whitespace-nowrap text-sm text-gray-400">{log.date.toLocaleString()}</td>
+                                        <td className="p-3 whitespace-nowrap">
+                                            <div className="font-medium">{log.productName}</div>
+                                            <div className="text-sm text-gray-400">{log.variantName}</div>
+                                        </td>
+                                        <td className="p-3 whitespace-nowrap">
+                                            <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                                log.action === 'ADJUSTMENT' ? 'bg-yellow-500/20 text-yellow-300' : 'bg-indigo-500/20 text-indigo-300'
+                                            }`}>
+                                                {log.action === 'ADJUSTMENT' ? 'Adjustment' : 'Transfer'}
+                                            </span>
+                                        </td>
+                                        <td className="p-3 text-sm text-gray-300">
+                                            {log.action === 'ADJUSTMENT' ? (
+                                                <>
+                                                    <div><strong>Branch:</strong> {branchMap.get(log.branchId!)}</div>
+                                                    <div><strong>Reason:</strong> {log.reason}</div>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div><strong>From:</strong> {branchMap.get(log.fromBranchId!)}</div>
+                                                    <div><strong>To:</strong> {branchMap.get(log.toBranchId!)}</div>
+                                                </>
+                                            )}
+                                        </td>
+                                        <td className="p-3 whitespace-nowrap text-right font-bold font-mono">
+                                            {log.action === 'ADJUSTMENT' ? (
+                                                <span className={log.quantity > 0 ? 'text-green-500' : 'text-red-500'}>
+                                                    {log.quantity > 0 ? `+${log.quantity}` : log.quantity}
+                                                </span>
+                                            ) : (
+                                                <span className="text-gray-300">{log.quantity}</span>
+                                            )}
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
                         </table>
-                        {stockTransfers.length === 0 && (
-                            <p className="text-center text-gray-400 py-8">No stock transfer history found.</p>
+                        {stockLogs.length === 0 && (
+                            <p className="text-center text-gray-400 py-8">No stock history found.</p>
                         )}
                     </div>
                 )}

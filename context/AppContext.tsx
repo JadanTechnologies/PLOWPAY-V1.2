@@ -1,5 +1,5 @@
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockTransfer } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -89,7 +89,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     const [products, setProducts] = useState<Product[]>(mockProducts);
     const [sales] = useState<Sale[]>(mockSales);
     const [branches] = useState<Branch[]>(mockBranches);
-    const [stockTransfers, setStockTransfers] = useState<StockTransfer[]>([]);
+    const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
         switch (metric) {
@@ -104,12 +104,31 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         }
     };
     
-    const adjustStock = useCallback((productId: string, variantId: string, branchId: string, newStock: number) => {
+    const adjustStock = useCallback((productId: string, variantId: string, branchId: string, newStock: number, reason: string) => {
+        let logEntry: StockLog | null = null;
         setProducts(prevProducts => {
             return prevProducts.map(product => {
                 if (product.id === productId) {
                     const newVariants = product.variants.map(variant => {
                         if (variant.id === variantId) {
+                            const oldStock = variant.stockByBranch[branchId] ?? 0;
+                            const quantityChange = newStock - oldStock;
+
+                            if (quantityChange !== 0) {
+                                logEntry = {
+                                    id: `log-${Date.now()}`,
+                                    date: new Date(),
+                                    productId,
+                                    variantId,
+                                    productName: product.name,
+                                    variantName: variant.name,
+                                    action: 'ADJUSTMENT',
+                                    quantity: quantityChange,
+                                    branchId,
+                                    reason,
+                                };
+                            }
+                            
                             const newStockByBranch = { ...variant.stockByBranch, [branchId]: newStock };
                             return { ...variant, stockByBranch: newStockByBranch };
                         }
@@ -120,25 +139,35 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
                 return product;
             });
         });
+        
+        if (logEntry) {
+            setStockLogs(prev => [logEntry!, ...prev]);
+        }
     }, []);
 
     const transferStock = useCallback((productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => {
-        let productName = '';
-        let variantName = '';
-        let transferSuccess = false;
-
+        let logEntry: StockLog | null = null;
         setProducts(prevProducts => {
-            const updatedProducts = prevProducts.map(p => {
+            return prevProducts.map(p => {
                 if (p.id === productId) {
-                    productName = p.name;
                     const updatedVariants = p.variants.map(v => {
                         if (v.id === variantId) {
-                            variantName = v.name;
                             const fromStock = v.stockByBranch[fromBranchId] ?? 0;
                             const toStock = v.stockByBranch[toBranchId] ?? 0;
                             
                             if (fromStock >= quantity) {
-                                transferSuccess = true;
+                                logEntry = {
+                                    id: `log-${Date.now()}`,
+                                    date: new Date(),
+                                    productId,
+                                    variantId,
+                                    productName: p.name,
+                                    variantName: v.name,
+                                    action: 'TRANSFER',
+                                    quantity: quantity,
+                                    fromBranchId,
+                                    toBranchId,
+                                };
                                 const newStockByBranch = {
                                     ...v.stockByBranch,
                                     [fromBranchId]: fromStock - quantity,
@@ -153,22 +182,10 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
                 }
                 return p;
             });
-            return updatedProducts;
         });
         
-        if (transferSuccess) {
-            const newTransfer: StockTransfer = {
-                id: `trans-${Date.now()}`,
-                productId,
-                variantId,
-                productName,
-                variantName,
-                fromBranchId,
-                toBranchId,
-                quantity,
-                date: new Date(),
-            };
-            setStockTransfers(prev => [newTransfer, ...prev]);
+        if (logEntry) {
+            setStockLogs(prev => [logEntry!, ...prev]);
         }
     }, []);
     
@@ -192,7 +209,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         products,
         sales,
         branches,
-        stockTransfers,
+        stockLogs,
         getMetric,
         adjustStock,
         transferStock,
