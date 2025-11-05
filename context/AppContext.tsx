@@ -158,6 +158,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
     const [brandConfig, setBrandConfig] = useState<BrandConfig>(mockBrandConfig);
     const [pageContent, setPageContent] = useState<PageContent>(mockPageContent);
+    const [searchTerm, setSearchTerm] = useState('');
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
         switch (metric) {
@@ -314,6 +315,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         adminUsers,
         brandConfig,
         pageContent,
+        searchTerm,
+        setSearchTerm,
         getMetric,
         adjustStock,
         transferStock,

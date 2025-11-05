@@ -14,7 +14,7 @@ export interface ProductVariant {
 }
 
 export interface Product {
-  id: string;
+  id:string;
   name: string;
   category: string;
   variants: ProductVariant[];
@@ -118,6 +118,8 @@ export interface AppContextType {
   adminUsers: AdminUser[];
   brandConfig: BrandConfig;
   pageContent: PageContent;
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
   adjustStock: (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => void;
   transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;

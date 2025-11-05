@@ -6,8 +6,7 @@ import Icon from './icons';
 type NewVariant = Omit<ProductVariant, 'id'>;
 
 const Inventory: React.FC = () => {
-    const { products, branches, adjustStock, transferStock, addProduct, stockLogs } = useAppContext();
-    const [searchTerm, setSearchTerm] = useState('');
+    const { products, branches, adjustStock, transferStock, addProduct, stockLogs, searchTerm } = useAppContext();
     const [activeTab, setActiveTab] = useState<'inventory' | 'history'>('inventory');
     
     // Adjust Modal State
@@ -163,18 +162,6 @@ const Inventory: React.FC = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                     <h2 className="text-2xl font-bold text-white mb-4 sm:mb-0">Inventory Management</h2>
                     <div className="flex gap-2">
-                         <div className="relative">
-                            <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                                <Icon name="search" className="w-5 h-5 text-gray-500" />
-                            </span>
-                            <input
-                                type="text"
-                                placeholder="Search products..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full sm:w-64 py-2 pl-10 pr-4 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                            />
-                        </div>
                         <button onClick={() => setIsAddProductModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
                             <Icon name="plus" className="w-5 h-5 mr-2" />
                             Add Product

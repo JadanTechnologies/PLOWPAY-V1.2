@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo, useCallback } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant } from '../types';
@@ -40,9 +41,8 @@ const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, 
 };
 
 const PointOfSale: React.FC = () => {
-  const { products } = useAppContext();
+  const { products, searchTerm } = useAppContext();
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showFavorites, setShowFavorites] = useState(false);
 
@@ -94,18 +94,6 @@ const PointOfSale: React.FC = () => {
       {/* Product Grid */}
       <div className="flex-1 flex flex-col bg-gray-800/50 rounded-lg p-4">
         <div className="mb-4 flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-grow">
-              <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                <Icon name="search" className="w-5 h-5 text-gray-500" />
-              </span>
-              <input
-                type="text"
-                placeholder="Search products..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full py-2 pl-10 pr-4 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              />
-            </div>
           <select 
             value={selectedCategory}
             onChange={e => setSelectedCategory(e.target.value)}

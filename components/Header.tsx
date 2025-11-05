@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import Icon from './icons';
 import { useAppContext } from '../hooks/useAppContext';
 
@@ -9,9 +10,32 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
-  const { logout } = useAppContext();
+  const { logout, setSearchTerm: setGlobalSearchTerm } = useAppContext();
   const [isProfileOpen, setProfileOpen] = useState(false);
+  const [localSearchTerm, setLocalSearchTerm] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
 
+  // Debounce search term update
+  useEffect(() => {
+    // Set loading state immediately
+    setIsSearching(true);
+    
+    // Set a timeout to update the global search term after 500ms
+    const handler = setTimeout(() => {
+      setGlobalSearchTerm(localSearchTerm);
+      setIsSearching(false);
+    }, 500);
+
+    // Cleanup function to clear the timeout if the user types again
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [localSearchTerm, setGlobalSearchTerm]);
+
+  const handleClearSearch = () => {
+    setLocalSearchTerm('');
+  };
+  
   // Guard against undefined pageTitle and handle pre-formatted titles
   const title = pageTitle || '';
   const formattedTitle = title.includes(' ')
@@ -34,13 +58,31 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
       <div className="flex items-center space-x-4">
         <div className="relative">
           <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-            <Icon name="search" className="w-5 h-5 text-gray-500" />
+             {isSearching && localSearchTerm ? (
+              <svg className="w-5 h-5 text-gray-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <Icon name="search" className="w-5 h-5 text-gray-500" />
+            )}
           </span>
           <input
             type="text"
             placeholder="Search..."
-            className="w-full py-2 pl-10 pr-4 text-white bg-gray-700 border border-gray-600 rounded-md sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            value={localSearchTerm}
+            onChange={(e) => setLocalSearchTerm(e.target.value)}
+            className="w-full py-2 pl-10 pr-10 text-white bg-gray-700 border border-gray-600 rounded-md sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
+          {localSearchTerm && (
+            <button
+              onClick={handleClearSearch}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-white transition-colors"
+              aria-label="Clear search"
+            >
+              <Icon name="x-mark" className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         <button className="p-2 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white focus:outline-none">
