@@ -7,7 +7,7 @@ const SubscriptionManagement: React.FC = () => {
     const { subscriptionPlans, addSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan, tenants } = useAppContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
-    const [formData, setFormData] = useState<{ name: 'Basic' | 'Pro' | 'Premium', price: number }>({ name: 'Basic', price: 0 });
+    const [formData, setFormData] = useState<{ name: string, price: number }>({ name: '', price: 0 });
 
     const openModal = (plan: SubscriptionPlan | null = null) => {
         if (plan) {
@@ -15,7 +15,7 @@ const SubscriptionManagement: React.FC = () => {
             setFormData({ name: plan.name, price: plan.price });
         } else {
             setEditingPlan(null);
-            setFormData({ name: 'Basic', price: 0 });
+            setFormData({ name: '', price: 0 });
         }
         setIsModalOpen(true);
     };
@@ -102,11 +102,16 @@ const SubscriptionManagement: React.FC = () => {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
                                 <label htmlFor="name" className="block text-sm font-medium text-gray-400">Plan Name</label>
-                                <select id="name" name="name" value={formData.name} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                                    <option value="Basic">Basic</option>
-                                    <option value="Pro">Pro</option>
-                                    <option value="Premium">Premium</option>
-                                </select>
+                                <input
+                                    type="text"
+                                    id="name"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleFormChange}
+                                    required
+                                    className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                    placeholder="e.g., Enterprise Plan"
+                                />
                             </div>
                             <div>
                                 <label htmlFor="price" className="block text-sm font-medium text-gray-400">Monthly Price ($)</label>

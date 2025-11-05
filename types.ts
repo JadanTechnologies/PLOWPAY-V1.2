@@ -58,7 +58,7 @@ export interface StockLog {
 
 export interface SubscriptionPlan {
   id: string;
-  name: 'Basic' | 'Pro' | 'Premium';
+  name: string;
   price: number; // per month
 }
 
