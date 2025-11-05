@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminRole, Permission } from '../../types';
@@ -11,7 +12,8 @@ const permissionLabels: Record<Permission, string> = {
     manageTeam: 'Manage Team Members',
     manageRoles: 'Manage Roles & Permissions',
     manageSystemSettings: 'Manage System Settings',
-    managePaymentGateways: 'Manage Payment Gateways'
+    managePaymentGateways: 'Manage Payment Gateways',
+    manageNotificationSettings: 'Manage Notification Settings',
 };
 
 const RoleCard: React.FC<{ role: AdminRole }> = ({ role }) => {

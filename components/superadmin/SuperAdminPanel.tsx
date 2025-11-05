@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useCallback } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
@@ -9,6 +10,7 @@ import TenantManagement from './TenantManagement';
 import TeamManagement from './TeamManagement';
 import RoleManagement from './RoleManagement';
 import PaymentSettings from './PaymentSettings';
+import NotificationSettings from './NotificationSettings';
 import { useAppContext } from '../../hooks/useAppContext';
 import { BrandConfig, PageContent, FaqItem } from '../../types';
 import Icon from '../icons';
@@ -169,6 +171,8 @@ const SuperAdminPanel: React.FC = () => {
                 return hasPermission('manageRoles') ? <RoleManagement /> : <AccessDenied />;
             case 'PAYMENTS':
                 return hasPermission('managePaymentGateways') ? <PaymentSettings /> : <AccessDenied />;
+            case 'NOTIFICATIONS':
+                return hasPermission('manageNotificationSettings') ? <NotificationSettings /> : <AccessDenied />;
             case 'SETTINGS':
                  return hasPermission('manageSystemSettings') ? <Settings /> : <AccessDenied />;
             default:
@@ -183,6 +187,7 @@ const SuperAdminPanel: React.FC = () => {
         TEAM_MANAGEMENT: 'Team Management',
         ROLE_MANAGEMENT: 'Role Management',
         PAYMENTS: 'Payment Gateways',
+        NOTIFICATIONS: 'Notification Settings',
         SETTINGS: 'System Settings',
     };
 

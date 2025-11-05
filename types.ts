@@ -83,7 +83,8 @@ export type Permission =
   | 'manageTeam'
   | 'manageRoles'
   | 'manageSystemSettings'
-  | 'managePaymentGateways';
+  | 'managePaymentGateways'
+  | 'manageNotificationSettings';
 
 export interface AdminRole {
     id: string;
@@ -151,6 +152,27 @@ export interface PaymentSettings {
     manual: ManualGatewaySettings;
 }
 
+export interface ResendSettings {
+    apiKey: string;
+}
+
+export interface SMTPSettings {
+    host: string;
+    port: number;
+    user: string;
+    pass: string;
+}
+
+export interface EmailSettings {
+    provider: 'resend' | 'smtp';
+    resend: ResendSettings;
+    smtp: SMTPSettings;
+}
+
+export interface NotificationSettings {
+    email: EmailSettings;
+}
+
 
 export interface AppContextType {
   products: Product[];
@@ -166,6 +188,7 @@ export interface AppContextType {
   brandConfig: BrandConfig;
   pageContent: PageContent;
   paymentSettings: PaymentSettings;
+  notificationSettings: NotificationSettings;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
@@ -179,5 +202,6 @@ export interface AppContextType {
   updatePageContent: (newPageContent: Partial<Omit<PageContent, 'faqs'>>) => void;
   updateFaqs: (newFaqs: FaqItem[]) => void;
   updatePaymentSettings: (newSettings: PaymentSettings) => void;
+  updateNotificationSettings: (newSettings: NotificationSettings) => void;
   logout?: () => void;
 }
