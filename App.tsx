@@ -6,7 +6,7 @@ import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 
 export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'REPORTS' | 'SETTINGS';
-export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'SETTINGS';
+export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'SETTINGS';
 
 const App: React.FC = () => {
   const [view, setView] = useState<'landing' | 'login' | 'app'>('landing');

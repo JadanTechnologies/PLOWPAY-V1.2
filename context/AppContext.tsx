@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserRole, AdminUserStatus } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -16,6 +16,15 @@ const mockSubscriptionPlans: SubscriptionPlan[] = [
     { id: 'plan_pro', name: 'Pro', price: 79 },
     { id: 'plan_premium', name: 'Premium', price: 149 },
 ];
+
+const generateMockAdminUsers = (): AdminUser[] => {
+    return [
+        { id: 'admin-1', name: 'Super Admin', email: 'admin@flowpay.com', role: 'ADMIN', status: 'ACTIVE', joinDate: new Date('2023-01-15') },
+        { id: 'admin-2', name: 'Jane Smith', email: 'jane.s@flowpay.com', role: 'SUPPORT', status: 'ACTIVE', joinDate: new Date('2023-05-20') },
+        { id: 'admin-3', name: 'Mike Johnson', email: 'mike.j@flowpay.com', role: 'DEVELOPER', status: 'ACTIVE', joinDate: new Date('2023-08-01') },
+        { id: 'admin-4', name: 'Emily Davis', email: 'emily.d@flowpay.com', role: 'SUPPORT', status: 'SUSPENDED', joinDate: new Date('2023-10-11') },
+    ];
+};
 
 const generateMockTenants = (): Tenant[] => {
     const tenants: Tenant[] = [];
@@ -112,6 +121,7 @@ const generateMockSales = (products: Product[]): Sale[] => {
 const mockProducts = generateMockProducts();
 const mockSales = generateMockSales(mockProducts);
 export const mockTenants = generateMockTenants();
+const mockAdminUsers = generateMockAdminUsers();
 
 interface AppContextProviderProps {
     children: ReactNode;
@@ -125,6 +135,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
     const [tenants] = useState<Tenant[]>(mockTenants);
     const [subscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
+    const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
         switch (metric) {
@@ -240,6 +251,25 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         });
     }, []);
 
+    const addAdminUser = useCallback((userData: Omit<AdminUser, 'id' | 'joinDate' | 'status'>) => {
+        setAdminUsers(prev => [
+            ...prev,
+            {
+                ...userData,
+                id: `admin-${Date.now()}`,
+                joinDate: new Date(),
+                status: 'ACTIVE'
+            }
+        ]);
+    }, []);
+
+    const updateAdminUser = useCallback((userId: string, userData: Partial<Omit<AdminUser, 'id' | 'joinDate'>>) => {
+        setAdminUsers(prev => prev.map(user => 
+            user.id === userId ? { ...user, ...userData } : user
+        ));
+    }, []);
+
+
     const value: AppContextType = {
         products,
         sales,
@@ -247,10 +277,13 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         stockLogs,
         tenants,
         subscriptionPlans,
+        adminUsers,
         getMetric,
         adjustStock,
         transferStock,
         addProduct,
+        addAdminUser,
+        updateAdminUser,
         logout: onLogout,
     };
 

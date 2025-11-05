@@ -5,6 +5,7 @@ import SuperAdminSidebar from './SuperAdminSidebar';
 import Header from '../Header';
 import PlatformDashboard from './PlatformDashboard';
 import TenantManagement from './TenantManagement';
+import TeamManagement from './TeamManagement';
 
 const SuperAdminPanel: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<SuperAdminPage>('PLATFORM_DASHBOARD');
@@ -27,6 +28,8 @@ const SuperAdminPanel: React.FC = () => {
                         <p className="text-gray-400 mt-4">Subscription plan management will be available here.</p>
                     </div>
                 );
+            case 'TEAM_MANAGEMENT':
+                return <TeamManagement />;
             case 'SETTINGS':
                  return (
                     <div className="p-6 bg-gray-800 rounded-lg shadow-md">
@@ -43,6 +46,7 @@ const SuperAdminPanel: React.FC = () => {
         PLATFORM_DASHBOARD: 'Platform Dashboard',
         TENANTS: 'Tenant Management',
         SUBSCRIPTIONS: 'Subscription Plans',
+        TEAM_MANAGEMENT: 'Team Management',
         SETTINGS: 'System Settings',
     };
 

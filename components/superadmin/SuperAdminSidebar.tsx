@@ -49,6 +49,7 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
     { page: 'PLATFORM_DASHBOARD', icon: 'chart-pie', label: 'Dashboard' },
     { page: 'TENANTS', icon: 'briefcase', label: 'Tenants' },
     { page: 'SUBSCRIPTIONS', icon: 'credit-card', label: 'Subscriptions' },
+    { page: 'TEAM_MANAGEMENT', icon: 'users', label: 'Team Management' },
     { page: 'SETTINGS', icon: 'settings', label: 'System Settings' },
   ];
 

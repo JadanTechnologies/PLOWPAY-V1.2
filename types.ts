@@ -73,6 +73,18 @@ export interface Tenant {
   joinDate: Date;
 }
 
+export type AdminUserRole = 'ADMIN' | 'SUPPORT' | 'DEVELOPER';
+export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED';
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: AdminUserRole;
+  status: AdminUserStatus;
+  joinDate: Date;
+}
+
 
 export interface AppContextType {
   products: Product[];
@@ -81,9 +93,12 @@ export interface AppContextType {
   stockLogs: StockLog[];
   tenants: Tenant[];
   subscriptionPlans: SubscriptionPlan[];
+  adminUsers: AdminUser[];
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
   adjustStock: (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => void;
   transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;
   addProduct: (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => void;
+  addAdminUser: (userData: Omit<AdminUser, 'id' | 'joinDate' | 'status'>) => void;
+  updateAdminUser: (userId: string, userData: Partial<Omit<AdminUser, 'id' | 'joinDate'>>) => void;
   logout?: () => void;
 }
