@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, ReactNode } from 'react';
+import React, { createContext, useState, ReactNode, useCallback } from 'react';
 import { Product, Sale, AppContextType, ProductVariant } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -74,7 +74,7 @@ const mockProducts = generateMockProducts();
 const mockSales = generateMockSales(mockProducts);
 
 export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [products] = useState<Product[]>(mockProducts);
+    const [products, setProducts] = useState<Product[]>(mockProducts);
     const [sales] = useState<Sale[]>(mockSales);
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
@@ -89,11 +89,29 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
                 return 4; // mock
         }
     };
+    
+    const adjustStock = useCallback((productId: string, variantId: string, newStock: number) => {
+        setProducts(prevProducts => {
+            return prevProducts.map(product => {
+                if (product.id === productId) {
+                    const newVariants = product.variants.map(variant => {
+                        if (variant.id === variantId) {
+                            return { ...variant, stock: newStock };
+                        }
+                        return variant;
+                    });
+                    return { ...product, variants: newVariants };
+                }
+                return product;
+            });
+        });
+    }, []);
 
     const value = {
         products,
         sales,
         getMetric,
+        adjustStock,
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

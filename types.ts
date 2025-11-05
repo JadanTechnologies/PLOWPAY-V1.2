@@ -39,4 +39,5 @@ export interface AppContextType {
   products: Product[];
   sales: Sale[];
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
+  adjustStock: (productId: string, variantId: string, newStock: number) => void;
 }
