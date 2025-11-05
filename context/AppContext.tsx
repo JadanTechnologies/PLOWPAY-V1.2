@@ -173,6 +173,14 @@ const mockNotificationSettings: NotificationSettings = {
         provider: 'resend',
         resend: { apiKey: 're_123456789' },
         smtp: { host: 'smtp.example.com', port: 587, user: 'user', pass: 'password' }
+    },
+    sms: {
+        twilio: {
+            enabled: false,
+            accountSid: '',
+            authToken: '',
+            fromNumber: ''
+        }
     }
 };
 

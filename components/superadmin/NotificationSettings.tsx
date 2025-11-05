@@ -1,8 +1,27 @@
 
+
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
-import { NotificationSettings, EmailSettings } from '../../types';
+import { NotificationSettings, SmsSettings } from '../../types';
 import Icon from '../icons';
+
+const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
+    return (
+        <button
+            type="button"
+            className={`${enabled ? 'bg-cyan-600' : 'bg-gray-600'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-800`}
+            role="switch"
+            aria-checked={enabled}
+            onClick={() => onChange(!enabled)}
+        >
+            <span
+                aria-hidden="true"
+                className={`${enabled ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+            />
+        </button>
+    );
+};
+
 
 const NotificationSettings: React.FC = () => {
     const { notificationSettings, updateNotificationSettings } = useAppContext();
@@ -22,6 +41,32 @@ const NotificationSettings: React.FC = () => {
                 ...prev.email,
                 [provider]: {
                     ...prev.email[provider],
+                    [field]: value
+                }
+            }
+        }));
+    };
+
+    const handleSmsToggle = (provider: keyof SmsSettings) => {
+        setFormState(prev => ({
+            ...prev,
+            sms: {
+                ...prev.sms,
+                [provider]: {
+                    ...prev.sms[provider],
+                    enabled: !prev.sms[provider].enabled
+                }
+            }
+        }));
+    };
+
+    const handleSmsChange = (provider: keyof SmsSettings, field: string, value: string) => {
+        setFormState(prev => ({
+            ...prev,
+            sms: {
+                ...prev.sms,
+                [provider]: {
+                    ...prev.sms[provider],
                     [field]: value
                 }
             }
@@ -52,7 +97,10 @@ const NotificationSettings: React.FC = () => {
 
             {/* Email Settings */}
             <div className="bg-gray-800 rounded-lg shadow-md p-6">
-                <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-3">Email Provider</h3>
+                <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-3 flex items-center">
+                    <Icon name="at-symbol" className="w-6 h-6 mr-3 text-cyan-400" />
+                    Email Provider
+                </h3>
                 <div className="mb-6">
                     <p className="text-sm font-medium text-gray-400 mb-2">Select the active email service provider:</p>
                     <div className="flex gap-4">
@@ -102,10 +150,51 @@ const NotificationSettings: React.FC = () => {
                 </div>
             </div>
             
-             {/* Placeholder for SMS Settings */}
-            <div className="bg-gray-800 rounded-lg shadow-md p-6 opacity-50">
-                <h3 className="text-xl font-bold text-white">SMS Provider</h3>
-                <p className="text-gray-400 mt-2">Configuration for services like Twilio will be available here soon.</p>
+            {/* SMS Settings */}
+            <div className="bg-gray-800 rounded-lg shadow-md p-6">
+                <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-3 flex items-center">
+                    <Icon name="chat-bubble-left-right" className="w-6 h-6 mr-3 text-cyan-400" />
+                    SMS Provider
+                </h3>
+                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                    <div className="flex justify-between items-center mb-4">
+                        <h4 className="text-lg font-semibold text-white">Twilio Configuration</h4>
+                        <Toggle enabled={formState.sms.twilio.enabled} onChange={() => handleSmsToggle('twilio')} />
+                    </div>
+                    <div className={`space-y-4 transition-opacity duration-300 ${formState.sms.twilio.enabled ? 'opacity-100' : 'opacity-50'}`}>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400">Account SID</label>
+                            <input 
+                                type="text" 
+                                value={formState.sms.twilio.accountSid} 
+                                onChange={e => handleSmsChange('twilio', 'accountSid', e.target.value)} 
+                                disabled={!formState.sms.twilio.enabled} 
+                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400">Auth Token</label>
+                            <input 
+                                type="password" 
+                                value={formState.sms.twilio.authToken} 
+                                onChange={e => handleSmsChange('twilio', 'authToken', e.target.value)} 
+                                disabled={!formState.sms.twilio.enabled} 
+                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-400">"From" Number</label>
+                            <input 
+                                type="text" 
+                                value={formState.sms.twilio.fromNumber} 
+                                onChange={e => handleSmsChange('twilio', 'fromNumber', e.target.value)} 
+                                disabled={!formState.sms.twilio.enabled} 
+                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
+                                placeholder="+15017122661"
+                            />
+                        </div>
+                    </div>
+                </div>
             </div>
             
              {/* Placeholder for Push Notification Settings */}

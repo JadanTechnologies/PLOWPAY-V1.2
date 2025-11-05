@@ -169,8 +169,20 @@ export interface EmailSettings {
     smtp: SMTPSettings;
 }
 
+export interface TwilioSettings {
+    enabled: boolean;
+    accountSid: string;
+    authToken: string;
+    fromNumber: string;
+}
+
+export interface SmsSettings {
+    twilio: TwilioSettings;
+}
+
 export interface NotificationSettings {
     email: EmailSettings;
+    sms: SmsSettings;
 }
 
 
