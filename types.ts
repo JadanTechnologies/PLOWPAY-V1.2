@@ -82,7 +82,8 @@ export type Permission =
   | 'manageSubscriptions'
   | 'manageTeam'
   | 'manageRoles'
-  | 'manageSystemSettings';
+  | 'manageSystemSettings'
+  | 'managePaymentGateways';
 
 export interface AdminRole {
     id: string;
@@ -120,6 +121,36 @@ export interface PageContent {
   faqs: FaqItem[];
 }
 
+export interface StripeSettings {
+    enabled: boolean;
+    publicKey: string;
+    secretKey: string;
+}
+
+export interface FlutterwaveSettings {
+    enabled: boolean;
+    publicKey: string;
+    secretKey: string;
+}
+
+export interface PaystackSettings {
+    enabled: boolean;
+    publicKey: string;
+    secretKey: string;
+}
+
+export interface ManualGatewaySettings {
+    enabled: boolean;
+    details: string;
+}
+
+export interface PaymentSettings {
+    stripe: StripeSettings;
+    flutterwave: FlutterwaveSettings;
+    paystack: PaystackSettings;
+    manual: ManualGatewaySettings;
+}
+
 
 export interface AppContextType {
   products: Product[];
@@ -134,6 +165,7 @@ export interface AppContextType {
   currentAdminUser: AdminUser | null;
   brandConfig: BrandConfig;
   pageContent: PageContent;
+  paymentSettings: PaymentSettings;
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
@@ -146,5 +178,6 @@ export interface AppContextType {
   updateBrandConfig: (newConfig: Partial<BrandConfig>) => void;
   updatePageContent: (newPageContent: Partial<Omit<PageContent, 'faqs'>>) => void;
   updateFaqs: (newFaqs: FaqItem[]) => void;
+  updatePaymentSettings: (newSettings: PaymentSettings) => void;
   logout?: () => void;
 }

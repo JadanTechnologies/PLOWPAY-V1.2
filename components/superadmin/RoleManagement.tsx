@@ -3,13 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminRole, Permission } from '../../types';
 
+// FIX: Added 'managePaymentGateways' to satisfy the Record<Permission, string> type.
 const permissionLabels: Record<Permission, string> = {
     viewPlatformDashboard: 'View Platform Dashboard',
     manageTenants: 'Manage Tenants',
     manageSubscriptions: 'Manage Subscriptions',
     manageTeam: 'Manage Team Members',
     manageRoles: 'Manage Roles & Permissions',
-    manageSystemSettings: 'Manage System Settings'
+    manageSystemSettings: 'Manage System Settings',
+    managePaymentGateways: 'Manage Payment Gateways'
 };
 
 const RoleCard: React.FC<{ role: AdminRole }> = ({ role }) => {

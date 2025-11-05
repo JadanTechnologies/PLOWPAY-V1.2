@@ -1,7 +1,7 @@
 
 
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -24,7 +24,8 @@ export const allPermissions: Permission[] = [
     'manageSubscriptions',
     'manageTeam',
     'manageRoles',
-    'manageSystemSettings'
+    'manageSystemSettings',
+    'managePaymentGateways'
 ];
 
 const mockAdminRoles: AdminRole[] = [
@@ -159,6 +160,13 @@ const mockPageContent: PageContent = {
     ]
 };
 
+const mockPaymentSettings: PaymentSettings = {
+    stripe: { enabled: true, publicKey: 'pk_test_123', secretKey: 'sk_test_123' },
+    flutterwave: { enabled: false, publicKey: '', secretKey: '' },
+    paystack: { enabled: false, publicKey: '', secretKey: '' },
+    manual: { enabled: true, details: 'Bank: FlowPay Bank\nAccount: 1234567890\nReference: Your Business Name' }
+};
+
 interface AppContextProviderProps {
     children: ReactNode;
     onLogout?: () => void;
@@ -177,6 +185,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [currentAdminUser] = useState<AdminUser | null>(mockAdminUsers.find(u => u.email === 'admin@flowpay.com') || null);
     const [brandConfig, setBrandConfig] = useState<BrandConfig>(mockBrandConfig);
     const [pageContent, setPageContent] = useState<PageContent>(mockPageContent);
+    const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(mockPaymentSettings);
     const [searchTerm, setSearchTerm] = useState('');
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
@@ -329,6 +338,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         setPageContent(prev => ({ ...prev, faqs: newFaqs }));
     }, []);
 
+    const updatePaymentSettings = useCallback((newSettings: PaymentSettings) => {
+        setPaymentSettings(newSettings);
+    }, []);
+
 
     const value: AppContextType = {
         products,
@@ -343,6 +356,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         currentAdminUser,
         brandConfig,
         pageContent,
+        paymentSettings,
         searchTerm,
         setSearchTerm,
         getMetric,
@@ -355,6 +369,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updateBrandConfig,
         updatePageContent,
         updateFaqs,
+        updatePaymentSettings,
         logout: onLogout,
     };
 

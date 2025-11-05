@@ -12,7 +12,7 @@ import Icon from './components/icons';
 
 
 export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'REPORTS' | 'SETTINGS';
-export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'SETTINGS';
+export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENTS' | 'SETTINGS';
 export type View = 'landing' | 'login' | 'app' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq';
 
 // InfoPage component to display text-based content

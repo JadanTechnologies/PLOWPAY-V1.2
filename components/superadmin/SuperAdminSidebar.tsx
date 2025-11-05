@@ -53,6 +53,7 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
     { page: 'PLATFORM_DASHBOARD', icon: 'chart-pie', label: 'Dashboard', permission: 'viewPlatformDashboard' },
     { page: 'TENANTS', icon: 'briefcase', label: 'Tenants', permission: 'manageTenants' },
     { page: 'SUBSCRIPTIONS', icon: 'credit-card', label: 'Subscriptions', permission: 'manageSubscriptions' },
+    { page: 'PAYMENTS', icon: 'cash', label: 'Payments', permission: 'managePaymentGateways' },
     { page: 'TEAM_MANAGEMENT', icon: 'users', label: 'Team', permission: 'manageTeam' },
     { page: 'ROLE_MANAGEMENT', icon: 'lock-closed', label: 'Roles', permission: 'manageRoles' },
     { page: 'SETTINGS', icon: 'settings', label: 'Settings', permission: 'manageSystemSettings' },
