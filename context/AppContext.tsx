@@ -111,7 +111,7 @@ const generateMockSales = (products: Product[]): Sale[] => {
 
 const mockProducts = generateMockProducts();
 const mockSales = generateMockSales(mockProducts);
-const mockTenants = generateMockTenants();
+export const mockTenants = generateMockTenants();
 
 interface AppContextProviderProps {
     children: ReactNode;

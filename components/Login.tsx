@@ -1,5 +1,7 @@
+
 import React, { useState } from 'react';
 import Icon from './icons';
+import { mockTenants } from '../context/AppContext';
 
 interface LoginProps {
   onLoginSuccess: (role: 'TENANT' | 'SUPER_ADMIN') => void;
@@ -15,15 +17,19 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack }) => {
     e.preventDefault();
     setError('');
 
+    const lowerCaseEmail = email.toLowerCase();
+
     // Mock authentication with specific credentials for each role
-    if (email.toLowerCase() === 'tenant@flowpay.com' && password === 'password123') {
-      onLoginSuccess('TENANT');
-    } else if (email.toLowerCase() === 'admin@flowpay.com' && password === 'password123') {
+    if (lowerCaseEmail === 'admin@flowpay.com' && password === 'password123') {
       onLoginSuccess('SUPER_ADMIN');
+    } else if (mockTenants.some(tenant => tenant.email === lowerCaseEmail) && password === 'password123') {
+      onLoginSuccess('TENANT');
     } else {
       setError('Invalid email or password. Please try again.');
     }
   };
+  
+  const exampleTenantEmail = mockTenants.length > 0 ? mockTenants[0].email : 'tenant@example.com';
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-950 p-4">
@@ -99,9 +105,9 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack }) => {
 
         <div className="text-center text-sm text-gray-500 bg-gray-900/50 p-3 rounded-md border border-gray-700">
             <p className="font-semibold text-gray-400 mb-2">Use these credentials to log in:</p>
-            <p><strong className="text-gray-300">Tenant:</strong> tenant@flowpay.com</p>
+            <p><strong className="text-gray-300">Tenant (e.g.):</strong> {exampleTenantEmail}</p>
             <p><strong className="text-gray-300">Super Admin:</strong> admin@flowpay.com</p>
-            <p><strong className="text-gray-300">Password (for both):</strong> password123</p>
+            <p><strong className="text-gray-300">Password (for all):</strong> password123</p>
         </div>
       </div>
     </div>
