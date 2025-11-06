@@ -70,7 +70,7 @@ const generateMockTenants = (): Tenant[] => {
             ownerName: ownerNames[i],
             email: `${ownerFirstName}@example.com`,
             username: ownerFirstName,
-            password: 'password123',
+            password: 'tenant12345',
             companyAddress: `${i+1}23 Market St, San Francisco, CA 94103`,
             companyPhone: `(555) 123-456${i}`,
             companyLogoUrl: '',
