@@ -1,5 +1,4 @@
 
-
 import React, { useMemo, useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons';
@@ -21,7 +20,7 @@ const MetricCard: React.FC<{ title: string; value: string | number; iconName: st
 
 
 const Reports: React.FC = () => {
-  const { sales, products, branches, staff, categories } = useAppContext();
+  const { sales, products, branches, staff, categories, customers } = useAppContext();
   const { formatCurrency } = useCurrency();
   
   const [dateRange, setDateRange] = useState(() => {
@@ -125,11 +124,12 @@ const Reports: React.FC = () => {
             const balanceAfterDiscount = itemTotal - itemDiscount;
             const totalCostPrice = item.costPrice * item.quantity;
             const profit = balanceAfterDiscount - totalCostPrice;
+            const customer = customers.find(c => c.id === sale.customerId);
 
             return {
                 id: `${sale.id}-${item.variantId}`,
                 branchName: branches.find(b => b.id === sale.branchId)?.name || 'Direct Sale',
-                customerName: sale.customer.name,
+                customerName: customer?.name || 'N/A',
                 itemName: `${item.name} (${item.variantName})`,
                 quantityBefore: 'N/A',
                 quantityAfter: 'N/A',
@@ -146,7 +146,7 @@ const Reports: React.FC = () => {
             };
         })
     );
-  }, [filteredSales, branches, staff]);
+  }, [filteredSales, branches, staff, customers]);
 
   const grandTotals = useMemo(() => {
     return detailedReportData.reduce((acc, item) => {
