@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -11,10 +11,16 @@ const mockBranches: Branch[] = [
     { id: 'branch-4', name: 'Eastside' },
 ];
 
+const mockStaffRoles: StaffRole[] = [
+    { id: 'staff-role-manager', name: 'Manager', permissions: [...allTenantPermissions] },
+    { id: 'staff-role-cashier', name: 'Cashier', permissions: ['accessPOS', 'viewReports'] },
+    { id: 'staff-role-logistics', name: 'Logistics', permissions: ['manageLogistics', 'manageInventory'] },
+];
+
 const mockStaff: Staff[] = [
-    { id: 'staff-1', name: 'Alice Manager', email: 'alice@tenant.com', role: 'Manager', branchId: 'branch-1' },
-    { id: 'staff-2', name: 'Bob Cashier', email: 'bob@tenant.com', role: 'Cashier', branchId: 'branch-1' },
-    { id: 'staff-3', name: 'Charlie Logistics', email: 'charlie@tenant.com', role: 'Logistics', branchId: 'branch-2' },
+    { id: 'staff-1', name: 'Alice Manager', email: 'alice@tenant.com', username: 'alice', password: 'password123', roleId: 'staff-role-manager', branchId: 'branch-1' },
+    { id: 'staff-2', name: 'Bob Cashier', email: 'bob@tenant.com', username: 'bob', password: 'password123', roleId: 'staff-role-cashier', branchId: 'branch-1' },
+    { id: 'staff-3', name: 'Charlie Logistics', email: 'charlie@tenant.com', username: 'charlie', password: 'password123', roleId: 'staff-role-logistics', branchId: 'branch-2' },
 ];
 
 const mockSubscriptionPlans: SubscriptionPlan[] = [
@@ -57,11 +63,17 @@ const generateMockTenants = (): Tenant[] => {
     const statuses: TenantStatus[] = ['ACTIVE', 'TRIAL', 'SUSPENDED'];
 
     for (let i = 0; i < 8; i++) {
+        const ownerFirstName = ownerNames[i].split(' ')[0].toLowerCase();
         tenants.push({
             id: `tenant-${i+1}`,
             businessName: businessNames[i],
             ownerName: ownerNames[i],
-            email: `${ownerNames[i].split(' ')[0].toLowerCase()}@example.com`,
+            email: `${ownerFirstName}@example.com`,
+            username: ownerFirstName,
+            password: 'password123',
+            companyAddress: `${i+1}23 Market St, San Francisco, CA 94103`,
+            companyPhone: `(555) 123-456${i}`,
+            companyLogoUrl: '',
             status: statuses[i % statuses.length],
             planId: mockSubscriptionPlans[i % mockSubscriptionPlans.length].id,
             joinDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
@@ -218,6 +230,50 @@ const mockShipments: Shipment[] = [
     },
 ];
 
+const mockSuppliers: Supplier[] = [
+    { id: 'sup-1', name: 'Global Electronics', contactPerson: 'John Supplier', email: 'john@globalelec.com', phone: '111-222-3333' },
+    { id: 'sup-2', name: 'Fashion Forward', contactPerson: 'Jane Fashion', email: 'jane@fashionfwd.com', phone: '222-333-4444' },
+];
+
+const mockPurchaseOrders: PurchaseOrder[] = [
+    {
+        id: 'po-1', poNumber: 'PO2024001', supplierId: 'sup-1', destinationBranchId: 'branch-1',
+        items: [{ variantId: 'var-1-0', productName: 'Laptop', variantName: '16GB RAM', quantity: 10, cost: 900 }],
+        total: 9000, status: 'ORDERED', createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+    },
+    {
+        id: 'po-2', poNumber: 'PO2024002', supplierId: 'sup-2', destinationBranchId: 'branch-2',
+        items: [
+            { variantId: 'var-5-0', productName: 'T-Shirt', variantName: 'Medium', quantity: 50, cost: 15 },
+            { variantId: 'var-6-1', productName: 'Jeans', variantName: 'Large', quantity: 30, cost: 40 }
+        ],
+        total: 1950, status: 'PENDING', createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+    }
+];
+
+const mockAccounts: Account[] = [
+    { id: 'acc-cash', name: 'Cash', type: 'ASSET', balance: 15000 },
+    { id: 'acc-ar', name: 'Accounts Receivable', type: 'ASSET', balance: 5000 },
+    { id: 'acc-inventory', name: 'Inventory', type: 'ASSET', balance: 25000 },
+    { id: 'acc-ap', name: 'Accounts Payable', type: 'LIABILITY', balance: 8000 },
+    { id: 'acc-equity', name: 'Owner\'s Equity', type: 'EQUITY', balance: 40000 },
+    { id: 'acc-sales', name: 'Sales Revenue', type: 'REVENUE', balance: 100000 },
+    { id: 'acc-cogs', name: 'Cost of Goods Sold', type: 'EXPENSE', balance: 55000 },
+    { id: 'acc-rent', name: 'Rent Expense', type: 'EXPENSE', balance: 8000 },
+];
+
+const mockJournalEntries: JournalEntry[] = [
+    { 
+        id: 'je-1', date: new Date(), description: 'Daily sales revenue',
+        transactions: [ { accountId: 'acc-cash', amount: 500 }, { accountId: 'acc-sales', amount: -500 } ]
+    },
+    { 
+        id: 'je-2', date: new Date(), description: 'Paid monthly rent',
+        transactions: [ { accountId: 'acc-rent', amount: 1000 }, { accountId: 'acc-cash', amount: -1000 } ]
+    }
+];
+
+
 const mockBrandConfig: BrandConfig = {
     name: "FlowPay",
     logoUrl: "", // Empty string will use default SVG
@@ -277,8 +333,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [sales, setSales] = useState<Sale[]>(mockSales);
     const [branches, setBranches] = useState<Branch[]>(mockBranches);
     const [staff, setStaff] = useState<Staff[]>(mockStaff);
+    const [staffRoles, setStaffRoles] = useState<StaffRole[]>(mockStaffRoles);
     const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
-    const [tenants] = useState<Tenant[]>(mockTenants);
+    const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
     const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
     const [adminRoles, setAdminRoles] = useState<AdminRole[]>(mockAdminRoles);
@@ -290,6 +347,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [trucks, setTrucks] = useState<Truck[]>(mockTrucks);
     const [shipments, setShipments] = useState<Shipment[]>(mockShipments);
     const [trackerProviders, setTrackerProviders] = useState<TrackerProvider[]>(mockTrackerProviders);
+    const [suppliers, setSuppliers] = useState<Supplier[]>(mockSuppliers);
+    const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(mockPurchaseOrders);
+    const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
+    const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntries);
     const [searchTerm, setSearchTerm] = useState('');
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
@@ -306,7 +367,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     };
 
     const addSale = useCallback(async (saleData: Omit<Sale, 'id' | 'date'>): Promise<{success: boolean, message: string}> => {
-        // 1. Decrease stock
+        // 1. Decrease stock and create stock logs
+        const newStockLogs: StockLog[] = [];
         setProducts(currentProducts => {
             const productsCopy = JSON.parse(JSON.stringify(currentProducts));
             for (const item of saleData.items) {
@@ -315,6 +377,18 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                     const variant = product.variants.find((v: ProductVariant) => v.id === item.variantId);
                     if (variant && variant.stockByBranch[saleData.branchId] !== undefined) {
                         variant.stockByBranch[saleData.branchId] -= item.quantity;
+                        newStockLogs.push({
+                            id: `log-${Date.now()}-${item.variantId}`,
+                            date: new Date(),
+                            productId: item.productId,
+                            variantId: item.variantId,
+                            productName: item.name,
+                            variantName: item.variantName,
+                            action: 'SALE',
+                            quantity: -item.quantity,
+                            branchId: saleData.branchId,
+                            referenceId: `sale-${Date.now()}`
+                        });
                     }
                 }
             }
@@ -328,6 +402,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             date: new Date(),
         };
         setSales(prev => [newSale, ...prev]);
+        setStockLogs(prev => [...newStockLogs, ...prev]);
     
         // 3. Handle notification
         let notificationMessage = '';
@@ -657,12 +732,107 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
 
     }, [shipments, updateShipmentStatus]);
 
+    const addPurchaseOrder = useCallback((poData: Omit<PurchaseOrder, 'id' | 'poNumber' | 'total' | 'createdAt'>) => {
+        const total = poData.items.reduce((acc, item) => acc + (item.cost * item.quantity), 0);
+        const newPO: PurchaseOrder = {
+            ...poData,
+            id: `po-${Date.now()}`,
+            poNumber: `PO${Date.now().toString().slice(-6)}`,
+            total,
+            createdAt: new Date(),
+        };
+        setPurchaseOrders(prev => [newPO, ...prev]);
+    }, []);
+
+    const updatePurchaseOrderStatus = useCallback((poId: string, status: PurchaseOrder['status']) => {
+        const po = purchaseOrders.find(p => p.id === poId);
+        if (!po) return;
+
+        if (status === 'RECEIVED') {
+            const newStockLogs: StockLog[] = [];
+            setProducts(prevProducts => {
+                const productsCopy = JSON.parse(JSON.stringify(prevProducts));
+                po.items.forEach(item => {
+                    const product = productsCopy.find((p: Product) => p.variants.some(v => v.id === item.variantId));
+                    if(product) {
+                        const variant = product.variants.find((v: ProductVariant) => v.id === item.variantId);
+                        if(variant) {
+                            variant.stockByBranch[po.destinationBranchId] = (variant.stockByBranch[po.destinationBranchId] || 0) + item.quantity;
+                             newStockLogs.push({
+                                id: `log-${Date.now()}-${item.variantId}`, date: new Date(),
+                                productId: product.id, variantId: item.variantId,
+                                productName: product.name, variantName: variant.name,
+                                action: 'PURCHASE_RECEIVED', quantity: item.quantity,
+                                branchId: po.destinationBranchId, referenceId: po.id
+                            });
+                        }
+                    }
+                });
+                return productsCopy;
+            });
+             setStockLogs(prev => [...newStockLogs, ...prev]);
+        }
+
+        setPurchaseOrders(prev => prev.map(p => p.id === poId ? { ...p, status } : p));
+    }, [purchaseOrders]);
+
+    const addStaffRole = useCallback((roleData: Omit<StaffRole, 'id'>) => {
+        const newRole: StaffRole = {
+            id: `staff-role-${Date.now()}`,
+            ...roleData
+        };
+        setStaffRoles(prev => [...prev, newRole]);
+    }, []);
+    
+    const updateStaffRole = useCallback((roleId: string, permissions: TenantPermission[]) => {
+        setStaffRoles(prev => prev.map(r => r.id === roleId ? { ...r, permissions } : r));
+    }, []);
+    
+    const deleteStaffRole = useCallback((roleId: string) => {
+        // Simple deletion logic, add checks for roles in use if needed
+        setStaffRoles(prev => prev.filter(r => r.id !== roleId));
+    }, []);
+
+    const addAccount = useCallback((accountData: Omit<Account, 'id' | 'balance'>) => {
+        const newAccount: Account = { ...accountData, id: `acc-${Date.now()}`, balance: 0 };
+        setAccounts(prev => [...prev, newAccount]);
+    }, []);
+
+    const addJournalEntry = useCallback((entryData: Omit<JournalEntry, 'id' | 'date'>) => {
+        const newEntry: JournalEntry = { ...entryData, id: `je-${Date.now()}`, date: new Date() };
+        setJournalEntries(prev => [newEntry, ...prev]);
+        
+        // Update account balances
+        setAccounts(prevAccounts => {
+            const updatedAccounts = [...prevAccounts];
+            newEntry.transactions.forEach(tx => {
+                const account = updatedAccounts.find(a => a.id === tx.accountId);
+                if (account) {
+                    account.balance += tx.amount;
+                }
+            });
+            return updatedAccounts;
+        });
+    }, []);
+
+    const addTenant = useCallback((tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status'>) => {
+        const newTenant: Tenant = {
+            ...tenantData,
+            id: `tenant-${Date.now()}`,
+            joinDate: new Date(),
+            status: 'TRIAL'
+        };
+        setTenants(prev => [newTenant, ...prev].sort((a,b) => b.joinDate.getTime() - a.joinDate.getTime()));
+    }, []);
+
 
     const value: AppContextType = {
         products,
         sales,
         branches,
         staff,
+        staffRoles,
+        allTenantPermissions,
         stockLogs,
         tenants,
         subscriptionPlans,
@@ -677,6 +847,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         trucks,
         shipments,
         trackerProviders,
+        suppliers,
+        purchaseOrders,
+        accounts,
+        journalEntries,
         searchTerm,
         setSearchTerm,
         getMetric,
@@ -706,6 +880,14 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addStaff,
         sellShipment,
         receiveShipment,
+        addPurchaseOrder,
+        updatePurchaseOrderStatus,
+        addStaffRole,
+        updateStaffRole,
+        deleteStaffRole,
+        addAccount,
+        addJournalEntry,
+        addTenant,
         logout: onLogout,
     };
 

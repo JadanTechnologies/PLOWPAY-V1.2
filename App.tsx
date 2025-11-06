@@ -2,6 +2,7 @@
 
 
 
+
 import React, { useState, useEffect } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -13,7 +14,7 @@ import { FaqItem } from './types';
 import Icon from './components/icons';
 
 
-export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'LOGISTICS' | 'REPORTS' | 'SETTINGS';
+export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'LOGISTICS' | 'PURCHASES' | 'ACCOUNTING' | 'REPORTS' | 'SETTINGS';
 export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENTS' | 'NOTIFICATIONS' | 'SETTINGS';
 export type View = 'landing' | 'login' | 'app' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq';
 

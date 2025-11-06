@@ -4,7 +4,7 @@ import { useAppContext } from '../hooks/useAppContext';
 import { Truck, Shipment, TrackerProvider, Branch, Staff, Sale, ProductVariant } from '../types';
 import Icon from './icons';
 
-type ModalState = 'NONE' | 'TRUCK' | 'SHIPMENT' | 'BRANCH' | 'STAFF' | 'SELL_SHIPMENT';
+type ModalState = 'NONE' | 'TRUCK' | 'SHIPMENT' | 'SELL_SHIPMENT';
 
 const MetricCard: React.FC<{ title: string; value: string | number; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-gray-800 rounded-lg shadow-md flex items-center">
@@ -38,20 +38,17 @@ const getStatusBadge = (status: Truck['status'] | Shipment['status']) => {
 
 const LogisticsManagement: React.FC = () => {
     const { 
-      trucks, shipments, trackerProviders, branches, staff, products,
-      addTruck, updateTruck, addShipment, updateShipmentStatus, 
-      updateTrackerProviders, addBranch, addStaff, sellShipment, receiveShipment
+      trucks, shipments, trackerProviders, branches,
+      addTruck, addShipment, 
+      updateTrackerProviders, sellShipment, receiveShipment
     } = useAppContext();
-    type ActiveTab = 'dashboard' | 'trucks' | 'shipments' | 'branches' | 'settings';
+    type ActiveTab = 'dashboard' | 'trucks' | 'shipments' | 'settings';
     const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
     const [modal, setModal] = useState<ModalState>('NONE');
-    const [selectedBranch, setSelectedBranch] = useState<Branch | null>(branches[0] || null);
     const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
 
     // Form states
     const [truckForm, setTruckForm] = useState({ licensePlate: '', driverName: '', status: 'IDLE' as Truck['status'] });
-    const [branchForm, setBranchForm] = useState({ name: '' });
-    const [staffForm, setStaffForm] = useState({ name: '', email: '', role: 'Cashier' as Staff['role'], branchId: '' });
     const [sellShipmentForm, setSellShipmentForm] = useState<Sale['customer']>({ name: '', phone: '' });
     const [trackerSettingsForm, setTrackerSettingsForm] = useState<TrackerProvider[]>(trackerProviders);
 
@@ -87,9 +84,6 @@ const LogisticsManagement: React.FC = () => {
             setSelectedShipment(data);
             setSellShipmentForm({ name: '', phone: '' });
         }
-        if (modalType === 'STAFF' && selectedBranch) {
-            setStaffForm({ name: '', email: '', role: 'Cashier', branchId: selectedBranch.id });
-        }
         setModal(modalType);
     };
 
@@ -98,21 +92,6 @@ const LogisticsManagement: React.FC = () => {
     const handleAddTruck = () => {
         addTruck({ ...truckForm, currentLocation: { lat: 0, lng: 0, address: 'N/A' }});
         handleCloseModal();
-    };
-
-    const handleAddBranch = () => {
-        if(branchForm.name.trim()){
-            addBranch(branchForm.name);
-            setBranchForm({name: ''});
-            handleCloseModal();
-        }
-    };
-
-    const handleAddStaff = () => {
-        if(staffForm.name.trim() && staffForm.email.trim() && staffForm.branchId) {
-            addStaff(staffForm);
-            handleCloseModal();
-        }
     };
 
     const handleSellShipment = async () => {
@@ -232,49 +211,7 @@ const LogisticsManagement: React.FC = () => {
                          </div>
                      </div>
                 );
-            case 'branches':
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="md:col-span-1 p-4 bg-gray-800 rounded-lg">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="text-lg font-semibold">Branches</h3>
-                                <button onClick={() => handleOpenModal('BRANCH')} className="p-1 bg-indigo-600 rounded-md hover:bg-indigo-500"><Icon name="plus" className="w-4 h-4"/></button>
-                            </div>
-                            <ul className="space-y-2">
-                                {branches.map(branch => (
-                                    <li key={branch.id} onClick={() => setSelectedBranch(branch)} className={`p-2 rounded-md cursor-pointer ${selectedBranch?.id === branch.id ? 'bg-indigo-600 text-white' : 'hover:bg-gray-700'}`}>
-                                        {branch.name}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                        <div className="md:col-span-2 p-4 bg-gray-800 rounded-lg">
-                            {selectedBranch ? (
-                                <div>
-                                    <div className="flex justify-between items-center mb-4">
-                                        <h3 className="text-lg font-semibold">Staff at {selectedBranch.name}</h3>
-                                        <button onClick={() => handleOpenModal('STAFF')} className="bg-indigo-600 text-sm flex items-center gap-1 py-1 px-2 rounded-md hover:bg-indigo-500">
-                                            <Icon name="plus" className="w-4 h-4"/> Add Staff
-                                        </button>
-                                    </div>
-                                    <table className="w-full text-left">
-                                        <thead className="border-b border-gray-700 text-sm">
-                                            <tr><th className="p-2">Name</th><th className="p-2">Email</th><th className="p-2">Role</th></tr>
-                                        </thead>
-                                        <tbody>
-                                            {staff.filter(s => s.branchId === selectedBranch.id).map(s => (
-                                                <tr key={s.id} className="border-b border-gray-700 text-sm">
-                                                    <td className="p-2">{s.name}</td><td className="p-2">{s.email}</td><td className="p-2">{s.role}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            ) : <p className="text-center text-gray-500">Select a branch to view staff.</p>}
-                        </div>
-                    </div>
-                );
-             case 'settings':
+            case 'settings':
                  return (
                      <div className="p-6 bg-gray-800 rounded-lg shadow-md max-w-2xl mx-auto">
                          <h2 className="text-2xl font-bold text-white mb-6">Tracker Provider Settings</h2>
@@ -323,7 +260,6 @@ const LogisticsManagement: React.FC = () => {
                         <TabButton tab="dashboard" label="Dashboard" />
                         <TabButton tab="trucks" label="Trucks" />
                         <TabButton tab="shipments" label="Shipments" />
-                        <TabButton tab="branches" label="Branches & Staff" />
                         <TabButton tab="settings" label="Settings" />
                     </nav>
                 </div>
@@ -341,28 +277,6 @@ const LogisticsManagement: React.FC = () => {
                             <div><label className="text-sm">Status</label><select onChange={e => setTruckForm({...truckForm, status: e.target.value as Truck['status']})} className="w-full bg-gray-700 p-2 rounded-md mt-1"><option>IDLE</option><option>IN_TRANSIT</option><option>MAINTENANCE</option></select></div>
                         </div>
                         <div className="flex justify-end gap-3 mt-6"><button onClick={handleCloseModal} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500">Cancel</button><button onClick={handleAddTruck} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500">Save</button></div>
-                    </div>
-                </div>
-            )}
-             {modal === 'BRANCH' && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-                    <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-xl font-bold mb-4">Add New Branch</h3>
-                        <div><label className="text-sm">Branch Name</label><input type="text" value={branchForm.name} onChange={e => setBranchForm({name: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
-                        <div className="flex justify-end gap-3 mt-6"><button onClick={handleCloseModal} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500">Cancel</button><button onClick={handleAddBranch} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500">Save</button></div>
-                    </div>
-                </div>
-            )}
-             {modal === 'STAFF' && selectedBranch && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-                    <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
-                        <h3 className="text-xl font-bold mb-4">Add Staff to {selectedBranch.name}</h3>
-                        <div className="space-y-4">
-                            <div><label className="text-sm">Name</label><input type="text" onChange={e => setStaffForm({...staffForm, name: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
-                            <div><label className="text-sm">Email</label><input type="email" onChange={e => setStaffForm({...staffForm, email: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
-                            <div><label className="text-sm">Role</label><select onChange={e => setStaffForm({...staffForm, role: e.target.value as Staff['role']})} className="w-full bg-gray-700 p-2 rounded-md mt-1"><option>Cashier</option><option>Manager</option><option>Logistics</option></select></div>
-                        </div>
-                        <div className="flex justify-end gap-3 mt-6"><button onClick={handleCloseModal} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500">Cancel</button><button onClick={handleAddStaff} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500">Save</button></div>
                     </div>
                 </div>
             )}

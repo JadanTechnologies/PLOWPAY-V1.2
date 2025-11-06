@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -8,6 +9,8 @@ import { Page } from '../App';
 import LogisticsManagement from './LogisticsManagement';
 import Reports from './Reports';
 import Settings from './Settings';
+import PurchaseOrderManagement from './PurchaseOrderManagement';
+import Accounting from './Accounting';
 
 
 const TenantApp: React.FC = () => {
@@ -26,8 +29,12 @@ const TenantApp: React.FC = () => {
         return <PointOfSale />;
       case 'INVENTORY':
         return <Inventory />;
+      case 'PURCHASES':
+        return <PurchaseOrderManagement />;
       case 'LOGISTICS':
         return <LogisticsManagement />;
+      case 'ACCOUNTING':
+        return <Accounting />;
       case 'REPORTS':
         return <Reports />;
       case 'SETTINGS':

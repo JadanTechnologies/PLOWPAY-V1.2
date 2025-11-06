@@ -5,7 +5,6 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { AdminRole, Permission } from '../../types';
 import Icon from '../icons';
 
-// FIX: Added 'managePaymentGateways' to satisfy the Record<Permission, string> type.
 const permissionLabels: Record<Permission, string> = {
     viewPlatformDashboard: 'View Platform Dashboard',
     manageTenants: 'Manage Tenants',
@@ -17,8 +16,51 @@ const permissionLabels: Record<Permission, string> = {
     manageNotificationSettings: 'Manage Notification Settings',
 };
 
+const permissionGroups: Record<string, Permission[]> = {
+    'Platform Management': ['viewPlatformDashboard', 'manageSystemSettings'],
+    'User & Tenant Management': ['manageTenants', 'manageSubscriptions', 'manageTeam', 'manageRoles'],
+    'Financial & Communications': ['managePaymentGateways', 'manageNotificationSettings']
+};
+
+const CollapsibleSection: React.FC<{
+    title: string;
+    permissions: Permission[];
+    assignedPermissions: Set<Permission>;
+    onPermissionChange: (permission: Permission, isChecked: boolean) => void;
+}> = ({ title, permissions, assignedPermissions, onPermissionChange }) => {
+    const [isOpen, setIsOpen] = useState(true);
+
+    return (
+        <div className="bg-gray-900/50 rounded-lg border border-gray-700">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full flex justify-between items-center p-3 text-left font-semibold"
+            >
+                <span>{title}</span>
+                <Icon name={isOpen ? 'chevronUp' : 'chevronDown'} className="w-5 h-5 transition-transform" />
+            </button>
+            {isOpen && (
+                <div className="p-4 border-t border-gray-700 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {permissions.map(permission => (
+                        <label key={permission} className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-700/50 transition-colors cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={assignedPermissions.has(permission)}
+                                onChange={(e) => onPermissionChange(permission, e.target.checked)}
+                                className="h-5 w-5 rounded bg-gray-600 border-gray-500 text-cyan-500 focus:ring-cyan-600 focus:ring-offset-gray-800"
+                            />
+                            <span className="text-gray-300">{permissionLabels[permission]}</span>
+                        </label>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+
 const RoleCard: React.FC<{ role: AdminRole }> = ({ role }) => {
-    const { allPermissions, updateAdminRole, deleteAdminRole } = useAppContext();
+    const { updateAdminRole, deleteAdminRole } = useAppContext();
     const [permissions, setPermissions] = useState<Set<Permission>>(new Set(role.permissions));
     
     useEffect(() => {
@@ -69,17 +111,15 @@ const RoleCard: React.FC<{ role: AdminRole }> = ({ role }) => {
                     )}
                 </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {allPermissions.map(permission => (
-                    <label key={permission} className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-700/50 transition-colors cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={permissions.has(permission)}
-                            onChange={(e) => handlePermissionChange(permission, e.target.checked)}
-                            className="h-5 w-5 rounded bg-gray-600 border-gray-500 text-cyan-500 focus:ring-cyan-600 focus:ring-offset-gray-800"
-                        />
-                        <span className="text-gray-300">{permissionLabels[permission]}</span>
-                    </label>
+            <div className="space-y-4">
+                {Object.entries(permissionGroups).map(([groupTitle, groupPermissions]) => (
+                    <CollapsibleSection
+                        key={groupTitle}
+                        title={groupTitle}
+                        permissions={groupPermissions}
+                        assignedPermissions={permissions}
+                        onPermissionChange={handlePermissionChange}
+                    />
                 ))}
             </div>
         </div>
@@ -88,7 +128,7 @@ const RoleCard: React.FC<{ role: AdminRole }> = ({ role }) => {
 
 
 const RoleManagement: React.FC = () => {
-    const { adminRoles, allPermissions, addAdminRole } = useAppContext();
+    const { adminRoles, addAdminRole } = useAppContext();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [newRoleName, setNewRoleName] = useState('');
     const [newRolePermissions, setNewRolePermissions] = useState<Set<Permission>>(new Set());
@@ -164,20 +204,16 @@ const RoleManagement: React.FC = () => {
                             </div>
 
                             <p className="text-sm font-medium text-gray-400 mb-2">Assign Permissions</p>
-                            <div className="flex-grow overflow-y-auto pr-2 -mr-2 border-t border-b border-gray-700 py-4">
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {allPermissions.map(permission => (
-                                        <label key={permission} className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-700/50 transition-colors cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={newRolePermissions.has(permission)}
-                                                onChange={(e) => handlePermissionChange(permission, e.target.checked)}
-                                                className="h-5 w-5 rounded bg-gray-600 border-gray-500 text-cyan-500 focus:ring-cyan-600 focus:ring-offset-gray-800"
-                                            />
-                                            <span className="text-gray-300">{permissionLabels[permission]}</span>
-                                        </label>
-                                    ))}
-                                </div>
+                            <div className="flex-grow overflow-y-auto pr-2 -mr-2 border-t border-b border-gray-700 py-4 space-y-4">
+                                {Object.entries(permissionGroups).map(([groupTitle, groupPermissions]) => (
+                                     <CollapsibleSection
+                                        key={groupTitle}
+                                        title={groupTitle}
+                                        permissions={groupPermissions}
+                                        assignedPermissions={newRolePermissions}
+                                        onPermissionChange={handlePermissionChange}
+                                    />
+                                ))}
                             </div>
 
                             <div className="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-700 flex-shrink-0">

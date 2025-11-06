@@ -4,11 +4,41 @@ export interface Branch {
   name: string;
 }
 
+export interface StaffRole {
+    id: string;
+    name: string;
+    permissions: TenantPermission[];
+}
+
+export type TenantPermission =
+ | 'accessPOS'
+ | 'manageInventory'
+ | 'viewReports'
+ | 'manageStaff'
+ | 'accessSettings'
+ | 'manageLogistics'
+ | 'managePurchases'
+ | 'accessAccounting';
+
+export const allTenantPermissions: TenantPermission[] = [
+    'accessPOS',
+    'manageInventory',
+    'viewReports',
+    'manageStaff',
+    'accessSettings',
+    'manageLogistics',
+    'managePurchases',
+    'accessAccounting',
+];
+
+
 export interface Staff {
   id: string;
   name: string;
   email: string;
-  role: 'Manager' | 'Cashier' | 'Logistics';
+  username: string;
+  password?: string;
+  roleId: string;
   branchId: string;
 }
 
@@ -50,7 +80,8 @@ export interface Sale {
   };
 }
 
-export type StockLogAction = 'ADJUSTMENT' | 'TRANSFER';
+export type StockLogAction = 'ADJUSTMENT' | 'TRANSFER' | 'SALE' | 'PURCHASE_RECEIVED';
+
 
 export interface StockLog {
   id: string;
@@ -65,6 +96,7 @@ export interface StockLog {
   toBranchId?: string; // For transfers
   branchId?: string; // For adjustments
   reason?: string; // For adjustments
+  referenceId?: string; // e.g., saleId or purchaseOrderId
 }
 
 export interface Truck {
@@ -117,6 +149,11 @@ export interface Tenant {
   businessName: string;
   ownerName: string;
   email: string;
+  username: string;
+  password?: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyLogoUrl?: string;
   status: TenantStatus;
   planId: string;
   joinDate: Date;
@@ -244,12 +281,60 @@ export interface NotificationSettings {
     push: PushSettings;
 }
 
+export interface Supplier {
+  id: string;
+  name: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+}
+
+export interface PurchaseOrderItem {
+  variantId: string;
+  variantName: string;
+  productName: string;
+  quantity: number;
+  cost: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  poNumber: string;
+  supplierId: string;
+  destinationBranchId: string;
+  items: PurchaseOrderItem[];
+  total: number;
+  status: 'PENDING' | 'ORDERED' | 'RECEIVED';
+  createdAt: Date;
+}
+
+export interface Account {
+    id: string;
+    name: string;
+    type: 'ASSET' | 'LIABILITY' | 'EQUITY' | 'REVENUE' | 'EXPENSE';
+    balance: number;
+}
+
+export interface Transaction {
+    accountId: string;
+    amount: number; // Positive for debit, negative for credit
+}
+
+export interface JournalEntry {
+    id: string;
+    date: Date;
+    description: string;
+    transactions: Transaction[];
+}
+
 
 export interface AppContextType {
   products: Product[];
   sales: Sale[];
   branches: Branch[];
   staff: Staff[];
+  staffRoles: StaffRole[];
+  allTenantPermissions: TenantPermission[];
   stockLogs: StockLog[];
   tenants: Tenant[];
   subscriptionPlans: SubscriptionPlan[];
@@ -264,6 +349,10 @@ export interface AppContextType {
   trucks: Truck[];
   shipments: Shipment[];
   trackerProviders: TrackerProvider[];
+  suppliers: Supplier[];
+  purchaseOrders: PurchaseOrder[];
+  accounts: Account[];
+  journalEntries: JournalEntry[];
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
@@ -293,5 +382,13 @@ export interface AppContextType {
   addStaff: (staffData: Omit<Staff, 'id'>) => void;
   sellShipment: (shipmentId: string, customer: Sale['customer']) => Promise<{success: boolean; message: string;}>;
   receiveShipment: (shipmentId: string) => void;
+  addPurchaseOrder: (poData: Omit<PurchaseOrder, 'id' | 'poNumber' | 'total' | 'createdAt'>) => void;
+  updatePurchaseOrderStatus: (poId: string, status: PurchaseOrder['status']) => void;
+  addStaffRole: (roleData: Omit<StaffRole, 'id'>) => void;
+  updateStaffRole: (roleId: string, permissions: TenantPermission[]) => void;
+  deleteStaffRole: (roleId: string) => void;
+  addAccount: (accountData: Omit<Account, 'id' | 'balance'>) => void;
+  addJournalEntry: (entryData: Omit<JournalEntry, 'id' | 'date'>) => void;
+  addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status'>) => void;
   logout?: () => void;
 }
