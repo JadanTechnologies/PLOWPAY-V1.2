@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -103,7 +103,8 @@ const generateMockProducts = (): Product[] => {
                     return {
                         id: `var-${productId}-${index}`,
                         name: variant.name,
-                        price: variant.price,
+                        sellingPrice: variant.price,
+                        costPrice: variant.price * (Math.random() * 0.3 + 0.5), // Cost is 50-80% of selling price
                         sku: `${name.substring(0,3).toUpperCase()}-${index}`,
                         stockByBranch: stockByBranch,
                     }
@@ -127,7 +128,7 @@ const generateMockSales = (products: Product[]): Sale[] => {
         const product = products[Math.floor(Math.random() * products.length)];
         const variant = product.variants[Math.floor(Math.random() * product.variants.length)];
         const quantity = Math.floor(Math.random() * 3) + 1;
-        const total = variant.price * quantity;
+        const total = variant.sellingPrice * quantity;
         sales.push({
             id: `sale-${i}`,
             date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
@@ -137,7 +138,7 @@ const generateMockSales = (products: Product[]): Sale[] => {
                 name: product.name,
                 variantName: variant.name,
                 quantity: quantity,
-                price: variant.price
+                sellingPrice: variant.sellingPrice
             }],
             total: total,
             branchId: mockBranches[Math.floor(Math.random() * mockBranches.length)].id,
@@ -192,7 +193,7 @@ const mockShipments: Shipment[] = [
         destination: 'branch-1', // Downtown
         truckId: 'truck-1',
         status: 'IN_TRANSIT',
-        items: [{ productId: 'prod-1', variantId: 'var-1-0', productName: 'Laptop', quantity: 50, price: 1200 }],
+        items: [{ productId: 'prod-1', variantId: 'var-1-0', productName: 'Laptop', quantity: 50, sellingPrice: 1200 }],
         estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 days from now
     },
     {
@@ -202,7 +203,7 @@ const mockShipments: Shipment[] = [
         destination: 'branch-2', // Uptown
         truckId: 'truck-2',
         status: 'PENDING',
-        items: [{ productId: 'prod-5', variantId: 'var-5-0', productName: 'T-Shirt', quantity: 200, price: 25 }],
+        items: [{ productId: 'prod-5', variantId: 'var-5-0', productName: 'T-Shirt', quantity: 200, sellingPrice: 25 }],
         estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) // 5 days from now
     },
      {
@@ -212,7 +213,7 @@ const mockShipments: Shipment[] = [
         destination: 'branch-3', // Westside
         truckId: 'truck-1',
         status: 'IN_TRANSIT',
-        items: [{ productId: 'prod-2', variantId: 'var-2-0', productName: 'Smartphone', quantity: 100, price: 800 }],
+        items: [{ productId: 'prod-2', variantId: 'var-2-0', productName: 'Smartphone', quantity: 100, sellingPrice: 800 }],
         estimatedDelivery: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000) // 4 days from now
     },
 ];
@@ -573,10 +574,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         ));
     }, []);
     
-    const updateTrackerProvider = useCallback((providerId: string, settings: Partial<Omit<TrackerProvider, 'id' | 'name'>>) => {
-        setTrackerProviders(prev => prev.map(provider => 
-            provider.id === providerId ? { ...provider, ...settings } : provider
-        ));
+    const updateTrackerProviders = useCallback((providers: TrackerProvider[]) => {
+        setTrackerProviders(providers);
     }, []);
 
     const addBranch = useCallback((branchName: string) => {
@@ -610,14 +609,14 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         if (!shipment) return { success: false, message: 'Shipment not found.' };
 
         // Create sale record from shipment
-        const total = shipment.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
-        const saleItems: Sale['items'] = shipment.items.map(item => ({
+        const total = shipment.items.reduce((acc, item) => acc + item.sellingPrice * item.quantity, 0);
+        const saleItems: CartItem[] = shipment.items.map(item => ({
              productId: item.productId,
              variantId: item.variantId,
              name: item.productName,
              variantName: products.find(p => p.id === item.productId)?.variants.find(v => v.id === item.variantId)?.name || 'N/A',
              quantity: item.quantity,
-             price: item.price,
+             sellingPrice: item.sellingPrice,
         }));
         
         const newSale: Sale = {
@@ -702,7 +701,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updateTruck,
         addShipment,
         updateShipmentStatus,
-        updateTrackerProvider,
+        updateTrackerProviders,
         addBranch,
         addStaff,
         sellShipment,

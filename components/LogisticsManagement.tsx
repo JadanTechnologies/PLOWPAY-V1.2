@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Truck, Shipment, TrackerProvider, Branch, Staff, Sale, ProductVariant } from '../types';
 import Icon from './icons';
@@ -40,7 +40,7 @@ const LogisticsManagement: React.FC = () => {
     const { 
       trucks, shipments, trackerProviders, branches, staff, products,
       addTruck, updateTruck, addShipment, updateShipmentStatus, 
-      updateTrackerProvider, addBranch, addStaff, sellShipment, receiveShipment
+      updateTrackerProviders, addBranch, addStaff, sellShipment, receiveShipment
     } = useAppContext();
     type ActiveTab = 'dashboard' | 'trucks' | 'shipments' | 'branches' | 'settings';
     const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
@@ -53,6 +53,20 @@ const LogisticsManagement: React.FC = () => {
     const [branchForm, setBranchForm] = useState({ name: '' });
     const [staffForm, setStaffForm] = useState({ name: '', email: '', role: 'Cashier' as Staff['role'], branchId: '' });
     const [sellShipmentForm, setSellShipmentForm] = useState<Sale['customer']>({ name: '', phone: '' });
+    const [trackerSettingsForm, setTrackerSettingsForm] = useState<TrackerProvider[]>(trackerProviders);
+
+    useEffect(() => {
+        setTrackerSettingsForm(trackerProviders);
+    }, [trackerProviders]);
+    
+    const handleTrackerSettingsChange = (id: string, field: 'apiKey' | 'apiEndpoint', value: string) => {
+        setTrackerSettingsForm(prev => prev.map(p => (p.id === id ? { ...p, [field]: value } : p)));
+    };
+
+    const handleSaveTrackerSettings = () => {
+        updateTrackerProviders(trackerSettingsForm);
+        alert('Tracker provider settings saved successfully!');
+    };
 
 
     const TabButton: React.FC<{tab: ActiveTab, label: string}> = ({ tab, label }) => (
@@ -265,24 +279,36 @@ const LogisticsManagement: React.FC = () => {
                      <div className="p-6 bg-gray-800 rounded-lg shadow-md max-w-2xl mx-auto">
                          <h2 className="text-2xl font-bold text-white mb-6">Tracker Provider Settings</h2>
                          <div className="space-y-6">
-                            {trackerProviders.map(provider => (
+                            {trackerSettingsForm.map(provider => (
                                 <div key={provider.id} className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
                                     <h3 className="text-xl font-semibold text-white mb-4">{provider.name}</h3>
                                     <div className="space-y-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-400">API Key</label>
-                                            <input type="password" defaultValue={provider.apiKey} placeholder="Enter API Key" className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-indigo-500 focus:border-indigo-500"/>
+                                            <input 
+                                                type="password" 
+                                                value={provider.apiKey} 
+                                                onChange={e => handleTrackerSettingsChange(provider.id, 'apiKey', e.target.value)}
+                                                placeholder="Enter API Key" 
+                                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-indigo-500 focus:border-indigo-500"
+                                            />
                                         </div>
                                          <div>
                                             <label className="block text-sm font-medium text-gray-400">API Endpoint URL</label>
-                                            <input type="text" defaultValue={provider.apiEndpoint} placeholder="Enter API Endpoint" className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-indigo-500 focus:border-indigo-500"/>
+                                            <input 
+                                                type="text" 
+                                                value={provider.apiEndpoint} 
+                                                onChange={e => handleTrackerSettingsChange(provider.id, 'apiEndpoint', e.target.value)}
+                                                placeholder="Enter API Endpoint" 
+                                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-indigo-500 focus:border-indigo-500"
+                                            />
                                         </div>
                                     </div>
                                 </div>
                             ))}
                          </div>
                          <div className="text-right mt-6">
-                            <button className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md">Save Settings</button>
+                            <button onClick={handleSaveTrackerSettings} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md">Save Settings</button>
                          </div>
                      </div>
                 );

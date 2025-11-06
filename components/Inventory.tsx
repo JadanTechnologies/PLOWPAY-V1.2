@@ -1,3 +1,4 @@
+
 import React, {useState, useMemo} from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, ProductVariant, StockLog } from '../types';
@@ -28,7 +29,7 @@ const Inventory: React.FC = () => {
     const [newProductName, setNewProductName] = useState('');
     const [newProductCategory, setNewProductCategory] = useState('');
     const [newProductVariants, setNewProductVariants] = useState<NewVariant[]>([
-        { name: '', sku: '', price: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }
+        { name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }
     ]);
 
     const filteredProducts = products.filter(p => 
@@ -95,7 +96,7 @@ const Inventory: React.FC = () => {
     const resetAddProductForm = () => {
         setNewProductName('');
         setNewProductCategory('');
-        setNewProductVariants([{ name: '', sku: '', price: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }]);
+        setNewProductVariants([{ name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }]);
     };
 
     const closeAddProductModal = () => {
@@ -129,7 +130,7 @@ const Inventory: React.FC = () => {
     }
 
     const addVariantRow = () => {
-        setNewProductVariants([...newProductVariants, { name: '', sku: '', price: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }]);
+        setNewProductVariants([...newProductVariants, { name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }]);
     };
 
     const removeVariantRow = (index: number) => {
@@ -189,7 +190,8 @@ const Inventory: React.FC = () => {
                                     <th className="p-3 text-sm font-semibold tracking-wide">Category</th>
                                     <th className="p-3 text-sm font-semibold tracking-wide">Variant</th>
                                     <th className="p-3 text-sm font-semibold tracking-wide">SKU</th>
-                                    <th className="p-3 text-sm font-semibold tracking-wide text-right">Price</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide text-right">Cost Price</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide text-right">Selling Price</th>
                                     {branches.map(branch => (
                                         <th key={branch.id} className="p-3 text-sm font-semibold tracking-wide text-right">{branch.name}</th>
                                     ))}
@@ -208,7 +210,8 @@ const Inventory: React.FC = () => {
                                             )}
                                             <td className="p-3 whitespace-nowrap">{variant.name}</td>
                                             <td className="p-3 whitespace-nowrap text-gray-400">{variant.sku}</td>
-                                            <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">${variant.price.toFixed(2)}</td>
+                                            <td className="p-3 whitespace-nowrap text-right font-mono text-gray-400">${variant.costPrice.toFixed(2)}</td>
+                                            <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">${variant.sellingPrice.toFixed(2)}</td>
                                             {branches.map(branch => {
                                                 const stock = variant.stockByBranch[branch.id] || 0;
                                                 return (
@@ -313,8 +316,8 @@ const Inventory: React.FC = () => {
                             <div className="space-y-4">
                                 {newProductVariants.map((variant, index) => (
                                     <div key={index} className="bg-gray-900 p-4 rounded-md border border-gray-700">
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3">
-                                            <div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-3">
+                                            <div className="sm:col-span-2">
                                                 <label className="block text-sm font-medium text-gray-400">Variant Name</label>
                                                 <input type="text" value={variant.name} onChange={e => handleVariantChange(index, 'name', e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
                                             </div>
@@ -323,8 +326,12 @@ const Inventory: React.FC = () => {
                                                 <input type="text" value={variant.sku} onChange={e => handleVariantChange(index, 'sku', e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-medium text-gray-400">Price</label>
-                                                <input type="number" value={variant.price} onChange={e => handleVariantChange(index, 'price', parseFloat(e.target.value))} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                                <label className="block text-sm font-medium text-gray-400">Cost Price</label>
+                                                <input type="number" value={variant.costPrice} onChange={e => handleVariantChange(index, 'costPrice', parseFloat(e.target.value))} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-400">Selling Price</label>
+                                                <input type="number" value={variant.sellingPrice} onChange={e => handleVariantChange(index, 'sellingPrice', parseFloat(e.target.value))} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
                                             </div>
                                         </div>
                                         <p className="text-sm font-medium text-gray-400 mb-2">Initial Stock</p>

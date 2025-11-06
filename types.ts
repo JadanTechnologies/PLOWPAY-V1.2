@@ -16,7 +16,8 @@ export interface ProductVariant {
   id: string;
   name: string; // e.g., 'Large', 'Red'
   sku: string;
-  price: number;
+  sellingPrice: number;
+  costPrice: number;
   stockByBranch: { [branchId: string]: number };
 }
 
@@ -34,7 +35,7 @@ export interface CartItem {
   name: string;
   variantName: string;
   quantity: number;
-  price: number;
+  sellingPrice: number;
 }
 
 export interface Sale {
@@ -91,7 +92,7 @@ export interface Shipment {
     variantId: string;
     productName: string;
     quantity: number;
-    price: number;
+    sellingPrice: number;
   }[];
   estimatedDelivery: Date;
 }
@@ -287,7 +288,7 @@ export interface AppContextType {
   updateTruck: (truckId: string, truckData: Partial<Omit<Truck, 'id'>>) => void;
   addShipment: (shipmentData: Omit<Shipment, 'id'>) => void;
   updateShipmentStatus: (shipmentId: string, status: Shipment['status']) => void;
-  updateTrackerProvider: (providerId: string, settings: Partial<Omit<TrackerProvider, 'id' | 'name'>>) => void;
+  updateTrackerProviders: (providers: TrackerProvider[]) => void;
   addBranch: (branchName: string) => void;
   addStaff: (staffData: Omit<Staff, 'id'>) => void;
   sellShipment: (shipmentId: string, customer: Sale['customer']) => Promise<{success: boolean; message: string;}>;

@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant } from '../types';
@@ -31,7 +30,7 @@ const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, 
             </select>
           )}
         <div className="flex justify-between items-center">
-          <p className="text-xl font-semibold text-indigo-400">${selectedVariant.price.toFixed(2)}</p>
+          <p className="text-xl font-semibold text-indigo-400">${selectedVariant.sellingPrice.toFixed(2)}</p>
           <button onClick={() => onAddToCart(product, selectedVariant)} className="bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-500 transition-colors">
             <Icon name="plus" className="w-5 h-5" />
           </button>
@@ -77,7 +76,7 @@ const PointOfSale: React.FC = () => {
           name: product.name,
           variantName: variant.name,
           quantity: 1, 
-          price: variant.price
+          sellingPrice: variant.sellingPrice
         }];
     });
   }, []);
@@ -102,7 +101,7 @@ const PointOfSale: React.FC = () => {
     });
   }, [products, searchTerm, selectedCategory, showFavorites]);
 
-  const subtotal = useMemo(() => cart.reduce((acc, item) => acc + item.price * item.quantity, 0), [cart]);
+  const subtotal = useMemo(() => cart.reduce((acc, item) => acc + item.sellingPrice * item.quantity, 0), [cart]);
   const tax = subtotal * 0.08;
   const total = subtotal + tax;
 
@@ -233,7 +232,7 @@ const PointOfSale: React.FC = () => {
                   <div className="flex-1 mr-2">
                     <p className="font-semibold truncate">{item.name}</p>
                     <p className="text-sm text-gray-400">{item.variantName}</p>
-                    <p className="text-sm text-indigo-400">${item.price.toFixed(2)}</p>
+                    <p className="text-sm text-indigo-400">${item.sellingPrice.toFixed(2)}</p>
                   </div>
                   <div className="flex items-center">
                     <button onClick={() => handleUpdateQuantity(item.variantId, -1)} className="p-1 rounded-full bg-gray-600 hover:bg-gray-500"><Icon name="minus" className="w-4 h-4" /></button>
