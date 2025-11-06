@@ -1,5 +1,4 @@
-
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
 import Header from '../Header';
@@ -11,19 +10,41 @@ import PaymentSettings from './PaymentSettings';
 import NotificationSettings from './NotificationSettings';
 import SubscriptionManagement from './SubscriptionManagement';
 import { useAppContext } from '../../hooks/useAppContext';
-import { BrandConfig, PageContent, FaqItem } from '../../types';
+import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language } from '../../types';
 import Icon from '../icons';
 import { usePermissions } from '../../hooks/usePermissions';
 import Announcements from './Announcements';
 
+const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
+    return (
+        <button
+            type="button"
+            className={`${enabled ? 'bg-cyan-600' : 'bg-gray-600'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-gray-800`}
+            role="switch"
+            aria-checked={enabled}
+            onClick={() => onChange(!enabled)}
+        >
+            <span
+                aria-hidden="true"
+                className={`${enabled ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+            />
+        </button>
+    );
+};
+
 const Settings: React.FC = () => {
-    type SettingsTab = 'branding' | 'content' | 'faqs';
+    type SettingsTab = 'branding' | 'content' | 'faqs' | 'currencies' | 'languages';
     const [activeTab, setActiveTab] = useState<SettingsTab>('branding');
-    const { brandConfig, pageContent, updateBrandConfig, updatePageContent, updateFaqs } = useAppContext();
+    const { brandConfig, pageContent, systemSettings, updateBrandConfig, updatePageContent, updateFaqs, updateSystemSettings } = useAppContext();
 
     const [brandForm, setBrandForm] = useState<BrandConfig>(brandConfig);
     const [contentForm, setContentForm] = useState<Omit<PageContent, 'faqs'>>(pageContent);
     const [faqs, setFaqs] = useState<FaqItem[]>(pageContent.faqs);
+    const [systemSettingsForm, setSystemSettingsForm] = useState<SystemSettings>(systemSettings);
+
+     useEffect(() => {
+        setSystemSettingsForm(systemSettings);
+    }, [systemSettings]);
 
     const handleBrandSave = () => {
         updateBrandConfig(brandForm);
@@ -55,6 +76,44 @@ const Settings: React.FC = () => {
     const pageContentKeys: (keyof Omit<PageContent, 'faqs'>)[] = [
         'about', 'contact', 'terms', 'privacy', 'refund', 'helpCenter', 'apiDocs', 'blog'
     ];
+
+    const handleCurrencyToggle = (code: string) => {
+        setSystemSettingsForm(prev => ({
+            ...prev,
+            currencies: prev.currencies.map(c => c.code === code ? { ...c, enabled: !c.enabled } : c)
+        }));
+    };
+
+    const handleDefaultCurrencyChange = (code: string) => {
+        setSystemSettingsForm(prev => ({ ...prev, defaultCurrency: code }));
+    };
+
+    const handleLanguageToggle = (code: string) => {
+        setSystemSettingsForm(prev => ({
+            ...prev,
+            languages: prev.languages.map(l => l.code === code ? { ...l, enabled: !l.enabled } : l)
+        }));
+    };
+
+    const handleDefaultLanguageChange = (code: string) => {
+        setSystemSettingsForm(prev => ({ ...prev, defaultLanguage: code }));
+    };
+
+    const handleLocalizationSave = () => {
+        // Ensure default currency/language is still enabled
+        const defaultCurrencyIsEnabled = systemSettingsForm.currencies.find(c => c.code === systemSettingsForm.defaultCurrency)?.enabled;
+        if (!defaultCurrencyIsEnabled) {
+            alert('The selected default currency is disabled. Please enable it before saving.');
+            return;
+        }
+        const defaultLanguageIsEnabled = systemSettingsForm.languages.find(l => l.code === systemSettingsForm.defaultLanguage)?.enabled;
+        if (!defaultLanguageIsEnabled) {
+            alert('The selected default language is disabled. Please enable it before saving.');
+            return;
+        }
+        updateSystemSettings(systemSettingsForm);
+        alert('Localization settings saved!');
+    };
 
 
     const renderTabContent = () => {
@@ -116,6 +175,66 @@ const Settings: React.FC = () => {
                         </div>
                     </div>
                 );
+            case 'currencies':
+                 return (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-lg font-semibold text-white mb-2">Enabled Currencies</h3>
+                            <div className="space-y-2 bg-gray-900/50 p-4 rounded-md border border-gray-700">
+                                {systemSettingsForm.currencies.map(currency => (
+                                    <div key={currency.code} className="flex justify-between items-center p-2 rounded-md hover:bg-gray-700/50">
+                                        <div>
+                                            <span className="font-semibold">{currency.name}</span>
+                                            <span className="text-gray-400 ml-2">({currency.code} - {currency.symbol})</span>
+                                        </div>
+                                        <Toggle enabled={currency.enabled} onChange={() => handleCurrencyToggle(currency.code)} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="defaultCurrency" className="block text-sm font-medium text-gray-400">Default Currency</label>
+                            <select id="defaultCurrency" value={systemSettingsForm.defaultCurrency} onChange={e => handleDefaultCurrencyChange(e.target.value)} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500">
+                                {systemSettingsForm.currencies.filter(c => c.enabled).map(c => (
+                                    <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="text-right">
+                            <button onClick={handleLocalizationSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Currencies</button>
+                        </div>
+                    </div>
+                );
+            case 'languages':
+                 return (
+                    <div className="space-y-6">
+                        <div>
+                            <h3 className="text-lg font-semibold text-white mb-2">Enabled Languages</h3>
+                            <div className="space-y-2 bg-gray-900/50 p-4 rounded-md border border-gray-700">
+                                {systemSettingsForm.languages.map(lang => (
+                                    <div key={lang.code} className="flex justify-between items-center p-2 rounded-md hover:bg-gray-700/50">
+                                        <div>
+                                            <span className="font-semibold">{lang.name}</span>
+                                            <span className="text-gray-400 ml-2">({lang.code})</span>
+                                        </div>
+                                        <Toggle enabled={lang.enabled} onChange={() => handleLanguageToggle(lang.code)} />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div>
+                            <label htmlFor="defaultLanguage" className="block text-sm font-medium text-gray-400">Default Language</label>
+                            <select id="defaultLanguage" value={systemSettingsForm.defaultLanguage} onChange={e => handleDefaultLanguageChange(e.target.value)} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500">
+                                {systemSettingsForm.languages.filter(l => l.enabled).map(l => (
+                                    <option key={l.code} value={l.code}>{l.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="text-right">
+                            <button onClick={handleLocalizationSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Languages</button>
+                        </div>
+                    </div>
+                );
         }
     };
     
@@ -128,10 +247,12 @@ const Settings: React.FC = () => {
     return (
         <div className="p-6 bg-gray-800 rounded-lg shadow-md">
             <h2 className="text-2xl font-bold text-white mb-6">System Settings</h2>
-            <div className="flex space-x-2 border-b border-gray-700 mb-6">
+            <div className="flex flex-wrap gap-2 border-b border-gray-700 mb-6 pb-2">
                 <TabButton tab="branding" label="Branding" />
                 <TabButton tab="content" label="Page Content" />
                 <TabButton tab="faqs" label="FAQs" />
+                <TabButton tab="currencies" label="Currencies" />
+                <TabButton tab="languages" label="Languages" />
             </div>
             <div>
                 {renderTabContent()}

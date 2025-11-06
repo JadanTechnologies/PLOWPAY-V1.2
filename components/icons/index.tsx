@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import React from 'react';
 
 type IconProps = {
@@ -54,6 +48,7 @@ const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
     'clipboard-document-list': <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 6.471 3H5.25A2.25 2.25 0 0 0 3 5.25v13.5A2.25 2.25 0 0 0 5.25 21h10.5a2.25 2.25 0 0 0 2.25-2.25V10.5c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08" />,
     'pause': <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-6-13.5v13.5" />,
     'arrow-up-tray': <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />,
+    printer: <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a8.483 8.483 0 0 1 10.56 0m-1.28 5.472A11.952 11.952 0 0 1 12 21a11.952 11.952 0 0 1-5.472-1.28m5.472-5.472v.003" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 7.5V18a2.25 2.25 0 0 1-2.25 2.25H9.75A2.25 2.25 0 0 1 7.5 18V7.5m9 0V6A2.25 2.25 0 0 0 14.25 3.75H9.75A2.25 2.25 0 0 0 7.5 6v1.5m9 0h3.75a2.25 2.25 0 0 1 2.25 2.25v6.75a2.25 2.25 0 0 1-2.25 2.25H3.75a2.25 2.25 0 0 1-2.25-2.25V9.75a2.25 2.25 0 0 1 2.25-2.25H7.5" />,
   };
   
   return (

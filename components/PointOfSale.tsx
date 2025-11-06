@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant, Payment, Sale } from '../types';
@@ -227,7 +225,7 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
                 </div>
                 <div className="no-print mt-auto p-4 bg-gray-900/50 rounded-b-lg flex justify-end gap-3">
                     <button onClick={onClose} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500 font-semibold">Close</button>
-                    <button onClick={handlePrint} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 font-semibold flex items-center gap-2"><Icon name="inventory" className="w-5 h-5"/>Print Invoice</button>
+                    <button onClick={handlePrint} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 font-semibold flex items-center gap-2"><Icon name="printer" className="w-5 h-5"/>Print Invoice</button>
                 </div>
             </div>
         </div>
