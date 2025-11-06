@@ -1,5 +1,6 @@
 
 
+
 export interface Branch {
   id: string;
   name: string;
@@ -169,12 +170,13 @@ export interface SubscriptionPlan {
   id: string;
   name: string;
   price: number; // per month
+  priceYearly: number;
   features: string[];
   description: string;
   recommended: boolean;
 }
 
-export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'TRIAL';
+export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'TRIAL' | 'UNVERIFIED';
 
 export interface TenantAutomations {
   generateEODReport: boolean;
@@ -189,6 +191,9 @@ export interface Tenant {
   username: string;
   password?: string;
   companyAddress?: string;
+  country?: string;
+  state?: string;
+  phoneCountryCode?: string;
   companyPhone?: string;
   companyLogoUrl?: string;
   status: TenantStatus;
@@ -198,6 +203,8 @@ export interface Tenant {
   currency?: string; // e.g. 'USD', 'NGN'
   language?: string; // e.g. 'en', 'es'
   automations?: TenantAutomations;
+  isVerified: boolean;
+  billingCycle: 'monthly' | 'yearly';
 }
 
 export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED';
@@ -226,6 +233,8 @@ export interface AdminUser {
   roleId: string;
   status: AdminUserStatus;
   joinDate: Date;
+  phone?: string;
+  avatarUrl?: string;
 }
 
 export interface BrandConfig {
@@ -556,7 +565,10 @@ export interface AppContextType {
   deleteStaffRole: (roleId: string) => void;
   addAccount: (accountData: Omit<Account, 'id' | 'balance'>) => void;
   addJournalEntry: (entryData: Omit<JournalEntry, 'id' | 'date'>) => void;
-  addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate'>) => void;
+  addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle'>) => Promise<{ success: boolean; message: string }>;
+  verifyTenant: (email: string) => void;
+  updateTenantProfile: (tenantData: Partial<Omit<Tenant, 'id'>>) => void;
+  updateAdminProfile: (adminData: Partial<Omit<AdminUser, 'id'>>) => void;
   addAnnouncement: (announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => void;
   markAnnouncementAsRead: (announcementId: string, userId: string) => void;
   addCustomer: (customerData: Omit<Customer, 'id' | 'creditBalance'>) => void;
@@ -566,10 +578,10 @@ export interface AppContextType {
   updateCategory: (categoryId: string, newName: string) => void;
   deleteCategory: (categoryId: string) => void;
   extendTrial: (tenantId: string, days: number) => void;
-  activateSubscription: (tenantId: string, planId: string) => void;
-  changeSubscriptionPlan: (tenantId: string, newPlanId: string) => void;
+  activateSubscription: (tenantId: string, planId: string, billingCycle: 'monthly' | 'yearly') => void;
+  changeSubscriptionPlan: (tenantId: string, newPlanId: string, billingCycle: 'monthly' | 'yearly') => void;
   processExpiredTrials: () => { processed: number; suspended: number };
-  processSubscriptionPayment: (tenantId: string, planId: string, method: string, amount: number, success: boolean, proofOfPaymentUrl?: string) => Promise<{success: boolean, message: string}>;
+  processSubscriptionPayment: (tenantId: string, planId: string, method: string, amount: number, billingCycle: 'monthly' | 'yearly', success: boolean, proofOfPaymentUrl?: string) => Promise<{success: boolean, message: string}>;
   updatePaymentTransactionStatus: (transactionId: string, newStatus: 'COMPLETED' | 'REJECTED') => void;
   updateEmailTemplate: (templateId: string, newSubject: string, newBody: string) => void;
   updateSmsTemplate: (templateId: string, newBody: string) => void;

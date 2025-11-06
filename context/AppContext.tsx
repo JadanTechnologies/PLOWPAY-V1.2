@@ -38,9 +38,12 @@ const mockCustomers: Customer[] = [
 ];
 
 const mockSubscriptionPlans: SubscriptionPlan[] = [
-    { id: 'plan_basic', name: 'Basic', price: 29, description: 'For small businesses just getting started.', features: ['1 Branch', 'Up to 1,000 Products', 'Core POS Features', 'Basic Reporting'], recommended: false },
-    { id: 'plan_pro', name: 'Pro', price: 79, description: 'For growing businesses that need more power.', features: ['Up to 5 Branches', 'Unlimited Products', 'Advanced POS Features', 'Full Reporting Suite', 'Staff Management'], recommended: true },
-    { id: 'plan_premium', name: 'Premium', price: 149, description: 'For large businesses and enterprises.', features: ['Unlimited Branches', 'Everything in Pro', 'API Access', 'Dedicated Support', 'Advanced Automations'], recommended: false },
+    // FIX: Added missing 'priceYearly' property to satisfy the SubscriptionPlan type.
+    { id: 'plan_basic', name: 'Basic', price: 29, priceYearly: 290, description: 'For small businesses just getting started.', features: ['1 Branch', 'Up to 1,000 Products', 'Core POS Features', 'Basic Reporting'], recommended: false },
+    // FIX: Added missing 'priceYearly' property to satisfy the SubscriptionPlan type.
+    { id: 'plan_pro', name: 'Pro', price: 79, priceYearly: 790, description: 'For growing businesses that need more power.', features: ['Up to 5 Branches', 'Unlimited Products', 'Advanced POS Features', 'Full Reporting Suite', 'Staff Management'], recommended: true },
+    // FIX: Added missing 'priceYearly' property to satisfy the SubscriptionPlan type.
+    { id: 'plan_premium', name: 'Premium', price: 149, priceYearly: 1490, description: 'For large businesses and enterprises.', features: ['Unlimited Branches', 'Everything in Pro', 'API Access', 'Dedicated Support', 'Advanced Automations'], recommended: false },
 ];
 
 export const allPermissions: Permission[] = [
@@ -75,20 +78,22 @@ const generateMockTenants = (): Tenant[] => {
     const tenants: Tenant[] = [];
     const businessNames = ['Innovate Inc.', 'Quantum Solutions', 'Stellar Goods', 'Apex Retail', 'Zenith Supplies', 'Synergy Corp', 'Momentum Trading', 'Odyssey Services'];
     const ownerNames = ['Alice Johnson', 'Bob Williams', 'Charlie Brown', 'Diana Miller', 'Ethan Davis', 'Fiona Garcia', 'George Rodriguez', 'Helen Martinez'];
-    const statuses: TenantStatus[] = ['ACTIVE', 'TRIAL', 'SUSPENDED'];
+    // FIX: Added UNVERIFIED to the list of possible statuses.
+    const statuses: TenantStatus[] = ['ACTIVE', 'TRIAL', 'SUSPENDED', 'UNVERIFIED'];
 
     for (let i = 0; i < 8; i++) {
         const ownerFirstName = ownerNames[i].split(' ')[0].toLowerCase();
         
         // Special case for the demo tenant
         const isDemoTenant = i === 0;
-        const status = statuses[i % statuses.length];
+        const status = isDemoTenant ? 'ACTIVE' : statuses[i % statuses.length];
         const joinDate = new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000);
         let trialEndDate: Date | undefined = undefined;
         if (status === 'TRIAL') {
             trialEndDate = new Date(joinDate.getTime() + 14 * 24 * 60 * 60 * 1000);
         }
 
+        // FIX: Added missing 'isVerified' and 'billingCycle' properties to satisfy the Tenant type.
         tenants.push({
             id: `tenant-${i+1}`,
             businessName: businessNames[i],
@@ -108,7 +113,9 @@ const generateMockTenants = (): Tenant[] => {
             automations: {
                 generateEODReport: i % 2 === 0,
                 sendLowStockAlerts: true,
-            }
+            },
+            isVerified: status !== 'UNVERIFIED',
+            billingCycle: i % 2 === 0 ? 'monthly' : 'yearly',
         });
     }
     return tenants.sort((a,b) => b.joinDate.getTime() - a.joinDate.getTime());
@@ -532,7 +539,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
     const [adminRoles, setAdminRoles] = useState<AdminRole[]>(mockAdminRoles);
-    const [currentAdminUser] = useState<AdminUser | null>(mockAdminUsers.find(u => u.email === 'admin@flowpay.com') || null);
+    const [currentAdminUser, setCurrentAdminUser] = useState<AdminUser | null>(mockAdminUsers.find(u => u.email === 'admin@flowpay.com') || null);
     const [brandConfig, setBrandConfig] = useState<BrandConfig>(mockBrandConfig);
     const [pageContent, setPageContent] = useState<PageContent>(mockPageContent);
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(mockPaymentSettings);
@@ -1184,16 +1191,20 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         });
     }, []);
 
-    const addTenant = useCallback((tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate'>) => {
+    // FIX: Updated addTenant to set default values and return a promise, matching its type definition.
+    const addTenant = useCallback(async (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle'>): Promise<{ success: boolean; message: string }> => {
         const joinDate = new Date();
         const newTenant: Tenant = {
             ...tenantData,
             id: `tenant-${Date.now()}`,
             joinDate: joinDate,
-            status: 'TRIAL',
+            status: 'UNVERIFIED',
             trialEndDate: new Date(joinDate.getTime() + 14 * 24 * 60 * 60 * 1000), // 14-day trial
+            isVerified: false,
+            billingCycle: 'monthly',
         };
         setTenants(prev => [newTenant, ...prev].sort((a,b) => b.joinDate.getTime() - a.joinDate.getTime()));
+        return { success: true, message: 'Tenant created. Verification email sent.' };
     }, []);
     
     const addAnnouncement = useCallback((announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => {
@@ -1296,10 +1307,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         }));
     }, []);
 
-    const activateSubscription = useCallback((tenantId: string, planId: string) => {
+    const activateSubscription = useCallback((tenantId: string, planId: string, billingCycle: 'monthly' | 'yearly') => {
         setTenants(prev => prev.map(t => {
             if (t.id === tenantId) {
-                const updatedTenant: Partial<Tenant> & { id: string } = { ...t, status: 'ACTIVE' as TenantStatus, planId };
+                const updatedTenant: Partial<Tenant> & { id: string } = { ...t, status: 'ACTIVE' as TenantStatus, planId, billingCycle };
                 delete updatedTenant.trialEndDate;
                 return updatedTenant as Tenant;
             }
@@ -1307,10 +1318,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         }));
     }, []);
     
-    const changeSubscriptionPlan = useCallback((tenantId: string, newPlanId: string) => {
+    const changeSubscriptionPlan = useCallback((tenantId: string, newPlanId: string, billingCycle: 'monthly' | 'yearly') => {
         setTenants(prev => prev.map(t => {
             if (t.id === tenantId) {
-                return { ...t, planId: newPlanId };
+                return { ...t, planId: newPlanId, billingCycle };
             }
             return t;
         }));
@@ -1337,7 +1348,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         return { processed, suspended };
     }, []);
 
-    const processSubscriptionPayment = useCallback(async (tenantId: string, planId: string, method: string, amount: number, success: boolean, proofOfPaymentUrl?: string): Promise<{success: boolean, message: string}> => {
+    const processSubscriptionPayment = useCallback(async (tenantId: string, planId: string, method: string, amount: number, billingCycle: 'monthly' | 'yearly', success: boolean, proofOfPaymentUrl?: string): Promise<{success: boolean, message: string}> => {
         return new Promise(resolve => {
             setTimeout(() => {
                 const newTransaction: PaymentTransaction = {
@@ -1354,7 +1365,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                 setPaymentTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()));
     
                 if (success && method !== 'Manual') {
-                    activateSubscription(tenantId, planId);
+                    changeSubscriptionPlan(tenantId, planId, billingCycle);
                     resolve({ success: true, message: 'Payment successful! Your plan has been activated.' });
                 } else if (success && method === 'Manual') {
                     resolve({ success: true, message: 'Your proof of payment has been submitted for review. Your plan will be activated upon approval.' });
@@ -1363,19 +1374,21 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                 }
             }, 500); // Simulate network delay
         });
-    }, [activateSubscription]);
+    }, [changeSubscriptionPlan]);
     
     const updatePaymentTransactionStatus = useCallback((transactionId: string, newStatus: 'COMPLETED' | 'REJECTED') => {
         setPaymentTransactions(prev => prev.map(tx => {
             if (tx.id === transactionId && tx.status === 'PENDING') {
                 if (newStatus === 'COMPLETED') {
-                    activateSubscription(tx.tenantId, tx.planId);
+                    // Assuming the billing cycle from the tenant, or default to monthly
+                    const tenant = tenants.find(t => t.id === tx.tenantId);
+                    activateSubscription(tx.tenantId, tx.planId, tenant?.billingCycle || 'monthly');
                 }
                 return { ...tx, status: newStatus };
             }
             return tx;
         }));
-    }, [activateSubscription]);
+    }, [activateSubscription, tenants]);
     
     const updateEmailTemplate = useCallback((templateId: string, newSubject: string, newBody: string) => {
         setEmailTemplates(prev => prev.map(t => t.id === templateId ? { ...t, subject: newSubject, body: newBody } : t));
@@ -1388,6 +1401,25 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const markInAppNotificationAsRead = useCallback((notificationId: string) => {
         setInAppNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
     }, []);
+
+    // FIX: Implemented missing functions from AppContextType.
+    const verifyTenant = useCallback((email: string) => {
+        setTenants(prev => prev.map(t => {
+            if (t.email === email && t.status === 'UNVERIFIED') {
+                return { ...t, status: 'TRIAL', isVerified: true };
+            }
+            return t;
+        }));
+    }, []);
+
+    const updateTenantProfile = useCallback((tenantData: Partial<Omit<Tenant, 'id'>>) => {
+        setTenants(prev => prev.map(t => t.id === currentTenant?.id ? { ...t, ...tenantData } : t));
+    }, [currentTenant]);
+
+    const updateAdminProfile = useCallback((adminData: Partial<Omit<AdminUser, 'id'>>) => {
+        setAdminUsers(prev => prev.map(u => u.id === currentAdminUser?.id ? { ...u, ...adminData } : u));
+        setCurrentAdminUser(prev => prev ? { ...prev, ...adminData } : null);
+    }, [currentAdminUser]);
 
 
     const value: AppContextType = {
@@ -1472,6 +1504,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addAccount,
         addJournalEntry,
         addTenant,
+        // FIX: Added missing functions to the context value.
+        verifyTenant,
+        updateTenantProfile,
+        updateAdminProfile,
         addAnnouncement,
         markAnnouncementAsRead,
         addCustomer,

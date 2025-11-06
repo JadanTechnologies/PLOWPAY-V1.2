@@ -1,5 +1,6 @@
 
 
+
 import { useMemo } from 'react';
 import { useAppContext } from './useAppContext';
 
@@ -23,6 +24,7 @@ const translations: Record<string, Record<string, string>> = {
     templates: 'Templates',
     maintenance: 'Maintenance',
     accessManagement: 'Access Management',
+    profile: 'Profile',
   },
   es: {
     dashboard: 'Tablero',
@@ -43,6 +45,7 @@ const translations: Record<string, Record<string, string>> = {
     templates: 'Plantillas',
     maintenance: 'Mantenimiento',
     accessManagement: 'Gestión de Acceso',
+    profile: 'Perfil',
   },
   fr: {
     dashboard: 'Tableau de Bord',
@@ -63,6 +66,7 @@ const translations: Record<string, Record<string, string>> = {
     templates: 'Modèles',
     maintenance: 'Maintenance',
     accessManagement: 'Gestion d\'accès',
+    profile: 'Profil',
   }
 };
 

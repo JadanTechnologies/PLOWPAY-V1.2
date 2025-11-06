@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import Icon from './icons';
 import { useAppContext } from '../hooks/useAppContext';
@@ -9,9 +10,10 @@ import { useTranslation } from '../hooks/useTranslation';
 interface HeaderProps {
   pageTitle: string;
   toggleSidebar: () => void;
+  onNavigateToProfile?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
+const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar, onNavigateToProfile }) => {
   const { 
     logout, setSearchTerm: setGlobalSearchTerm, 
     announcements, currentAdminUser, markAnnouncementAsRead,
@@ -229,7 +231,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
 
         <div className="relative">
           <button onClick={() => setProfileOpen(!isProfileOpen)} className="flex items-center space-x-2 focus:outline-none">
-            <img className="w-10 h-10 rounded-full" src="https://picsum.photos/100/100" alt="User Avatar" />
+            <img className="w-10 h-10 rounded-full" src={isSuperAdmin ? currentAdminUser?.avatarUrl : "https://picsum.photos/100/100"} alt="User Avatar" />
             <div className='text-left hidden sm:block'>
               <div className="font-medium text-white">{isSuperAdmin ? currentAdminUser?.name : currentTenant?.ownerName}</div>
               <div className="text-sm text-gray-400">{isSuperAdmin ? 'Super Admin' : currentTenant?.businessName}</div>
@@ -237,8 +239,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
           </button>
           {isProfileOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-gray-700 rounded-md shadow-lg py-1 z-50">
-              <a href="#" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600">Profile</a>
-              <a href="#" className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600">Settings</a>
+              <a href="#" onClick={(e) => { e.preventDefault(); onNavigateToProfile?.(); setProfileOpen(false); }} className="block px-4 py-2 text-sm text-gray-300 hover:bg-gray-600">Profile</a>
               <div className="border-t border-gray-600 my-1"></div>
               <button onClick={logout} className="w-full text-left flex items-center px-4 py-2 text-sm text-red-400 hover:bg-gray-600">
                 <Icon name="logout" className="w-5 h-5 mr-2" />

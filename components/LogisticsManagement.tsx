@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Truck, Shipment, TrackerProvider, Branch, Customer, Sale, ProductVariant } from '../types';

@@ -9,7 +9,8 @@ const TenantManagement: React.FC = () => {
     const [modal, setModal] = useState<'NONE' | 'ADD_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE'>('NONE');
     const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
 
-    const initialFormState: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate'> = {
+    // FIX: Updated the type to correctly omit auto-generated properties.
+    const initialFormState: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle'> = {
         businessName: '', ownerName: '', email: '', username: '', password: '', 
         companyAddress: '', companyPhone: '', companyLogoUrl: '',
         planId: subscriptionPlans[0]?.id || ''
@@ -57,17 +58,20 @@ const TenantManagement: React.FC = () => {
 
     const handleActivate = () => {
         if (selectedTenant && selectedPlanId) {
-            activateSubscription(selectedTenant.id, selectedPlanId);
+            // FIX: Added missing 'billingCycle' argument to the function call.
+            activateSubscription(selectedTenant.id, selectedPlanId, 'monthly');
             closeModal();
         }
     };
 
 
     const getStatusBadge = (status: TenantStatus) => {
+        // FIX: Added 'UNVERIFIED' status to the styles object.
         const styles: {[key in TenantStatus]: string} = {
             ACTIVE: 'bg-green-500/20 text-green-300',
             SUSPENDED: 'bg-red-500/20 text-red-300',
             TRIAL: 'bg-yellow-500/20 text-yellow-300',
+            UNVERIFIED: 'bg-gray-500/20 text-gray-300',
         };
         return (
             <span className={`px-2 py-1 text-xs font-semibold rounded-full ${styles[status]}`}>

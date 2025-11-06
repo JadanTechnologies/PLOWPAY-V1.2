@@ -60,7 +60,7 @@ const TemplateManagement: React.FC = () => {
                 </div>
                 
                 {/* FIX: Corrected invalid JSX for placeholders. They are now string literals. */}
-                <p className="text-sm text-gray-400 mb-4">You can use placeholders like {'`{{tenantName}}`'}, {'`{{planName}}`'}, {'`{{amount}}`'} in your templates.</p>
+                <p className="text-sm text-gray-400 mb-4">You can use placeholders like {`{{tenantName}}`}, {`{{planName}}`}, {`{{amount}}`} in your templates.</p>
                 
                 <div className="space-y-6">
                     {activeTab === 'email' && emailForm.map(template => (

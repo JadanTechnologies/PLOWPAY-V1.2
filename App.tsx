@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -13,11 +14,12 @@ import SignUp from './components/SignUp';
 import ForgotPassword from './components/ForgotPassword';
 import MaintenancePage from './components/MaintenancePage';
 import AccessDeniedPage from './components/AccessDeniedPage';
+import VerificationPage from './components/VerificationPage';
 
 
-export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'LOGISTICS' | 'PURCHASES' | 'ACCOUNTING' | 'REPORTS' | 'SETTINGS' | 'CREDIT_MANAGEMENT' | 'CONSIGNMENT' | 'BILLING' | 'CHECKOUT';
-export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENT_GATEWAYS' | 'PAYMENT_TRANSACTIONS' | 'NOTIFICATIONS' | 'TEMPLATE_MANAGEMENT' | 'SETTINGS' | 'ANNOUNCEMENTS' | 'MAINTENANCE' | 'ACCESS_MANAGEMENT';
-export type View = 'landing' | 'login' | 'signup' | 'forgot_password' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq' | 'help' | 'api' | 'blog' | 'app';
+export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'LOGISTICS' | 'PURCHASES' | 'ACCOUNTING' | 'REPORTS' | 'SETTINGS' | 'CREDIT_MANAGEMENT' | 'CONSIGNMENT' | 'BILLING' | 'CHECKOUT' | 'PROFILE';
+export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENT_GATEWAYS' | 'PAYMENT_TRANSACTIONS' | 'NOTIFICATIONS' | 'TEMPLATE_MANAGEMENT' | 'SETTINGS' | 'ANNOUNCEMENTS' | 'MAINTENANCE' | 'ACCESS_MANAGEMENT' | 'PROFILE';
+export type View = 'landing' | 'login' | 'signup' | 'forgot_password' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq' | 'help' | 'api' | 'blog' | 'app' | 'verification';
 
 // InfoPage component to display text-based content
 const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ pageKey, setView }) => {
@@ -111,6 +113,7 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('landing');
   const [userRole, setUserRole] = useState<'TENANT' | 'SUPER_ADMIN' | null>(null);
+  const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
 
   const handleLoginSuccess = (role: 'TENANT' | 'SUPER_ADMIN') => {
     setUserRole(role);
@@ -120,6 +123,13 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setUserRole(null);
     setView('landing');
+  };
+
+  const handleNavigate = (newView: View, data?: any) => {
+    if (newView === 'verification' && data?.email) {
+        setVerificationEmail(data.email);
+    }
+    setView(newView);
   };
   
   const RenderedView = () => {
@@ -200,13 +210,15 @@ const App: React.FC = () => {
 
     switch (view) {
       case 'landing':
-        return <LandingPage onNavigate={setView} />;
+        return <LandingPage onNavigate={handleNavigate} />;
       case 'login':
-        return <Login onLoginSuccess={handleLoginSuccess} onNavigate={setView} />;
+        return <Login onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
       case 'signup':
-        return <SignUp onNavigate={setView} />;
+        return <SignUp onNavigate={handleNavigate} />;
+      case 'verification':
+        return <VerificationPage email={verificationEmail} onNavigate={handleNavigate} />;
       case 'forgot_password':
-        return <ForgotPassword onNavigate={setView} />;
+        return <ForgotPassword onNavigate={handleNavigate} />;
       case 'terms':
       case 'privacy':
       case 'refund':
@@ -216,15 +228,15 @@ const App: React.FC = () => {
       case 'help':
       case 'api':
       case 'blog':
-        return <InfoPage pageKey={view} setView={setView} />;
+        return <InfoPage pageKey={view} setView={handleNavigate} />;
       case 'app':
         if (userRole) {
           return userRole === 'TENANT' ? <TenantApp /> : <SuperAdminPanel />;
         }
         setTimeout(() => setView('login'), 0); 
-        return <Login onLoginSuccess={handleLoginSuccess} onNavigate={setView} />;
+        return <Login onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
       default:
-        return <LandingPage onNavigate={setView} />;
+        return <LandingPage onNavigate={handleNavigate} />;
     }
   }
 

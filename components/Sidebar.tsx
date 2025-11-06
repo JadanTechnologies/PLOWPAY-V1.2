@@ -2,6 +2,7 @@
 
 
 
+
 import React from 'react';
 import { Page } from '../App';
 import Icon from './icons';
@@ -70,8 +71,12 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
     { page: 'ACCOUNTING', icon: 'calculator', label: t('accounting'), key: 'accounting' },
     { page: 'REPORTS', icon: 'reports', label: t('reports'), key: 'reports' },
     { page: 'BILLING', icon: 'credit-card', label: t('billing'), key: 'billing' },
-    { page: 'SETTINGS', icon: 'settings', label: t('settings'), key: 'settings' },
   ];
+  
+  const bottomNavItems = [
+      { page: 'PROFILE', icon: 'user', label: t('profile'), key: 'profile' },
+      { page: 'SETTINGS', icon: 'settings', label: t('settings'), key: 'settings' },
+  ]
 
   return (
     <div
@@ -105,9 +110,22 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
       </nav>
       
        <div className="mt-auto p-2 border-t border-gray-700">
+        <ul>
+            {bottomNavItems.map(item => (
+                <NavItem 
+                    key={item.page}
+                    page={item.page as Page}
+                    iconName={item.icon}
+                    label={item.label}
+                    currentPage={currentPage}
+                    setPage={setPage}
+                    isSidebarOpen={isOpen}
+                />
+            ))}
+        </ul>
         <button 
           onClick={() => setIsOpen(!isOpen)} 
-          className="w-full flex items-center justify-center p-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+          className="w-full flex items-center justify-center p-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white mt-2"
           aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
         >
             <Icon name={isOpen ? 'chevronLeft' : 'chevronRight'} className="w-6 h-6" />

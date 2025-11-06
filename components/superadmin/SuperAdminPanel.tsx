@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
@@ -20,6 +21,7 @@ import PaymentTransactions from './PaymentTransactions';
 import TemplateManagement from './TemplateManagement';
 import Maintenance from './Maintenance';
 import AccessManagement from './AccessManagement';
+import SuperAdminProfile from './Profile';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
     return (
@@ -312,6 +314,8 @@ const SuperAdminPanel: React.FC = () => {
                 return hasPermission('manageSystemSettings') ? <AccessManagement /> : <AccessDenied />;
             case 'SETTINGS':
                  return hasPermission('manageSystemSettings') ? <Settings /> : <AccessDenied />;
+            case 'PROFILE':
+                return <SuperAdminProfile />; // All admins should be able to see their profile
             default:
                 return hasPermission('viewPlatformDashboard') ? <PlatformDashboard /> : <AccessDenied />;
         }
@@ -331,6 +335,7 @@ const SuperAdminPanel: React.FC = () => {
         MAINTENANCE: 'Platform Maintenance',
         ACCESS_MANAGEMENT: 'Access Management',
         SETTINGS: 'System Settings',
+        PROFILE: 'My Profile',
     };
 
     return (
@@ -345,6 +350,7 @@ const SuperAdminPanel: React.FC = () => {
                 <Header
                     pageTitle={pageTitleMap[currentPage]}
                     toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+                    onNavigateToProfile={() => setCurrentPage('PROFILE')}
                 />
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-950 p-4 sm:p-6 lg:p-8">
                     {renderPage()}

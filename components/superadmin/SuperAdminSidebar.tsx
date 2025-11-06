@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { SuperAdminPage } from '../../App';
 import Icon from '../icons';
@@ -70,6 +71,10 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
     { page: 'ROLE_MANAGEMENT', icon: 'lock-closed', label: 'Roles', permission: 'manageRoles' },
     { page: 'MAINTENANCE', icon: 'settings', label: 'Maintenance', permission: 'manageSystemSettings' },
     { page: 'ACCESS_MANAGEMENT', icon: 'lock-closed', label: 'Access Management', permission: 'manageSystemSettings' },
+  ] as const;
+
+  const bottomNavItems = [
+    { page: 'PROFILE', icon: 'user', label: 'Profile', permission: 'viewPlatformDashboard'}, // All admins can see their own profile
     { page: 'SETTINGS', icon: 'settings', label: 'Settings', permission: 'manageSystemSettings' },
   ] as const;
 
@@ -105,9 +110,24 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
       </nav>
 
        <div className="mt-auto p-2 border-t border-gray-700">
+         <ul>
+            {bottomNavItems.map(item => (
+              hasPermission(item.permission) && (
+                <NavItem 
+                    key={item.page}
+                    page={item.page as SuperAdminPage}
+                    iconName={item.icon}
+                    label={item.label}
+                    currentPage={currentPage}
+                    setPage={setPage}
+                    isSidebarOpen={isOpen}
+                />
+              )
+            ))}
+        </ul>
         <button 
           onClick={() => setIsOpen(!isOpen)} 
-          className="w-full flex items-center justify-center p-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+          className="w-full flex items-center justify-center p-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white mt-2"
           aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
         >
             <Icon name={isOpen ? 'chevronLeft' : 'chevronRight'} className="w-6 h-6" />
