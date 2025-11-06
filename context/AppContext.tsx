@@ -681,6 +681,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     
     const updateCurrentTenantSettings = useCallback((newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => {
         setCurrentTenant(prev => prev ? { ...prev, ...newSettings } : null);
+        if (newSettings.language) {
+            setCurrentLanguage(newSettings.language);
+        }
     }, []);
 
     const addSubscriptionPlan = useCallback((planData: Omit<SubscriptionPlan, 'id'>) => {

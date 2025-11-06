@@ -1,6 +1,6 @@
 
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons';
 import { StaffRole, TenantPermission } from '../types';
@@ -66,7 +66,8 @@ const Settings: React.FC = () => {
     const { 
         branches, staff, staffRoles, allTenantPermissions, 
         addBranch, addStaff, addStaffRole, updateStaffRole, deleteStaffRole,
-        systemSettings, currentTenant, updateCurrentTenantSettings
+        systemSettings, currentTenant, updateCurrentTenantSettings,
+        currentLanguage, setCurrentLanguage
     } = useAppContext();
     const [activeTab, setActiveTab] = useState<SettingsTab>('general');
 
@@ -82,13 +83,29 @@ const Settings: React.FC = () => {
     
     const [generalSettings, setGeneralSettings] = useState({
         currency: currentTenant?.currency || systemSettings.defaultCurrency,
-        language: currentTenant?.language || systemSettings.defaultLanguage,
+        language: currentLanguage,
     });
     
+    useEffect(() => {
+        setGeneralSettings({
+            currency: currentTenant?.currency || systemSettings.defaultCurrency,
+            language: currentLanguage,
+        });
+    }, [currentTenant, systemSettings.defaultCurrency, currentLanguage]);
+
     const handleGeneralSettingsSave = () => {
         updateCurrentTenantSettings(generalSettings);
         alert('Settings saved!');
-    }
+    };
+
+    const handleSettingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setGeneralSettings(prev => ({...prev, [name]: value }));
+        if (name === 'language') {
+            setCurrentLanguage(value);
+        }
+    };
+
 
     const roleMap = new Map(staffRoles.map(r => [r.id, r.name]));
     const branchMap = new Map(branches.map(b => [b.id, b.name]));
@@ -178,7 +195,7 @@ const Settings: React.FC = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-400">Currency</label>
-                                    <select value={generalSettings.currency} onChange={e => setGeneralSettings({...generalSettings, currency: e.target.value})} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
+                                    <select name="currency" value={generalSettings.currency} onChange={handleSettingChange} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
                                         {systemSettings.currencies.filter(c => c.enabled).map(c => (
                                             <option key={c.code} value={c.code}>{c.name} ({c.symbol})</option>
                                         ))}
@@ -186,7 +203,7 @@ const Settings: React.FC = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-400">Language</label>
-                                    <select value={generalSettings.language} onChange={e => setGeneralSettings({...generalSettings, language: e.target.value})} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
+                                    <select name="language" value={generalSettings.language} onChange={handleSettingChange} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
                                        {systemSettings.languages.filter(l => l.enabled).map(l => (
                                             <option key={l.code} value={l.code}>{l.name}</option>
                                         ))}
