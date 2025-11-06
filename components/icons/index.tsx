@@ -49,6 +49,7 @@ const Icon: React.FC<IconProps> = ({ name, className = 'w-6 h-6' }) => {
     'pause': <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25v13.5m-6-13.5v13.5" />,
     'arrow-up-tray': <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />,
     printer: <path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a8.483 8.483 0 0 1 10.56 0m-1.28 5.472A11.952 11.952 0 0 1 12 21a11.952 11.952 0 0 1-5.472-1.28m5.472-5.472v.003" /><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 7.5V18a2.25 2.25 0 0 1-2.25 2.25H9.75A2.25 2.25 0 0 1 7.5 18V7.5m9 0V6A2.25 2.25 0 0 0 14.25 3.75H9.75A2.25 2.25 0 0 0 7.5 6v1.5m9 0h3.75a2.25 2.25 0 0 1 2.25 2.25v6.75a2.25 2.25 0 0 1-2.25 2.25H3.75a2.25 2.25 0 0 1-2.25-2.25V9.75a2.25 2.25 0 0 1 2.25-2.25H7.5" />,
+    play: <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />,
   };
   
   return (

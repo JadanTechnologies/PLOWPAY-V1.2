@@ -1,27 +1,41 @@
-
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Tenant, TenantStatus } from '../../types';
 import Icon from '../icons';
 
 const TenantManagement: React.FC = () => {
-    const { tenants, subscriptionPlans, addTenant } = useAppContext();
-    const [isModalOpen, setModalOpen] = useState(false);
-    
-    const initialFormState = {
+    const { tenants, subscriptionPlans, addTenant, extendTrial, activateSubscription } = useAppContext();
+    const [modal, setModal] = useState<'NONE' | 'ADD_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE'>('NONE');
+    const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+
+    const initialFormState: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate'> = {
         businessName: '', ownerName: '', email: '', username: '', password: '', 
         companyAddress: '', companyPhone: '', companyLogoUrl: '',
         planId: subscriptionPlans[0]?.id || ''
     };
-    const [formState, setFormState] = useState<Omit<Tenant, 'id' | 'joinDate' | 'status'>>(initialFormState);
+    const [formState, setFormState] = useState(initialFormState);
+    const [extendDays, setExtendDays] = useState(14);
+    const [selectedPlanId, setSelectedPlanId] = useState(subscriptionPlans[0]?.id || '');
 
     const planMap = new Map(subscriptionPlans.map(p => [p.id, p.name]));
     
-    const openModal = () => setModalOpen(true);
-    const closeModal = () => {
-        setModalOpen(false);
-        setFormState(initialFormState);
+    const openModal = (modalType: 'ADD_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE', tenant: Tenant | null = null) => {
+        setModal(modalType);
+        if (tenant) {
+            setSelectedTenant(tenant);
+            if (modalType === 'ACTIVATE') {
+                setSelectedPlanId(tenant.planId);
+            }
+        }
     };
+
+    const closeModal = () => {
+        setModal('NONE');
+        setSelectedTenant(null);
+        setFormState(initialFormState);
+        setExtendDays(14);
+    };
+
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormState(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -31,6 +45,20 @@ const TenantManagement: React.FC = () => {
         e.preventDefault();
         addTenant(formState);
         closeModal();
+    };
+
+    const handleExtendTrial = () => {
+        if (selectedTenant && extendDays > 0) {
+            extendTrial(selectedTenant.id, extendDays);
+            closeModal();
+        }
+    };
+
+    const handleActivate = () => {
+        if (selectedTenant && selectedPlanId) {
+            activateSubscription(selectedTenant.id, selectedPlanId);
+            closeModal();
+        }
     };
 
 
@@ -51,7 +79,7 @@ const TenantManagement: React.FC = () => {
         <div className="p-6 bg-gray-800 rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Tenant Management</h2>
-                <button onClick={openModal} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
+                <button onClick={() => openModal('ADD_TENANT')} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
                     <Icon name="plus" className="w-5 h-5 mr-2" />
                     Add Tenant
                 </button>
@@ -66,6 +94,7 @@ const TenantManagement: React.FC = () => {
                             <th className="p-3 text-sm font-semibold tracking-wide text-center">Status</th>
                             <th className="p-3 text-sm font-semibold tracking-wide">Plan</th>
                             <th className="p-3 text-sm font-semibold tracking-wide">Join Date</th>
+                            <th className="p-3 text-sm font-semibold tracking-wide">Trial Ends</th>
                             <th className="p-3 text-sm font-semibold tracking-wide text-center">Actions</th>
                         </tr>
                     </thead>
@@ -78,10 +107,26 @@ const TenantManagement: React.FC = () => {
                                 <td className="p-3 whitespace-nowrap text-center">{getStatusBadge(tenant.status)}</td>
                                 <td className="p-3 whitespace-nowrap">{planMap.get(tenant.planId)}</td>
                                 <td className="p-3 whitespace-nowrap text-gray-400">{tenant.joinDate.toLocaleDateString()}</td>
+                                <td className="p-3 whitespace-nowrap text-gray-400">
+                                    {tenant.status === 'TRIAL' && tenant.trialEndDate ? (
+                                        new Date(tenant.trialEndDate).toLocaleDateString()
+                                    ) : 'N/A'}
+                                </td>
                                 <td className="p-3 text-center whitespace-nowrap space-x-2">
                                      <button className="text-sky-400 hover:text-sky-300 font-semibold px-2 py-1 rounded-md text-sm">View</button>
                                      <button className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Edit</button>
-                                     <button className="text-rose-400 hover:text-rose-300 font-semibold px-2 py-1 rounded-md text-sm">Suspend</button>
+                                     {tenant.status === 'TRIAL' && (
+                                        <>
+                                            <button onClick={() => openModal('EXTEND_TRIAL', tenant)} className="text-green-400 hover:text-green-300 font-semibold px-2 py-1 rounded-md text-sm">Extend</button>
+                                            <button onClick={() => openModal('ACTIVATE', tenant)} className="text-cyan-400 hover:text-cyan-300 font-semibold px-2 py-1 rounded-md text-sm">Activate</button>
+                                        </>
+                                    )}
+                                    {tenant.status === 'SUSPENDED' && (
+                                        <button onClick={() => openModal('ACTIVATE', tenant)} className="text-green-400 hover:text-green-300 font-semibold px-2 py-1 rounded-md text-sm">Re-activate</button>
+                                    )}
+                                    {tenant.status === 'ACTIVE' && (
+                                        <button className="text-rose-400 hover:text-rose-300 font-semibold px-2 py-1 rounded-md text-sm">Suspend</button>
+                                    )}
                                 </td>
                             </tr>
                         ))}
@@ -92,7 +137,7 @@ const TenantManagement: React.FC = () => {
                 )}
             </div>
 
-            {isModalOpen && (
+            {modal === 'ADD_TENANT' && (
                  <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
                     <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
                         <h3 className="text-xl font-bold mb-4 text-white">Add New Tenant</h3>
@@ -123,6 +168,53 @@ const TenantManagement: React.FC = () => {
                                 <button type="submit" className="px-4 py-2 rounded-md bg-cyan-600 text-white hover:bg-cyan-500 font-semibold">Create Tenant</button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+            
+            {modal === 'EXTEND_TRIAL' && selectedTenant && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+                    <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+                        <h3 className="text-xl font-bold mb-4 text-white">Extend Trial for {selectedTenant.businessName}</h3>
+                        <div>
+                            <label htmlFor="extendDays" className="block text-sm font-medium text-gray-400">Days to Extend</label>
+                            <input
+                                type="number"
+                                id="extendDays"
+                                value={extendDays}
+                                onChange={(e) => setExtendDays(parseInt(e.target.value, 10))}
+                                className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"
+                                min="1"
+                            />
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button onClick={closeModal} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500 font-semibold">Cancel</button>
+                            <button onClick={handleExtendTrial} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500 font-semibold">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {modal === 'ACTIVATE' && selectedTenant && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+                    <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+                        <h3 className="text-xl font-bold mb-4 text-white">Activate Subscription</h3>
+                        <p className="text-gray-400 mb-4">Select a plan for {selectedTenant.businessName} to activate their account.</p>
+                        <div>
+                            <label htmlFor="planId" className="block text-sm font-medium text-gray-400">Subscription Plan</label>
+                            <select
+                                id="planId"
+                                value={selectedPlanId}
+                                onChange={(e) => setSelectedPlanId(e.target.value)}
+                                className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"
+                            >
+                                {subscriptionPlans.map(p => <option key={p.id} value={p.id}>{p.name} - ${p.price}/mo</option>)}
+                            </select>
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button onClick={closeModal} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500 font-semibold">Cancel</button>
+                            <button onClick={handleActivate} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500 font-semibold">Activate</button>
+                        </div>
                     </div>
                 </div>
             )}

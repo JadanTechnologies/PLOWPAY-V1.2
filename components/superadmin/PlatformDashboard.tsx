@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     ResponsiveContainer,
     AreaChart,
@@ -28,7 +28,9 @@ const MetricCard: React.FC<{ title: string; value: string; iconName: string; ico
 );
 
 const PlatformDashboard: React.FC = () => {
-    const { tenants, subscriptionPlans } = useAppContext();
+    const { tenants, subscriptionPlans, processExpiredTrials } = useAppContext();
+    const [jobStatus, setJobStatus] = useState('');
+
 
     const platformMetrics = useMemo(() => {
         const planMap = new Map(subscriptionPlans.map(p => [p.id, p.price]));
@@ -97,6 +99,15 @@ const PlatformDashboard: React.FC = () => {
         
         return Object.entries(revenueData).map(([name, value]) => ({ name, value }));
     }, [tenants, subscriptionPlans]);
+    
+    const handleRunJob = () => {
+        setJobStatus('Processing...');
+        // Simulate async job
+        setTimeout(() => {
+            const { processed, suspended } = processExpiredTrials();
+            setJobStatus(`Job completed. ${processed} trials checked, ${suspended} accounts suspended. Last run: ${new Date().toLocaleTimeString()}`);
+        }, 1000);
+    };
 
     const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
 
@@ -152,6 +163,27 @@ const PlatformDashboard: React.FC = () => {
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
+                </div>
+            </div>
+
+            <div className="bg-gray-800 rounded-lg shadow-md p-6">
+                <h3 className="mb-4 text-lg font-semibold text-white">System Cron Jobs</h3>
+                <div className="bg-gray-900/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h4 className="font-semibold text-white">Process Expired Trials</h4>
+                        <p className="text-sm text-gray-400 mt-1">
+                            Checks for tenants whose trial period has ended and updates their status to 'Suspended'. 
+                            This is a simulation of a daily automated job.
+                        </p>
+                        {jobStatus && <p className="text-xs text-cyan-400 mt-2 font-mono">{jobStatus}</p>}
+                    </div>
+                    <button
+                        onClick={handleRunJob}
+                        className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center flex-shrink-0"
+                    >
+                        <Icon name="play" className="w-5 h-5 mr-2" />
+                        Run Job Manually
+                    </button>
                 </div>
             </div>
         </div>

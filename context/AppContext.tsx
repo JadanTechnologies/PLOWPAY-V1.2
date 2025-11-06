@@ -3,6 +3,7 @@
 
 
 
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category } from '../types';
 
@@ -86,6 +87,12 @@ const generateMockTenants = (): Tenant[] => {
         
         // Special case for the demo tenant
         const isDemoTenant = i === 0;
+        const status = statuses[i % statuses.length];
+        const joinDate = new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000);
+        let trialEndDate: Date | undefined = undefined;
+        if (status === 'TRIAL') {
+            trialEndDate = new Date(joinDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+        }
 
         tenants.push({
             id: `tenant-${i+1}`,
@@ -97,9 +104,10 @@ const generateMockTenants = (): Tenant[] => {
             companyAddress: `${i+1}23 Market St, San Francisco, CA 94103`,
             companyPhone: `(555) 123-456${i}`,
             companyLogoUrl: '',
-            status: statuses[i % statuses.length],
+            status: status,
             planId: mockSubscriptionPlans[i % mockSubscriptionPlans.length].id,
-            joinDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+            joinDate: joinDate,
+            trialEndDate: trialEndDate,
             currency: isDemoTenant ? 'USD' : undefined,
             language: isDemoTenant ? 'en' : undefined,
             automations: {
@@ -450,7 +458,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             const stored = window.localStorage.getItem(TENANTS_STORAGE_KEY);
             if (stored) {
                 const parsed = JSON.parse(stored);
-                return parsed.map((t: any) => ({ ...t, joinDate: new Date(t.joinDate) }));
+                return parsed.map((t: any) => ({ ...t, joinDate: new Date(t.joinDate), trialEndDate: t.trialEndDate ? new Date(t.trialEndDate) : undefined }));
             }
         } catch (e) { console.error("Failed to load tenants from storage", e); }
         return mockTenants;
@@ -1105,12 +1113,14 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         });
     }, []);
 
-    const addTenant = useCallback((tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status'>) => {
+    const addTenant = useCallback((tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate'>) => {
+        const joinDate = new Date();
         const newTenant: Tenant = {
             ...tenantData,
             id: `tenant-${Date.now()}`,
-            joinDate: new Date(),
-            status: 'TRIAL'
+            joinDate: joinDate,
+            status: 'TRIAL',
+            trialEndDate: new Date(joinDate.getTime() + 14 * 24 * 60 * 60 * 1000), // 14-day trial
         };
         setTenants(prev => [newTenant, ...prev].sort((a,b) => b.joinDate.getTime() - a.joinDate.getTime()));
     }, []);
@@ -1203,6 +1213,49 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         }
         setCategories(prev => prev.filter(cat => cat.id !== categoryId));
     }, [products]);
+    
+    const extendTrial = useCallback((tenantId: string, days: number) => {
+        setTenants(prev => prev.map(t => {
+            if (t.id === tenantId && t.trialEndDate) {
+                const newEndDate = new Date(t.trialEndDate);
+                newEndDate.setDate(newEndDate.getDate() + days);
+                return { ...t, trialEndDate: newEndDate };
+            }
+            return t;
+        }));
+    }, []);
+
+    const activateSubscription = useCallback((tenantId: string, planId: string) => {
+        setTenants(prev => prev.map(t => {
+            if (t.id === tenantId) {
+                const updatedTenant: Partial<Tenant> & { id: string } = { ...t, status: 'ACTIVE' as TenantStatus, planId };
+                delete updatedTenant.trialEndDate;
+                return updatedTenant as Tenant;
+            }
+            return t;
+        }));
+    }, []);
+
+    const processExpiredTrials = useCallback(() => {
+        const now = new Date();
+        let processed = 0;
+        let suspended = 0;
+        setTenants(prev => {
+            const newTenants = prev.map(t => {
+                if (t.status === 'TRIAL' && t.trialEndDate) {
+                    processed++;
+                    const trialEndDate = new Date(t.trialEndDate);
+                    if (trialEndDate < now) {
+                        suspended++;
+                        return { ...t, status: 'SUSPENDED' as TenantStatus };
+                    }
+                }
+                return t;
+            });
+            return newTenants;
+        });
+        return { processed, suspended };
+    }, []);
 
 
     const value: AppContextType = {
@@ -1288,6 +1341,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addCategory,
         updateCategory,
         deleteCategory,
+        extendTrial,
+        activateSubscription,
+        processExpiredTrials,
         logout: onLogout,
     };
 

@@ -193,6 +193,7 @@ export interface Tenant {
   status: TenantStatus;
   planId: string;
   joinDate: Date;
+  trialEndDate?: Date;
   currency?: string; // e.g. 'USD', 'NGN'
   language?: string; // e.g. 'en', 'es'
   automations?: TenantAutomations;
@@ -492,7 +493,7 @@ export interface AppContextType {
   deleteStaffRole: (roleId: string) => void;
   addAccount: (accountData: Omit<Account, 'id' | 'balance'>) => void;
   addJournalEntry: (entryData: Omit<JournalEntry, 'id' | 'date'>) => void;
-  addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status'>) => void;
+  addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate'>) => void;
   addAnnouncement: (announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => void;
   markAnnouncementAsRead: (announcementId: string, userId: string) => void;
   addCustomer: (customerData: Omit<Customer, 'id' | 'creditBalance'>) => void;
@@ -501,5 +502,8 @@ export interface AppContextType {
   addCategory: (categoryName: string) => void;
   updateCategory: (categoryId: string, newName: string) => void;
   deleteCategory: (categoryId: string) => void;
+  extendTrial: (tenantId: string, days: number) => void;
+  activateSubscription: (tenantId: string, planId: string) => void;
+  processExpiredTrials: () => { processed: number; suspended: number };
   logout?: () => void;
 }
