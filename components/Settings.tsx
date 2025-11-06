@@ -1,11 +1,12 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons';
-import { StaffRole, TenantPermission } from '../types';
+import { StaffRole, TenantPermission, TenantAutomations } from '../types';
 
-type SettingsTab = 'general' | 'branches' | 'staff' | 'roles';
+type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations';
 
 const permissionLabels: Record<TenantPermission, string> = {
     accessPOS: 'Access Point of Sale',
@@ -61,12 +62,29 @@ const CollapsiblePermissionSection: React.FC<{
     );
 };
 
+const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
+    return (
+        <button
+            type="button"
+            className={`${enabled ? 'bg-indigo-600' : 'bg-gray-600'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800`}
+            role="switch"
+            aria-checked={enabled}
+            onClick={() => onChange(!enabled)}
+        >
+            <span
+                aria-hidden="true"
+                className={`${enabled ? 'translate-x-5' : 'translate-x-0'} pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+            />
+        </button>
+    );
+};
+
 
 const Settings: React.FC = () => {
     const { 
         branches, staff, staffRoles, allTenantPermissions, 
         addBranch, addStaff, addStaffRole, updateStaffRole, deleteStaffRole,
-        systemSettings, currentTenant, updateCurrentTenantSettings,
+        systemSettings, currentTenant, updateCurrentTenantSettings, updateTenantAutomations,
         currentLanguage, setCurrentLanguage, currentCurrency, setCurrentCurrency
     } = useAppContext();
     const [activeTab, setActiveTab] = useState<SettingsTab>('general');
@@ -84,8 +102,11 @@ const Settings: React.FC = () => {
     // State for the General Settings form
     const [formCurrency, setFormCurrency] = useState(currentCurrency);
     const [formLanguage, setFormLanguage] = useState(currentLanguage);
+    const [automationsForm, setAutomationsForm] = useState(
+        currentTenant?.automations || { generateEODReport: false, sendLowStockAlerts: false }
+    );
 
-    // Sync form state if context changes (e.g., from header dropdown or initial load)
+    // Sync form state if context changes
     useEffect(() => {
         setFormCurrency(currentCurrency);
     }, [currentCurrency]);
@@ -93,6 +114,10 @@ const Settings: React.FC = () => {
     useEffect(() => {
         setFormLanguage(currentLanguage);
     }, [currentLanguage]);
+
+    useEffect(() => {
+        setAutomationsForm(currentTenant?.automations || { generateEODReport: false, sendLowStockAlerts: false });
+    }, [currentTenant]);
 
     const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newCurrency = e.target.value;
@@ -112,6 +137,15 @@ const Settings: React.FC = () => {
             language: formLanguage
         });
         alert('Settings saved!');
+    };
+
+    const handleAutomationToggle = (key: keyof TenantAutomations) => {
+        setAutomationsForm(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const handleAutomationsSave = () => {
+        updateTenantAutomations(automationsForm);
+        alert('Automation settings saved!');
     };
 
 
@@ -224,6 +258,34 @@ const Settings: React.FC = () => {
                         </div>
                     </div>
                 );
+            case 'automations':
+                 return (
+                    <div className="max-w-2xl space-y-6">
+                        <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-700">
+                            <h3 className="text-xl font-semibold mb-1 text-white">Cron Jobs & Automations</h3>
+                            <p className="text-gray-400 mb-4 text-sm">Enable automated tasks to streamline your operations.</p>
+                             <div className="space-y-4">
+                                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md">
+                                    <div>
+                                        <label className="font-medium text-white">Daily End-of-Day Report</label>
+                                        <p className="text-xs text-gray-400">Automatically generate a sales summary every night.</p>
+                                    </div>
+                                    <Toggle enabled={automationsForm.generateEODReport} onChange={() => handleAutomationToggle('generateEODReport')} />
+                                </div>
+                                 <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md">
+                                    <div>
+                                        <label className="font-medium text-white">Daily Low-Stock Alerts</label>
+                                        <p className="text-xs text-gray-400">Receive an email notification for items running low on stock.</p>
+                                    </div>
+                                    <Toggle enabled={automationsForm.sendLowStockAlerts} onChange={() => handleAutomationToggle('sendLowStockAlerts')} />
+                                </div>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <button onClick={handleAutomationsSave} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md">Save Automations</button>
+                        </div>
+                    </div>
+                 );
             case 'branches':
                 return (
                     <div>
@@ -301,8 +363,9 @@ const Settings: React.FC = () => {
     return (
         <div className="p-6 bg-gray-800 rounded-lg shadow-md">
             <h2 className="text-2xl font-bold text-white mb-6">Settings</h2>
-            <div className="flex space-x-2 border-b border-gray-700 mb-6">
+            <div className="flex flex-wrap gap-2 border-b border-gray-700 mb-6 pb-2">
                 <TabButton tab="general" label="General" />
+                <TabButton tab="automations" label="Automations" />
                 <TabButton tab="branches" label="Branches" />
                 <TabButton tab="staff" label="Staff" />
                 <TabButton tab="roles" label="Roles & Permissions" />

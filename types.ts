@@ -160,6 +160,11 @@ export interface SubscriptionPlan {
 
 export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'TRIAL';
 
+export interface TenantAutomations {
+  generateEODReport: boolean;
+  sendLowStockAlerts: boolean;
+}
+
 export interface Tenant {
   id: string;
   businessName: string;
@@ -175,6 +180,7 @@ export interface Tenant {
   joinDate: Date;
   currency?: string; // e.g. 'USD', 'NGN'
   language?: string; // e.g. 'en', 'es'
+  automations?: TenantAutomations;
 }
 
 export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED';
@@ -430,6 +436,7 @@ export interface AppContextType {
   updateNotificationSettings: (newSettings: NotificationSettings) => void;
   updateSystemSettings: (newSettings: Partial<SystemSettings>) => void;
   updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => void;
+  updateTenantAutomations: (newAutomations: Partial<TenantAutomations>) => void;
   addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => void;
   updateSubscriptionPlan: (planId: string, planData: Partial<Omit<SubscriptionPlan, 'id'>>) => void;
   deleteSubscriptionPlan: (planId: string) => void;

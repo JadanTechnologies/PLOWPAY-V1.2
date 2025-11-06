@@ -1,7 +1,8 @@
 
 
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -85,6 +86,10 @@ const generateMockTenants = (): Tenant[] => {
             joinDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
             currency: isDemoTenant ? 'USD' : undefined,
             language: isDemoTenant ? 'en' : undefined,
+            automations: {
+                generateEODReport: i % 2 === 0,
+                sendLowStockAlerts: true,
+            }
         });
     }
     return tenants.sort((a,b) => b.joinDate.getTime() - a.joinDate.getTime());
@@ -388,43 +393,63 @@ interface AppContextProviderProps {
     onLogout?: () => void;
 }
 
+const TENANTS_STORAGE_KEY = 'flowpay-tenants';
+const SALES_STORAGE_KEY = 'flowpay-sales';
+// The simple login logic implies we are always tenant-1 for the demo
+const CURRENT_TENANT_ID = 'tenant-1';
+
 export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children, onLogout = () => {} }) => {
     const [products, setProducts] = useState<Product[]>(mockProducts);
     
-    const SALES_STORAGE_KEY = 'flowpay-sales';
-
     const [sales, setSales] = useState<Sale[]>(() => {
         try {
             const storedSales = window.localStorage.getItem(SALES_STORAGE_KEY);
             if (storedSales) {
                 const parsedSales = JSON.parse(storedSales);
-                // Convert date strings back to Date objects
-                return parsedSales.map((sale: any) => ({
-                    ...sale,
-                    date: new Date(sale.date),
-                }));
+                return parsedSales.map((sale: any) => ({ ...sale, date: new Date(sale.date) }));
             }
-        } catch (error) {
-            console.error("Error reading sales from local storage", error);
-        }
-        return mockSales; // Fallback to mock sales
+        } catch (error) { console.error("Error reading sales from local storage", error); }
+        return mockSales;
+    });
+
+    const [tenants, setTenants] = useState<Tenant[]>(() => {
+        try {
+            const stored = window.localStorage.getItem(TENANTS_STORAGE_KEY);
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                return parsed.map((t: any) => ({ ...t, joinDate: new Date(t.joinDate) }));
+            }
+        } catch (e) { console.error("Failed to load tenants from storage", e); }
+        return mockTenants;
+    });
+
+    const [currentTenant, setCurrentTenant] = useState<Tenant | null>(() => {
+        const initialTenants = (() => {
+            try {
+                const stored = window.localStorage.getItem(TENANTS_STORAGE_KEY);
+                return stored ? JSON.parse(stored).map((t: any) => ({ ...t, joinDate: new Date(t.joinDate) })) : mockTenants;
+            } catch { return mockTenants; }
+        })();
+        return initialTenants.find((t: Tenant) => t.id === CURRENT_TENANT_ID) || null;
     });
 
     useEffect(() => {
         try {
             window.localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(sales));
-        } catch (error) {
-            console.error("Error saving sales to local storage", error);
-        }
+        } catch (error) { console.error("Error saving sales to local storage", error); }
     }, [sales]);
 
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(TENANTS_STORAGE_KEY, JSON.stringify(tenants));
+            setCurrentTenant(tenants.find(t => t.id === CURRENT_TENANT_ID) || null);
+        } catch (e) { console.error("Failed to save tenants to storage", e); }
+    }, [tenants]);
 
     const [branches, setBranches] = useState<Branch[]>(mockBranches);
     const [staff, setStaff] = useState<Staff[]>(mockStaff);
     const [staffRoles, setStaffRoles] = useState<StaffRole[]>(mockStaffRoles);
     const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
-    const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
-    const [currentTenant, setCurrentTenant] = useState<Tenant | null>(mockTenants[0] || null);
     const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
     const [adminRoles, setAdminRoles] = useState<AdminRole[]>(mockAdminRoles);
@@ -445,6 +470,13 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntries);
     const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
     const [searchTerm, setSearchTerm] = useState('');
+    
+    useEffect(() => {
+        if (currentTenant) {
+            setCurrentLanguage(currentTenant.language || systemSettings.defaultLanguage);
+            setCurrentCurrency(currentTenant.currency || systemSettings.defaultCurrency);
+        }
+    }, [currentTenant, systemSettings.defaultLanguage, systemSettings.defaultCurrency]);
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
         switch (metric) {
@@ -689,13 +721,22 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     }, []);
     
     const updateCurrentTenantSettings = useCallback((newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => {
-        setCurrentTenant(prev => prev ? { ...prev, ...newSettings } : null);
-        if (newSettings.language) {
-            setCurrentLanguage(newSettings.language);
-        }
-        if (newSettings.currency) {
-            setCurrentCurrency(newSettings.currency);
-        }
+        setTenants(prevTenants =>
+            prevTenants.map(t =>
+                t.id === CURRENT_TENANT_ID ? { ...t, ...newSettings } : t
+            )
+        );
+    }, []);
+    
+    const updateTenantAutomations = useCallback((newAutomations: Partial<TenantAutomations>) => {
+        setTenants(prevTenants =>
+            prevTenants.map(t => {
+                if (t.id === CURRENT_TENANT_ID) {
+                    return { ...t, automations: { ...(t.automations || { generateEODReport: false, sendLowStockAlerts: false }), ...newAutomations } };
+                }
+                return t;
+            })
+        );
     }, []);
 
     const addSubscriptionPlan = useCallback((planData: Omit<SubscriptionPlan, 'id'>) => {
@@ -1008,6 +1049,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updateNotificationSettings,
         updateSystemSettings,
         updateCurrentTenantSettings,
+        updateTenantAutomations,
         addSubscriptionPlan,
         updateSubscriptionPlan,
         deleteSubscriptionPlan,
