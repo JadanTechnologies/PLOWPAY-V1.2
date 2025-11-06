@@ -1,8 +1,10 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons';
 import { Account, JournalEntry } from '../types';
+import { useCurrency } from '../hooks/useCurrency';
 
 type AccountingTab = 'dashboard' | 'journal' | 'accounts' | 'reports';
 
@@ -21,6 +23,7 @@ const MetricCard: React.FC<{ title: string; value: string; iconName: string; ico
 
 const Accounting: React.FC = () => {
     const { accounts, journalEntries, addAccount, addJournalEntry } = useAppContext();
+    const { formatCurrency } = useCurrency();
     const [activeTab, setActiveTab] = useState<AccountingTab>('dashboard');
 
     const [isAccountModalOpen, setAccountModalOpen] = useState(false);
@@ -80,9 +83,9 @@ const Accounting: React.FC = () => {
             case 'dashboard':
                 return (
                      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        <MetricCard title="Total Revenue" value={`$${financials.totalRevenue.toLocaleString()}`} iconName="trending-up" iconBgColor="bg-green-500" />
-                        <MetricCard title="Total Expenses" value={`$${financials.totalExpenses.toLocaleString()}`} iconName="trending-up" iconBgColor="bg-red-500" />
-                        <MetricCard title="Net Income" value={`$${financials.netIncome.toLocaleString()}`} iconName="chart-pie" iconBgColor="bg-blue-500" />
+                        <MetricCard title="Total Revenue" value={formatCurrency(financials.totalRevenue)} iconName="trending-up" iconBgColor="bg-green-500" />
+                        <MetricCard title="Total Expenses" value={formatCurrency(financials.totalExpenses)} iconName="trending-up" iconBgColor="bg-red-500" />
+                        <MetricCard title="Net Income" value={formatCurrency(financials.netIncome)} iconName="chart-pie" iconBgColor="bg-blue-500" />
                     </div>
                 );
             case 'journal':
@@ -98,8 +101,8 @@ const Accounting: React.FC = () => {
                                <tbody>
                                 {journalEntries.map(je => <tr key={je.id} className="border-b border-gray-700">
                                     <td className="p-3">{je.date.toLocaleDateString()}</td><td className="p-3">{je.description}</td>
-                                    <td className="p-3 font-mono">{je.transactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0).toFixed(2)}</td>
-                                    <td className="p-3 font-mono">{-je.transactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0).toFixed(2)}</td>
+                                    <td className="p-3 font-mono">{formatCurrency(je.transactions.filter(t => t.amount > 0).reduce((sum, t) => sum + t.amount, 0))}</td>
+                                    <td className="p-3 font-mono">{formatCurrency(-je.transactions.filter(t => t.amount < 0).reduce((sum, t) => sum + t.amount, 0))}</td>
                                 </tr>)}
                                </tbody>
                            </table>
@@ -118,7 +121,7 @@ const Accounting: React.FC = () => {
                                <thead className="border-b border-gray-700"><tr><th className="p-3">Name</th><th className="p-3">Type</th><th className="p-3 text-right">Balance</th></tr></thead>
                                <tbody>
                                 {accounts.map(acc => <tr key={acc.id} className="border-b border-gray-700">
-                                    <td className="p-3">{acc.name}</td><td className="p-3">{acc.type}</td><td className="p-3 text-right font-mono">${acc.balance.toFixed(2)}</td>
+                                    <td className="p-3">{acc.name}</td><td className="p-3">{acc.type}</td><td className="p-3 text-right font-mono">{formatCurrency(acc.balance)}</td>
                                 </tr>)}
                                </tbody>
                            </table>
@@ -131,30 +134,30 @@ const Accounting: React.FC = () => {
                         <div className="bg-gray-900/50 p-4 rounded-lg">
                             <h3 className="font-bold text-lg mb-2 text-center">Income Statement</h3>
                             <div className="space-y-1">
-                                <div className="flex justify-between"><span className="font-semibold">Revenue</span><span>${financials.totalRevenue.toFixed(2)}</span></div>
-                                <div className="flex justify-between border-b border-gray-700 pb-1"><span className="pl-4">Total Revenue</span><span>${financials.totalRevenue.toFixed(2)}</span></div>
+                                <div className="flex justify-between"><span className="font-semibold">Revenue</span><span>{formatCurrency(financials.totalRevenue)}</span></div>
+                                <div className="flex justify-between border-b border-gray-700 pb-1"><span className="pl-4">Total Revenue</span><span>{formatCurrency(financials.totalRevenue)}</span></div>
                                 <div className="flex justify-between pt-2"><span className="font-semibold">Expenses</span></div>
-                                {accounts.filter(a => a.type === 'EXPENSE').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>${a.balance.toFixed(2)}</span></div>)}
-                                <div className="flex justify-between border-b border-gray-700 pb-1"><span className="pl-4">Total Expenses</span><span>${financials.totalExpenses.toFixed(2)}</span></div>
-                                <div className="flex justify-between pt-2 font-bold text-xl"><span className="font-semibold">Net Income</span><span>${financials.netIncome.toFixed(2)}</span></div>
+                                {accounts.filter(a => a.type === 'EXPENSE').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>{formatCurrency(a.balance)}</span></div>)}
+                                <div className="flex justify-between border-b border-gray-700 pb-1"><span className="pl-4">Total Expenses</span><span>{formatCurrency(financials.totalExpenses)}</span></div>
+                                <div className="flex justify-between pt-2 font-bold text-xl"><span className="font-semibold">Net Income</span><span>{formatCurrency(financials.netIncome)}</span></div>
                             </div>
                         </div>
                          <div className="bg-gray-900/50 p-4 rounded-lg">
                             <h3 className="font-bold text-lg mb-2 text-center">Balance Sheet</h3>
                              <div className="space-y-1">
                                 <div className="flex justify-between font-semibold"><span>Assets</span></div>
-                                {accounts.filter(a => a.type === 'ASSET').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>${a.balance.toFixed(2)}</span></div>)}
-                                <div className="flex justify-between border-b border-gray-700 pb-1 font-bold"><span>Total Assets</span><span>${financials.totalAssets.toFixed(2)}</span></div>
+                                {accounts.filter(a => a.type === 'ASSET').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>{formatCurrency(a.balance)}</span></div>)}
+                                <div className="flex justify-between border-b border-gray-700 pb-1 font-bold"><span>Total Assets</span><span>{formatCurrency(financials.totalAssets)}</span></div>
                                 
                                 <div className="flex justify-between pt-2 font-semibold"><span>Liabilities</span></div>
-                                {accounts.filter(a => a.type === 'LIABILITY').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>${(-a.balance).toFixed(2)}</span></div>)}
-                                <div className="flex justify-between font-bold"><span>Total Liabilities</span><span>${financials.totalLiabilities.toFixed(2)}</span></div>
+                                {accounts.filter(a => a.type === 'LIABILITY').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>{formatCurrency(-a.balance)}</span></div>)}
+                                <div className="flex justify-between font-bold"><span>Total Liabilities</span><span>{formatCurrency(financials.totalLiabilities)}</span></div>
 
                                 <div className="flex justify-between pt-2 font-semibold"><span>Equity</span></div>
-                                {accounts.filter(a => a.type === 'EQUITY').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>${(-a.balance).toFixed(2)}</span></div>)}
-                                <div className="flex justify-between font-bold"><span>Total Equity</span><span>${financials.totalEquity.toFixed(2)}</span></div>
+                                {accounts.filter(a => a.type === 'EQUITY').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>{formatCurrency(-a.balance)}</span></div>)}
+                                <div className="flex justify-between font-bold"><span>Total Equity</span><span>{formatCurrency(financials.totalEquity)}</span></div>
                                 
-                                <div className="flex justify-between pt-2 font-bold text-xl border-t border-gray-700"><span>Total Liabilities + Equity</span><span>${(financials.totalLiabilities + financials.totalEquity).toFixed(2)}</span></div>
+                                <div className="flex justify-between pt-2 font-bold text-xl border-t border-gray-700"><span>Total Liabilities + Equity</span><span>{formatCurrency(financials.totalLiabilities + financials.totalEquity)}</span></div>
                             </div>
                         </div>
                     </div>

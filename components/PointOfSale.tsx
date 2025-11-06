@@ -1,13 +1,16 @@
 
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant, Payment, Sale } from '../types';
 import Icon from './icons';
 import Calculator from './Calculator';
+import { useCurrency } from '../hooks/useCurrency';
 
 const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, variant: ProductVariant) => void }> = ({ product, onAddToCart }) => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
   const [isAdding, setIsAdding] = useState(false);
+  const { formatCurrency } = useCurrency();
 
   const handleAddToCartClick = () => {
       setIsAdding(true);
@@ -39,7 +42,7 @@ const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, 
             </select>
           )}
         <div className="flex justify-between items-center">
-          <p className="text-xl font-semibold text-indigo-400">${selectedVariant.sellingPrice.toFixed(2)}</p>
+          <p className="text-xl font-semibold text-indigo-400">{formatCurrency(selectedVariant.sellingPrice)}</p>
           <button onClick={handleAddToCartClick} disabled={isAdding} className="bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-500 transition-colors w-9 h-9 flex items-center justify-center">
             {isAdding ? (
                 <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -60,6 +63,7 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
     const [payments, setPayments] = useState<Payment[]>([]);
     const [currentAmount, setCurrentAmount] = useState('');
     const [currentMethod, setCurrentMethod] = useState<'Cash' | 'Card' | 'Bank'>('Cash');
+    const { formatCurrency } = useCurrency();
     
     const totalPaid = useMemo(() => payments.reduce((acc, p) => acc + p.amount, 0), [payments]);
     const remaining = useMemo(() => totalDue - totalPaid, [totalDue, totalPaid]);
@@ -77,7 +81,7 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
 
     const handleQuickCash = (amount: number) => {
         setCurrentMethod('Cash');
-        setCurrentAmount(String(amount));
+        setCurrentAmount(String(amount.toFixed(2)));
     };
 
     const nextBill = (amount: number) => {
@@ -98,7 +102,7 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
                 
                 <div className="bg-gray-900/50 p-4 rounded-md text-center mb-4">
                     <p className="text-gray-400 text-lg">Total Due</p>
-                    <p className="text-5xl font-extrabold text-indigo-400 tracking-tight">${totalDue.toFixed(2)}</p>
+                    <p className="text-5xl font-extrabold text-indigo-400 tracking-tight">{formatCurrency(totalDue)}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -112,9 +116,9 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
                         <input type="number" placeholder="Amount" value={currentAmount} onChange={e => setCurrentAmount(e.target.value)} className="w-full bg-gray-700 p-3 rounded-md text-2xl text-center"/>
                         {currentMethod === 'Cash' && remaining > 0 && (
                             <div className="text-center text-sm text-gray-400">
-                                Exact: <button className="font-semibold text-indigo-400" onClick={() => handleQuickCash(remaining)}>${remaining.toFixed(2)}</button>
+                                Exact: <button className="font-semibold text-indigo-400" onClick={() => handleQuickCash(remaining)}>{formatCurrency(remaining)}</button>
                                 &nbsp;|&nbsp;
-                                Next Bill: <button className="font-semibold text-indigo-400" onClick={() => handleQuickCash(nextBill(remaining))}>${nextBill(remaining).toFixed(2)}</button>
+                                Next Bill: <button className="font-semibold text-indigo-400" onClick={() => handleQuickCash(nextBill(remaining))}>{formatCurrency(nextBill(remaining))}</button>
                             </div>
                         )}
                         <button onClick={addPayment} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-md text-lg">Add Payment</button>
@@ -124,13 +128,13 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
                     <div className="bg-gray-700/50 p-4 rounded-md flex flex-col">
                          <h4 className="font-semibold mb-2">Payments Received:</h4>
                          <ul className="flex-grow space-y-1 text-sm">
-                            {payments.map((p, i) => <li key={i} className="flex justify-between"><span>{p.method}</span><span>${p.amount.toFixed(2)}</span></li>)}
+                            {payments.map((p, i) => <li key={i} className="flex justify-between"><span>{p.method}</span><span>{formatCurrency(p.amount)}</span></li>)}
                             {payments.length === 0 && <li className="text-gray-400">No payments added.</li>}
                          </ul>
                          <div className="border-t border-gray-600 pt-2 space-y-1 mt-2 text-lg">
-                            <div className="flex justify-between"><span>Total Paid:</span><span>${totalPaid.toFixed(2)}</span></div>
-                            <div className={`flex justify-between font-bold ${remaining <= 0 ? 'text-green-400' : 'text-red-400'}`}><span>Remaining:</span><span>${remaining > 0 ? remaining.toFixed(2) : '0.00'}</span></div>
-                            {change > 0 && <div className="flex justify-between font-bold text-yellow-400"><span>Change Due:</span><span>${change.toFixed(2)}</span></div>}
+                            <div className="flex justify-between"><span>Total Paid:</span><span>{formatCurrency(totalPaid)}</span></div>
+                            <div className={`flex justify-between font-bold ${remaining <= 0 ? 'text-green-400' : 'text-red-400'}`}><span>Remaining:</span><span>{remaining > 0 ? formatCurrency(remaining) : formatCurrency(0)}</span></div>
+                            {change > 0 && <div className="flex justify-between font-bold text-yellow-400"><span>Change Due:</span><span>{formatCurrency(change)}</span></div>}
                          </div>
                     </div>
                 </div>
@@ -139,7 +143,7 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
                     {remaining > 0 ? 'Complete with Deposit' : 'Complete Sale'}
                 </button>
                  <p className="text-xs text-gray-500 text-center mt-2">
-                    {remaining > 0 ? `An outstanding balance of $${remaining.toFixed(2)} will be recorded as credit.` : 'Payment covers total amount.'}
+                    {remaining > 0 ? `An outstanding balance of ${formatCurrency(remaining)} will be recorded as credit.` : 'Payment covers total amount.'}
                 </p>
             </div>
         </div>
@@ -148,6 +152,7 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
 
 const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, onClose }) => {
     const { brandConfig, staff } = useAppContext();
+    const { formatCurrency } = useCurrency();
     const subtotal = sale.items.reduce((acc, item) => acc + item.sellingPrice * item.quantity, 0);
     const tax = sale.total - subtotal + (sale.discount || 0);
     const cashier = staff.find(s => s.id === sale.staffId);
@@ -195,8 +200,8 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
                                         <div className="text-xs text-gray-400">{item.variantName}</div>
                                     </td>
                                     <td className="text-center">{item.quantity}</td>
-                                    <td className="text-right">${item.sellingPrice.toFixed(2)}</td>
-                                    <td className="text-right">${(item.quantity * item.sellingPrice).toFixed(2)}</td>
+                                    <td className="text-right">{formatCurrency(item.sellingPrice)}</td>
+                                    <td className="text-right">{formatCurrency(item.quantity * item.sellingPrice)}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -204,18 +209,18 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
 
                     {/* Totals */}
                     <div className="space-y-1 text-sm mb-4">
-                        <div className="flex justify-between"><span className="text-gray-400">Subtotal:</span><span>${subtotal.toFixed(2)}</span></div>
-                        <div className="flex justify-between"><span className="text-gray-400">Tax:</span><span>${tax.toFixed(2)}</span></div>
-                         {sale.discount && sale.discount > 0 && <div className="flex justify-between"><span className="text-gray-400">Discount:</span><span className="text-red-400">-${sale.discount.toFixed(2)}</span></div>}
-                        <div className="flex justify-between font-bold text-lg"><span>Total:</span><span>${sale.total.toFixed(2)}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-400">Subtotal:</span><span>{formatCurrency(subtotal)}</span></div>
+                        <div className="flex justify-between"><span className="text-gray-400">Tax:</span><span>{formatCurrency(tax)}</span></div>
+                         {sale.discount && sale.discount > 0 && <div className="flex justify-between"><span className="text-gray-400">Discount:</span><span className="text-red-400">-{formatCurrency(sale.discount)}</span></div>}
+                        <div className="flex justify-between font-bold text-lg"><span>Total:</span><span>{formatCurrency(sale.total)}</span></div>
                     </div>
                     
                     {/* Payments */}
                     <div className="space-y-1 text-sm border-t border-gray-700 pt-2">
                          {sale.payments.map((p, i) => (
-                            <div key={i} className="flex justify-between"><span className="text-gray-400">Paid ({p.method}):</span><span>${p.amount.toFixed(2)}</span></div>
+                            <div key={i} className="flex justify-between"><span className="text-gray-400">Paid ({p.method}):</span><span>{formatCurrency(p.amount)}</span></div>
                          ))}
-                         {sale.change > 0 && <div className="flex justify-between font-bold"><span>Change:</span><span>${sale.change.toFixed(2)}</span></div>}
+                         {sale.change > 0 && <div className="flex justify-between font-bold"><span>Change:</span><span>{formatCurrency(sale.change)}</span></div>}
                     </div>
 
                     <p className="text-center text-xs mt-6 text-gray-400">Thank you for your business!</p>
@@ -240,6 +245,7 @@ interface HeldOrder {
 
 const PointOfSale: React.FC = () => {
   const { products, searchTerm, addSale, branches } = useAppContext();
+  const { formatCurrency } = useCurrency();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showFavorites, setShowFavorites] = useState(false);
@@ -529,10 +535,10 @@ const PointOfSale: React.FC = () => {
                     <div className="flex-1 mr-2 overflow-hidden">
                         <p className="font-semibold truncate">{item.name}</p>
                         <p className="text-sm text-indigo-400 font-bold">{item.variantName}</p>
-                        <p className="text-xs text-gray-400 mt-1">{item.quantity} &times; ${item.sellingPrice.toFixed(2)}</p>
+                        <p className="text-xs text-gray-400 mt-1">{item.quantity} &times; {formatCurrency(item.sellingPrice)}</p>
                     </div>
                     <div className="flex flex-col items-end space-y-2">
-                        <p className="font-bold text-lg">${(item.sellingPrice * item.quantity).toFixed(2)}</p>
+                        <p className="font-bold text-lg">{formatCurrency(item.sellingPrice * item.quantity)}</p>
                         <div className="flex items-center">
                             <button onClick={() => handleUpdateQuantity(item.variantId, -1)} className="p-1 rounded-full bg-gray-600 hover:bg-gray-500"><Icon name="minus" className="w-4 h-4" /></button>
                             <span className="w-8 text-center font-bold">{item.quantity}</span>
@@ -547,12 +553,12 @@ const PointOfSale: React.FC = () => {
         {cart.length > 0 && (
           <div className="mt-auto pt-4 border-t border-gray-700">
             <div className="space-y-2 text-lg">
-              <div className="flex justify-between"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
-              <div className="flex justify-between text-gray-400"><span>Tax (8%)</span><span>${tax.toFixed(2)}</span></div>
+              <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+              <div className="flex justify-between text-gray-400"><span>Tax (8%)</span><span>{formatCurrency(tax)}</span></div>
               <div className="flex justify-between items-center text-gray-400">
                 <label htmlFor="discount">Discount</label>
                 <div className="flex items-center">
-                    <span className="mr-1">$</span>
+                    <span className="mr-1">{formatCurrency(0).charAt(0)}</span>
                     <input
                         id="discount"
                         type="number"
@@ -563,7 +569,7 @@ const PointOfSale: React.FC = () => {
                     />
                 </div>
               </div>
-              <div className="flex justify-between font-bold text-2xl"><span>Total</span><span>${total < 0 ? '0.00' : total.toFixed(2)}</span></div>
+              <div className="flex justify-between font-bold text-2xl"><span>Total</span><span>{total < 0 ? formatCurrency(0) : formatCurrency(total)}</span></div>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2">
                 <button className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-md flex items-center justify-center" onClick={() => {setCart([]); setDiscount(0);}}>

@@ -1,9 +1,11 @@
 
+
 import React, { useMemo, useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Sale } from '../types';
+import { useCurrency } from '../hooks/useCurrency';
 
 const MetricCard: React.FC<{ title: string; value: string | number; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-gray-800 rounded-lg shadow-md flex items-center">
@@ -20,6 +22,7 @@ const MetricCard: React.FC<{ title: string; value: string | number; iconName: st
 
 const Reports: React.FC = () => {
   const { sales, products, branches, staff } = useAppContext();
+  const { formatCurrency } = useCurrency();
   
   const [dateRange, setDateRange] = useState(() => {
     const end = new Date();
@@ -78,10 +81,10 @@ const Reports: React.FC = () => {
     const averageSaleValue = filteredSales.length > 0 ? totalRevenue / filteredSales.length : 0;
     
     return {
-      totalRevenue: totalRevenue.toFixed(2),
+      totalRevenue: totalRevenue,
       totalSales: filteredSales.length,
       totalItemsSold,
-      averageSaleValue: averageSaleValue.toFixed(2)
+      averageSaleValue: averageSaleValue
     };
   }, [filteredSales]);
 
@@ -178,10 +181,10 @@ const Reports: React.FC = () => {
        </div>
 
        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            <MetricCard title="Total Revenue" value={`$${salesMetrics.totalRevenue}`} iconName="dashboard" iconBgColor="bg-blue-500" />
+            <MetricCard title="Total Revenue" value={formatCurrency(salesMetrics.totalRevenue)} iconName="dashboard" iconBgColor="bg-blue-500" />
             <MetricCard title="Total Sales" value={salesMetrics.totalSales} iconName="pos" iconBgColor="bg-green-500" />
             <MetricCard title="Items Sold" value={salesMetrics.totalItemsSold} iconName="inventory" iconBgColor="bg-orange-500" />
-            <MetricCard title="Avg. Sale Value" value={`$${salesMetrics.averageSaleValue}`} iconName="calculator" iconBgColor="bg-purple-500" />
+            <MetricCard title="Avg. Sale Value" value={formatCurrency(salesMetrics.averageSaleValue)} iconName="calculator" iconBgColor="bg-purple-500" />
         </div>
         
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -192,7 +195,7 @@ const Reports: React.FC = () => {
                         <Pie data={salesByCategory} cx="50%" cy="50%" labelLine={false} outerRadius={100} fill="#8884d8" dataKey="value" nameKey="name" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
                             {salesByCategory.map((entry, index) => <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />)}
                         </Pie>
-                        <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }} formatter={(value: number) => `$${value.toFixed(2)}`} />
+                        <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }} formatter={(value: number) => formatCurrency(value)} />
                         <Legend />
                     </PieChart>
                 </ResponsiveContainer>
@@ -234,10 +237,10 @@ const Reports: React.FC = () => {
                             <tr key={row.id} className="border-b border-gray-700 hover:bg-gray-700/50">
                                 <td className="p-2">{index + 1}</td><td className="p-2">{row.branchName}</td><td className="p-2">{row.customerName}</td><td className="p-2">{row.itemName}</td>
                                 <td className="p-2 text-right">{row.quantityBefore}</td><td className="p-2 text-right">{row.quantityAfter}</td><td className="p-2 text-right font-bold">{row.quantitySold}</td>
-                                <td className="p-2 text-right font-mono">${row.costPrice.toFixed(2)}</td><td className="p-2 text-right font-mono">${row.totalCostPrice.toFixed(2)}</td>
-                                <td className="p-2 text-right font-mono">${row.sellingPrice.toFixed(2)}</td><td className="p-2 text-right font-mono">${row.totalSellingPrice.toFixed(2)}</td>
-                                <td className="p-2 text-right font-mono text-red-400">${row.discount.toFixed(2)}</td><td className="p-2 text-right font-mono">${row.balanceAfterDiscount.toFixed(2)}</td>
-                                <td className="p-2 text-right font-mono font-bold text-green-400">${row.profit.toFixed(2)}</td><td className="p-2">{row.attendant}</td><td className="p-2">{row.dateTime}</td>
+                                <td className="p-2 text-right font-mono">{formatCurrency(row.costPrice)}</td><td className="p-2 text-right font-mono">{formatCurrency(row.totalCostPrice)}</td>
+                                <td className="p-2 text-right font-mono">{formatCurrency(row.sellingPrice)}</td><td className="p-2 text-right font-mono">{formatCurrency(row.totalSellingPrice)}</td>
+                                <td className="p-2 text-right font-mono text-red-400">{formatCurrency(row.discount)}</td><td className="p-2 text-right font-mono">{formatCurrency(row.balanceAfterDiscount)}</td>
+                                <td className="p-2 text-right font-mono font-bold text-green-400">{formatCurrency(row.profit)}</td><td className="p-2">{row.attendant}</td><td className="p-2">{row.dateTime}</td>
                             </tr>
                         ))}
                     </tbody>
@@ -245,10 +248,10 @@ const Reports: React.FC = () => {
                         <tr>
                             <td colSpan={6} className="p-2 text-right">Grand Total</td>
                             <td className="p-2 text-right">{grandTotals.quantitySold}</td><td></td>
-                            <td className="p-2 text-right font-mono">${grandTotals.totalCostPrice.toFixed(2)}</td><td></td>
-                            <td className="p-2 text-right font-mono">${grandTotals.totalSellingPrice.toFixed(2)}</td>
-                            <td className="p-2 text-right font-mono text-red-400">${grandTotals.discount.toFixed(2)}</td><td></td>
-                            <td className="p-2 text-right font-mono text-green-400">${grandTotals.profit.toFixed(2)}</td>
+                            <td className="p-2 text-right font-mono">{formatCurrency(grandTotals.totalCostPrice)}</td><td></td>
+                            <td className="p-2 text-right font-mono">{formatCurrency(grandTotals.totalSellingPrice)}</td>
+                            <td className="p-2 text-right font-mono text-red-400">{formatCurrency(grandTotals.discount)}</td><td></td>
+                            <td className="p-2 text-right font-mono text-green-400">{formatCurrency(grandTotals.profit)}</td>
                             <td colSpan={2}></td>
                         </tr>
                     </tfoot>

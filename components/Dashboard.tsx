@@ -1,9 +1,12 @@
 
+
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons';
 import { Sale } from '../types';
+import { useCurrency } from '../hooks/useCurrency';
+import { useTranslation } from '../hooks/useTranslation';
 
 const MetricCard: React.FC<{ title: string; value: string; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-gray-800 rounded-lg shadow-md flex items-center">
@@ -18,8 +21,9 @@ const MetricCard: React.FC<{ title: string; value: string; iconName: string; ico
 );
 
 const Dashboard: React.FC = () => {
-  // FIX: Destructure `branches` from context to look up branch names.
   const { sales, getMetric, branches } = useAppContext();
+  const { formatCurrency } = useCurrency();
+  const { t } = useTranslation();
 
   const totalRevenue = getMetric('totalRevenue');
   const salesVolume = getMetric('salesVolume');
@@ -37,7 +41,7 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <MetricCard title="Total Revenue" value={`$${totalRevenue.toLocaleString()}`} iconName="dashboard" iconBgColor="bg-blue-500" />
+        <MetricCard title={t('totalRevenue')} value={formatCurrency(totalRevenue)} iconName="dashboard" iconBgColor="bg-blue-500" />
         <MetricCard title="Sales Volume" value={salesVolume.toLocaleString()} iconName="pos" iconBgColor="bg-green-500" />
         <MetricCard title="New Customers" value={newCustomers.toLocaleString()} iconName="user" iconBgColor="bg-yellow-500" />
         <MetricCard title="Active Branches" value={activeBranches.toString()} iconName="inventory" iconBgColor="bg-purple-500" />
@@ -50,8 +54,8 @@ const Dashboard: React.FC = () => {
             <LineChart data={salesData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="name" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }} />
+              <YAxis stroke="#9ca3af" tickFormatter={(value) => formatCurrency(Number(value))} />
+              <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }} formatter={(value: number) => formatCurrency(value)} />
               <Legend />
               <Line type="monotone" dataKey="sales" stroke="#4f46e5" strokeWidth={2} activeDot={{ r: 8 }} />
             </LineChart>
@@ -63,8 +67,8 @@ const Dashboard: React.FC = () => {
             <BarChart data={branchData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
               <XAxis dataKey="name" stroke="#9ca3af" />
-              <YAxis stroke="#9ca3af" />
-              <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }} />
+              <YAxis stroke="#9ca3af" tickFormatter={(value) => formatCurrency(Number(value))} />
+              <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }} formatter={(value: number) => formatCurrency(value)} />
               <Legend />
               <Bar dataKey="performance" fill="#10b981" />
             </BarChart>
@@ -90,10 +94,9 @@ const Dashboard: React.FC = () => {
                 <tr key={sale.id} className={`border-b border-gray-700 ${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-800/50'}`}>
                   <td className="p-3 whitespace-nowrap">{sale.id}</td>
                   <td className="p-3 whitespace-nowrap">{sale.customer.name}</td>
-                  {/* FIX: Use `branchId` to find and display the branch name. */}
                   <td className="p-3 whitespace-nowrap">{branches.find(b => b.id === sale.branchId)?.name}</td>
                   <td className="p-3 whitespace-nowrap">{sale.date.toLocaleDateString()}</td>
-                  <td className="p-3 whitespace-nowrap text-right font-medium">${sale.total.toFixed(2)}</td>
+                  <td className="p-3 whitespace-nowrap text-right font-medium">{formatCurrency(sale.total)}</td>
                 </tr>
               ))}
             </tbody>

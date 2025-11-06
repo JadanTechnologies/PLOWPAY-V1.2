@@ -1,6 +1,7 @@
 
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -82,6 +83,8 @@ const generateMockTenants = (): Tenant[] => {
             status: statuses[i % statuses.length],
             planId: mockSubscriptionPlans[i % mockSubscriptionPlans.length].id,
             joinDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+            currency: isDemoTenant ? 'USD' : undefined,
+            language: isDemoTenant ? 'en' : undefined,
         });
     }
     return tenants.sort((a,b) => b.joinDate.getTime() - a.joinDate.getTime());
@@ -336,6 +339,23 @@ const mockNotificationSettings: NotificationSettings = {
     }
 };
 
+const mockSystemSettings: SystemSettings = {
+    currencies: [
+        { code: 'USD', name: 'United States Dollar', symbol: '$', enabled: true },
+        { code: 'NGN', name: 'Nigerian Naira', symbol: '₦', enabled: true },
+        { code: 'EUR', name: 'Euro', symbol: '€', enabled: true },
+        { code: 'GBP', name: 'British Pound', symbol: '£', enabled: false },
+    ],
+    defaultCurrency: 'USD',
+    languages: [
+        { code: 'en', name: 'English', enabled: true },
+        { code: 'es', name: 'Español', enabled: true },
+        { code: 'fr', name: 'Français', enabled: false },
+    ],
+    defaultLanguage: 'en',
+};
+
+
 const mockAnnouncements: Announcement[] = [
     { 
         id: 'anno-1', 
@@ -396,6 +416,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [staffRoles, setStaffRoles] = useState<StaffRole[]>(mockStaffRoles);
     const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
     const [tenants, setTenants] = useState<Tenant[]>(mockTenants);
+    const [currentTenant, setCurrentTenant] = useState<Tenant | null>(mockTenants[0] || null);
     const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
     const [adminRoles, setAdminRoles] = useState<AdminRole[]>(mockAdminRoles);
@@ -404,6 +425,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [pageContent, setPageContent] = useState<PageContent>(mockPageContent);
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(mockPaymentSettings);
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(mockNotificationSettings);
+    const [systemSettings, setSystemSettings] = useState<SystemSettings>(mockSystemSettings);
+    const [currentLanguage, setCurrentLanguage] = useState<string>(mockSystemSettings.defaultLanguage);
     const [trucks, setTrucks] = useState<Truck[]>(mockTrucks);
     const [shipments, setShipments] = useState<Shipment[]>(mockShipments);
     const [trackerProviders, setTrackerProviders] = useState<TrackerProvider[]>(mockTrackerProviders);
@@ -650,6 +673,14 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     
     const updateNotificationSettings = useCallback((newSettings: NotificationSettings) => {
         setNotificationSettings(newSettings);
+    }, []);
+
+    const updateSystemSettings = useCallback((newSettings: Partial<SystemSettings>) => {
+        setSystemSettings(prev => ({ ...prev, ...newSettings }));
+    }, []);
+    
+    const updateCurrentTenantSettings = useCallback((newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => {
+        setCurrentTenant(prev => prev ? { ...prev, ...newSettings } : null);
     }, []);
 
     const addSubscriptionPlan = useCallback((planData: Omit<SubscriptionPlan, 'id'>) => {
@@ -920,6 +951,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         allTenantPermissions,
         stockLogs,
         tenants,
+        currentTenant,
         subscriptionPlans,
         adminUsers,
         adminRoles,
@@ -929,6 +961,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         pageContent,
         paymentSettings,
         notificationSettings,
+        systemSettings,
         trucks,
         shipments,
         trackerProviders,
@@ -938,6 +971,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         journalEntries,
         announcements,
         searchTerm,
+        currentLanguage,
+        setCurrentLanguage,
         setSearchTerm,
         getMetric,
         addSale,
@@ -954,6 +989,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updateFaqs,
         updatePaymentSettings,
         updateNotificationSettings,
+        updateSystemSettings,
+        updateCurrentTenantSettings,
         addSubscriptionPlan,
         updateSubscriptionPlan,
         deleteSubscriptionPlan,

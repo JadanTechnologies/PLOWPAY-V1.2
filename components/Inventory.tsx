@@ -1,12 +1,16 @@
+
+
 import React, {useState, useMemo} from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, ProductVariant, StockLog } from '../types';
 import Icon from './icons';
+import { useCurrency } from '../hooks/useCurrency';
 
 type NewVariant = Omit<ProductVariant, 'id'>;
 
 const Inventory: React.FC = () => {
     const { products, branches, adjustStock, transferStock, addProduct, stockLogs, searchTerm } = useAppContext();
+    const { formatCurrency } = useCurrency();
     const [activeTab, setActiveTab] = useState<'inventory' | 'history'>('inventory');
     
     // Adjust Modal State
@@ -221,8 +225,8 @@ const Inventory: React.FC = () => {
                                             )}
                                             <td className="p-3 whitespace-nowrap">{variant.name}</td>
                                             <td className="p-3 whitespace-nowrap text-gray-400">{variant.sku}</td>
-                                            <td className="p-3 whitespace-nowrap text-right font-mono text-gray-400">${variant.costPrice.toFixed(2)}</td>
-                                            <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">${variant.sellingPrice.toFixed(2)}</td>
+                                            <td className="p-3 whitespace-nowrap text-right font-mono text-gray-400">{formatCurrency(variant.costPrice)}</td>
+                                            <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">{formatCurrency(variant.sellingPrice)}</td>
                                             {branches.map(branch => {
                                                 const stock = variant.stockByBranch[branch.id] || 0;
                                                 return (

@@ -3,6 +3,7 @@
 import React from 'react';
 import { Page } from '../App';
 import Icon from './icons';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface SidebarProps {
   currentPage: Page;
@@ -21,25 +22,32 @@ const NavItem: React.FC<{
 }> = ({ page, iconName, label, currentPage, setPage, isSidebarOpen }) => {
   const isActive = currentPage === page;
   return (
-    <li>
+    <li className="relative">
       <a
         href="#"
         onClick={(e) => {
           e.preventDefault();
           setPage(page);
         }}
-        className={`flex items-center p-2 rounded-lg transition-colors duration-200 ${
+        className={`group flex items-center p-3 my-1 rounded-lg transition-colors duration-200 ${
           isActive
             ? 'bg-indigo-600 text-white'
             : 'text-gray-400 hover:bg-gray-700 hover:text-white'
         }`}
       >
-        <Icon name={iconName} className="w-6 h-6" />
+        <Icon name={iconName} className="w-6 h-6 flex-shrink-0" />
         <span
-          className={`ml-3 transition-opacity duration-300 ${isSidebarOpen ? 'opacity-100' : 'opacity-0'}`}
+          className={`ml-3 whitespace-nowrap transition-all duration-200 ${
+            isSidebarOpen ? 'opacity-100' : 'opacity-0 w-0'
+          }`}
         >
           {label}
         </span>
+        {!isSidebarOpen && (
+          <div className="absolute left-full ml-4 w-auto min-w-max px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-md shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50">
+            {label}
+          </div>
+        )}
       </a>
     </li>
   );
@@ -47,15 +55,17 @@ const NavItem: React.FC<{
 
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOpen }) => {
+  const { t } = useTranslation();
+
   const navItems = [
-    { page: 'DASHBOARD', icon: 'dashboard', label: 'Dashboard' },
-    { page: 'POS', icon: 'pos', label: 'Point of Sale' },
-    { page: 'INVENTORY', icon: 'inventory', label: 'Inventory' },
-    { page: 'PURCHASES', icon: 'clipboard-document-list', label: 'Purchases' },
-    { page: 'LOGISTICS', icon: 'truck', label: 'Logistics' },
-    { page: 'ACCOUNTING', icon: 'calculator', label: 'Accounting' },
-    { page: 'REPORTS', icon: 'reports', label: 'Reports' },
-    { page: 'SETTINGS', icon: 'settings', label: 'Settings' },
+    { page: 'DASHBOARD', icon: 'dashboard', label: t('dashboard'), key: 'dashboard' },
+    { page: 'POS', icon: 'pos', label: t('pos'), key: 'pos' },
+    { page: 'INVENTORY', icon: 'inventory', label: t('inventory'), key: 'inventory' },
+    { page: 'PURCHASES', icon: 'clipboard-document-list', label: t('purchases'), key: 'purchases' },
+    { page: 'LOGISTICS', icon: 'truck', label: t('logistics'), key: 'logistics' },
+    { page: 'ACCOUNTING', icon: 'calculator', label: t('accounting'), key: 'accounting' },
+    { page: 'REPORTS', icon: 'reports', label: t('reports'), key: 'reports' },
+    { page: 'SETTINGS', icon: 'settings', label: t('settings'), key: 'settings' },
   ];
 
   return (
@@ -64,19 +74,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
         isOpen ? 'w-64' : 'w-20'
       }`}
     >
-      <div className="flex items-center justify-between h-16 px-4 border-b border-gray-700">
-        <div className={`flex items-center transition-opacity duration-300 ${isOpen ? 'opacity-100' : 'opacity-0'}`}>
-            <svg className="w-8 h-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+      <div className={`flex h-16 shrink-0 items-center border-b border-gray-700 ${isOpen ? 'px-4' : 'px-0 justify-center'}`}>
+        <div className={`flex items-center ${isOpen ? '' : 'w-full justify-center'}`}>
+            <svg className="w-8 h-8 text-indigo-400 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.825-1.106-2.156 0-2.981.54-.403 1.25-.624 1.968-.624a4.58 4.58 0 0 1 .844.119" />
             </svg>
-            <span className="ml-2 text-xl font-bold">FlowPay</span>
+            <span className={`ml-2 text-xl font-bold whitespace-nowrap transition-all duration-200 ${isOpen ? 'opacity-100' : 'opacity-0 w-0'}`}>FlowPay</span>
         </div>
-        <button onClick={() => setIsOpen(!isOpen)} className="p-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
-            <Icon name={isOpen ? 'chevronLeft' : 'chevronRight'} className="w-6 h-6" />
-        </button>
       </div>
 
-      <nav className="flex-1 px-2 py-4 space-y-2 overflow-y-auto">
+      <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
         <ul>
             {navItems.map(item => (
                 <NavItem 
@@ -91,6 +98,16 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
             ))}
         </ul>
       </nav>
+      
+       <div className="mt-auto p-2 border-t border-gray-700">
+        <button 
+          onClick={() => setIsOpen(!isOpen)} 
+          className="w-full flex items-center justify-center p-3 rounded-lg text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
+          aria-label={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+            <Icon name={isOpen ? 'chevronLeft' : 'chevronRight'} className="w-6 h-6" />
+        </button>
+      </div>
     </div>
   );
 };

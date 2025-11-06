@@ -1,8 +1,10 @@
 
+
 import React from 'react';
 import Icon from './icons';
 import { View } from '../App';
 import { useAppContext } from '../hooks/useAppContext';
+import { useCurrency } from '../hooks/useCurrency';
 
 
 interface LandingPageProps {
@@ -11,6 +13,7 @@ interface LandingPageProps {
 
 const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   const { brandConfig, subscriptionPlans } = useAppContext();
+  const { formatCurrency } = useCurrency();
 
   const features = [
     {
@@ -123,7 +126,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   <h3 className="text-2xl font-semibold text-white">{plan.name}</h3>
                   <p className="text-gray-400 mt-2 h-10">{plan.description}</p>
                   <div className="mt-4">
-                    <span className="text-5xl font-extrabold text-white">${plan.price}</span>
+                    <span className="text-5xl font-extrabold text-white">{formatCurrency(plan.price).replace(/\.00$/, '')}</span>
                     <span className="text-lg text-gray-400">/mo</span>
                   </div>
                   <ul className="mt-6 space-y-3 text-gray-400 flex-grow">

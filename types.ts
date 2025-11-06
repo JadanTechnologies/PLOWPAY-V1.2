@@ -1,4 +1,5 @@
 
+
 export interface Branch {
   id: string;
   name: string;
@@ -170,6 +171,8 @@ export interface Tenant {
   status: TenantStatus;
   planId: string;
   joinDate: Date;
+  currency?: string; // e.g. 'USD', 'NGN'
+  language?: string; // e.g. 'en', 'es'
 }
 
 export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED';
@@ -353,6 +356,26 @@ export interface Announcement {
   readBy: string[]; // Array of user IDs (admin or tenant)
 }
 
+export interface Currency {
+  code: string;
+  name: string;
+  symbol: string;
+  enabled: boolean;
+}
+
+export interface Language {
+  code: string;
+  name: string;
+  enabled: boolean;
+}
+
+export interface SystemSettings {
+  currencies: Currency[];
+  defaultCurrency: string;
+  languages: Language[];
+  defaultLanguage: string;
+}
+
 
 export interface AppContextType {
   products: Product[];
@@ -363,6 +386,7 @@ export interface AppContextType {
   allTenantPermissions: TenantPermission[];
   stockLogs: StockLog[];
   tenants: Tenant[];
+  currentTenant: Tenant | null;
   subscriptionPlans: SubscriptionPlan[];
   adminUsers: AdminUser[];
   adminRoles: AdminRole[];
@@ -372,6 +396,7 @@ export interface AppContextType {
   pageContent: PageContent;
   paymentSettings: PaymentSettings;
   notificationSettings: NotificationSettings;
+  systemSettings: SystemSettings;
   trucks: Truck[];
   shipments: Shipment[];
   trackerProviders: TrackerProvider[];
@@ -381,6 +406,8 @@ export interface AppContextType {
   journalEntries: JournalEntry[];
   announcements: Announcement[];
   searchTerm: string;
+  currentLanguage: string;
+  setCurrentLanguage: (langCode: string) => void;
   setSearchTerm: (term: string) => void;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
   addSale: (saleData: Omit<Sale, 'id' | 'date'>) => Promise<{success: boolean, message: string, newSale?: Sale}>;
@@ -397,6 +424,8 @@ export interface AppContextType {
   updateFaqs: (newFaqs: FaqItem[]) => void;
   updatePaymentSettings: (newSettings: PaymentSettings) => void;
   updateNotificationSettings: (newSettings: NotificationSettings) => void;
+  updateSystemSettings: (newSettings: Partial<SystemSettings>) => void;
+  updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => void;
   addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => void;
   updateSubscriptionPlan: (planId: string, planData: Partial<Omit<SubscriptionPlan, 'id'>>) => void;
   deleteSubscriptionPlan: (planId: string) => void;

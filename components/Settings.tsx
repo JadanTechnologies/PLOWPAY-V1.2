@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons';
@@ -63,7 +65,8 @@ const CollapsiblePermissionSection: React.FC<{
 const Settings: React.FC = () => {
     const { 
         branches, staff, staffRoles, allTenantPermissions, 
-        addBranch, addStaff, addStaffRole, updateStaffRole, deleteStaffRole 
+        addBranch, addStaff, addStaffRole, updateStaffRole, deleteStaffRole,
+        systemSettings, currentTenant, updateCurrentTenantSettings
     } = useAppContext();
     const [activeTab, setActiveTab] = useState<SettingsTab>('general');
 
@@ -77,6 +80,16 @@ const Settings: React.FC = () => {
     const [staffForm, setStaffForm] = useState({ name: '', email: '', username: '', password: '', roleId: staffRoles[0]?.id || '', branchId: branches[0]?.id || '' });
     const [roleForm, setRoleForm] = useState<{ id: string | null; name: string; permissions: Set<TenantPermission> }>({ id: null, name: '', permissions: new Set() });
     
+    const [generalSettings, setGeneralSettings] = useState({
+        currency: currentTenant?.currency || systemSettings.defaultCurrency,
+        language: currentTenant?.language || systemSettings.defaultLanguage,
+    });
+    
+    const handleGeneralSettingsSave = () => {
+        updateCurrentTenantSettings(generalSettings);
+        alert('Settings saved!');
+    }
+
     const roleMap = new Map(staffRoles.map(r => [r.id, r.name]));
     const branchMap = new Map(branches.map(b => [b.id, b.name]));
 
@@ -148,15 +161,15 @@ const Settings: React.FC = () => {
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-400">Business Name</label>
-                                    <input type="text" defaultValue="Tenant Business" className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                    <input type="text" defaultValue={currentTenant?.businessName} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-400">Address</label>
-                                    <input type="text" defaultValue="123 Main St, Anytown, USA" className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                    <input type="text" defaultValue={currentTenant?.companyAddress} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-400">Phone</label>
-                                    <input type="text" defaultValue="(555) 123-4567" className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                    <input type="text" defaultValue={currentTenant?.companyPhone} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
                                 </div>
                             </div>
                         </div>
@@ -165,24 +178,24 @@ const Settings: React.FC = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-400">Currency</label>
-                                    <select className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
-                                        <option>USD ($)</option>
-                                        <option>EUR (€)</option>
-                                        <option>GBP (£)</option>
+                                    <select value={generalSettings.currency} onChange={e => setGeneralSettings({...generalSettings, currency: e.target.value})} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
+                                        {systemSettings.currencies.filter(c => c.enabled).map(c => (
+                                            <option key={c.code} value={c.code}>{c.name} ({c.symbol})</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-400">Timezone</label>
-                                    <select className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
-                                        <option>(GMT-05:00) Eastern Time</option>
-                                        <option>(GMT-06:00) Central Time</option>
-                                        <option>(GMT-08:00) Pacific Time</option>
+                                    <label className="block text-sm font-medium text-gray-400">Language</label>
+                                    <select value={generalSettings.language} onChange={e => setGeneralSettings({...generalSettings, language: e.target.value})} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
+                                       {systemSettings.languages.filter(l => l.enabled).map(l => (
+                                            <option key={l.code} value={l.code}>{l.name}</option>
+                                        ))}
                                     </select>
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
-                            <button className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md">Save Changes</button>
+                            <button onClick={handleGeneralSettingsSave} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md">Save Changes</button>
                         </div>
                     </div>
                 );

@@ -1,8 +1,10 @@
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import Icon from './icons';
 import { useAppContext } from '../hooks/useAppContext';
 import { Announcement } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface HeaderProps {
   pageTitle: string;
@@ -11,11 +13,29 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
   const { logout, setSearchTerm: setGlobalSearchTerm, announcements, currentAdminUser, markAnnouncementAsRead } = useAppContext();
+  const { t, currentLanguage, changeLanguage, availableLanguages } = useTranslation();
+  
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
+  const [isLanguageOpen, setLanguageOpen] = useState(false);
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [time, setTime] = useState(new Date());
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     const timerId = setInterval(() => setTime(new Date()), 1000);
@@ -70,17 +90,18 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
           });
       }
   };
+  
+  const handleLanguageChange = (langCode: string) => {
+      changeLanguage(langCode);
+      setLanguageOpen(false);
+  };
 
   // Guard against undefined pageTitle and handle pre-formatted titles
   const title = pageTitle || '';
   const formattedTitle = title.includes(' ')
     ? title
-    : title
-        .toLowerCase()
-        .split('_')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-
+    : t(title.toLowerCase().replace(/_/g, ''));
+        
   return (
     <header className="flex items-center justify-between h-16 px-4 bg-gray-800 border-b border-gray-700 shadow-md">
       <div className="flex items-center">
@@ -90,7 +111,14 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
         <h1 className="text-xl font-semibold text-white">{formattedTitle}</h1>
       </div>
       
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 md:space-x-4">
+        <div className="relative group flex items-center">
+            <span className={`h-3 w-3 rounded-full transition-colors ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`}></span>
+            <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-gray-900 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                {isOnline ? 'Online' : 'Offline - Some features may be unavailable'}
+            </span>
+        </div>
+
         <div className="hidden md:block text-lg font-medium text-gray-300 font-mono tracking-wider tabular-nums">
           {time.toLocaleTimeString()}
         </div>
@@ -110,7 +138,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
             placeholder="Search..."
             value={localSearchTerm}
             onChange={(e) => setLocalSearchTerm(e.target.value)}
-            className="w-full py-2 pl-10 pr-10 text-white bg-gray-700 border border-gray-600 rounded-md sm:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            className="w-full py-2 pl-10 pr-10 text-white bg-gray-700 border border-gray-600 rounded-md sm:w-48 md:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
           {localSearchTerm && (
             <button
@@ -122,6 +150,26 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
             </button>
           )}
         </div>
+
+        <div className="relative">
+            <button onClick={() => setLanguageOpen(!isLanguageOpen)} className="p-2 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white focus:outline-none">
+                <Icon name="globe" className="w-6 h-6" />
+            </button>
+            {isLanguageOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-gray-700 rounded-md shadow-lg z-50 border border-gray-600">
+                    <ul className="py-1">
+                        {availableLanguages.map(lang => (
+                             <li key={lang.code}>
+                                <button onClick={() => handleLanguageChange(lang.code)} className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-600 ${currentLanguage === lang.code ? 'text-indigo-400 font-semibold' : 'text-gray-300'}`}>
+                                    {lang.name}
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </div>
+
 
         <div className="relative">
             <button onClick={handleNotificationsToggle} className="relative p-2 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white focus:outline-none">

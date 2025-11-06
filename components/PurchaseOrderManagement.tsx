@@ -1,11 +1,14 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { PurchaseOrder, PurchaseOrderItem } from '../types';
 import Icon from './icons';
+import { useCurrency } from '../hooks/useCurrency';
 
 const PurchaseOrderManagement: React.FC = () => {
     const { purchaseOrders, suppliers, branches, products, addPurchaseOrder, updatePurchaseOrderStatus } = useAppContext();
+    const { formatCurrency } = useCurrency();
     const [isModalOpen, setModalOpen] = useState(false);
 
     const initialFormState = {
@@ -100,7 +103,7 @@ const PurchaseOrderManagement: React.FC = () => {
                                 <td className="p-3">{supplierMap.get(po.supplierId)}</td>
                                 <td className="p-3">{branchMap.get(po.destinationBranchId)}</td>
                                 <td className="p-3 text-sm text-gray-400">{po.createdAt.toLocaleDateString()}</td>
-                                <td className="p-3 text-right font-mono">${po.total.toFixed(2)}</td>
+                                <td className="p-3 text-right font-mono">{formatCurrency(po.total)}</td>
                                 <td className="p-3 text-center">{getStatusBadge(po.status)}</td>
                                 <td className="p-3 text-center">
                                     {po.status === 'ORDERED' && <button onClick={() => updatePurchaseOrderStatus(po.id, 'RECEIVED')} className="text-green-400 text-sm font-semibold">Receive Stock</button>}
@@ -134,7 +137,7 @@ const PurchaseOrderManagement: React.FC = () => {
                              <button onClick={addItemRow} className="text-indigo-400 text-sm font-semibold">+ Add Item</button>
                         </div>
                         <div className="mt-6 flex justify-between items-center pt-4 border-t border-gray-700">
-                             <div className="text-xl font-bold">Total: ${totalCost.toFixed(2)}</div>
+                             <div className="text-xl font-bold">Total: {formatCurrency(totalCost)}</div>
                              <div className="flex gap-3"><button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500">Cancel</button><button onClick={handleSubmit} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500">Create PO</button></div>
                         </div>
                     </div>
