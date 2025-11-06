@@ -85,6 +85,7 @@ export interface Sale {
   };
   payments: Payment[];
   change: number;
+  staffId: string;
 }
 
 export type StockLogAction = 'ADJUSTMENT' | 'TRANSFER' | 'SALE' | 'PURCHASE_RECEIVED';

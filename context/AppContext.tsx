@@ -157,6 +157,7 @@ const generateMockSales = (products: Product[]): Sale[] => {
             customer: customers[Math.floor(Math.random() * customers.length)],
             payments: [{ method: 'Cash', amount: total }],
             change: 0,
+            staffId: mockStaff[Math.floor(Math.random() * mockStaff.length)].id,
         });
     }
     return sales.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -704,7 +705,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             branchId: 'DIRECT_SALE',
             customer,
             payments: [{ method: 'Cargo Sale', amount: total }],
-            change: 0
+            change: 0,
+            staffId: 'staff-1', // Default staff for direct cargo sales
         };
         setSales(prev => [newSale, ...prev]);
 

@@ -7,10 +7,19 @@ import Calculator from './Calculator';
 
 const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, variant: ProductVariant) => void }> = ({ product, onAddToCart }) => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
+  const [isAdding, setIsAdding] = useState(false);
+
+  const handleAddToCartClick = () => {
+      setIsAdding(true);
+      setTimeout(() => {
+          onAddToCart(product, selectedVariant);
+          setIsAdding(false);
+      }, 300);
+  };
 
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transform hover:scale-105 transition-transform duration-200 cursor-pointer flex flex-col">
-      <div onClick={() => onAddToCart(product, selectedVariant)}>
+      <div onClick={handleAddToCartClick}>
         <img className="w-full aspect-[4/3] object-cover rounded-t-lg" src={`https://picsum.photos/seed/${product.id}/400/300`} alt={product.name} />
         <div className="p-4 flex-grow">
           <h3 className="font-bold text-lg text-white mb-1 truncate">{product.name}</h3>
@@ -31,8 +40,15 @@ const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, 
           )}
         <div className="flex justify-between items-center">
           <p className="text-xl font-semibold text-indigo-400">${selectedVariant.sellingPrice.toFixed(2)}</p>
-          <button onClick={() => onAddToCart(product, selectedVariant)} className="bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-500 transition-colors">
-            <Icon name="plus" className="w-5 h-5" />
+          <button onClick={handleAddToCartClick} disabled={isAdding} className="bg-indigo-600 text-white rounded-full p-2 hover:bg-indigo-500 transition-colors w-9 h-9 flex items-center justify-center">
+            {isAdding ? (
+                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            ) : (
+                <Icon name="plus" className="w-5 h-5" />
+            )}
           </button>
         </div>
       </div>
@@ -48,7 +64,9 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
     const totalPaid = useMemo(() => payments.reduce((acc, p) => acc + p.amount, 0), [payments]);
     const remaining = useMemo(() => totalDue - totalPaid, [totalDue, totalPaid]);
     const change = useMemo(() => (remaining < 0 ? Math.abs(remaining) : 0), [remaining]);
-    const isFullyPaid = remaining <= 0;
+    
+    // A sale is completable if some payment is made, or if it's a zero-value sale.
+    const isCompletable = totalPaid > 0 || totalDue === 0;
 
     const addPayment = () => {
         const amount = parseFloat(currentAmount);
@@ -111,24 +129,28 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
                          </ul>
                          <div className="border-t border-gray-600 pt-2 space-y-1 mt-2 text-lg">
                             <div className="flex justify-between"><span>Total Paid:</span><span>${totalPaid.toFixed(2)}</span></div>
-                            <div className={`flex justify-between font-bold ${isFullyPaid ? 'text-green-400' : 'text-red-400'}`}><span>Remaining:</span><span>${remaining > 0 ? remaining.toFixed(2) : '0.00'}</span></div>
+                            <div className={`flex justify-between font-bold ${remaining <= 0 ? 'text-green-400' : 'text-red-400'}`}><span>Remaining:</span><span>${remaining > 0 ? remaining.toFixed(2) : '0.00'}</span></div>
                             {change > 0 && <div className="flex justify-between font-bold text-yellow-400"><span>Change Due:</span><span>${change.toFixed(2)}</span></div>}
                          </div>
                     </div>
                 </div>
 
-                <button onClick={() => onConfirm(payments, change)} disabled={!isFullyPaid} className="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-md text-xl disabled:bg-gray-600 disabled:cursor-not-allowed">
-                    Complete Sale
+                <button onClick={() => onConfirm(payments, change)} className="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-md text-xl">
+                    {remaining > 0 ? 'Complete with Deposit' : 'Complete Sale'}
                 </button>
+                 <p className="text-xs text-gray-500 text-center mt-2">
+                    {remaining > 0 ? `An outstanding balance of $${remaining.toFixed(2)} will be recorded as credit.` : 'Payment covers total amount.'}
+                </p>
             </div>
         </div>
     );
 };
 
 const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, onClose }) => {
-    const { brandConfig } = useAppContext();
+    const { brandConfig, staff } = useAppContext();
     const subtotal = sale.items.reduce((acc, item) => acc + item.sellingPrice * item.quantity, 0);
     const tax = sale.total - subtotal;
+    const cashier = staff.find(s => s.id === sale.staffId);
 
     const handlePrint = () => {
         window.print();
@@ -152,6 +174,7 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
                         <div>
                             <p><strong>Sale ID:</strong> {sale.id}</p>
                             <p><strong>Date:</strong> {sale.date.toLocaleString()}</p>
+                             <p><strong>Cashier:</strong> {cashier?.name || 'N/A'}</p>
                         </div>
                         <div>
                              <p><strong>Customer:</strong> {sale.customer.name}</p>
@@ -275,14 +298,22 @@ const PointOfSale: React.FC = () => {
 
   const handleConfirmPayment = async (payments: Payment[], change: number) => {
       if (cart.length === 0) return;
+
+      const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0) - change;
+      const finalPayments = [...payments];
+
+      if (total > totalPaid) {
+          finalPayments.push({ method: 'Credit', amount: total - totalPaid });
+      }
       
       const saleData = {
           items: cart,
           total: total,
           branchId: branches[0]?.id || 'branch-1', // Default to first branch
           customer: customer,
-          payments: payments,
-          change: change
+          payments: finalPayments,
+          change: change,
+          staffId: 'staff-1', // Mock: assume staff-1 is logged in
       };
 
       const result = await addSale(saleData);
