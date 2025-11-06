@@ -412,11 +412,17 @@ export interface Language {
   enabled: boolean;
 }
 
+export interface MaintenanceSettings {
+  isActive: boolean;
+  message: string;
+}
+
 export interface SystemSettings {
   currencies: Currency[];
   defaultCurrency: string;
   languages: Language[];
   defaultLanguage: string;
+  maintenanceSettings: MaintenanceSettings;
 }
 
 export type PaymentTransactionStatus = 'COMPLETED' | 'PENDING' | 'FAILED' | 'REJECTED';
@@ -512,6 +518,7 @@ export interface AppContextType {
   updatePaymentSettings: (newSettings: PaymentSettings) => void;
   updateNotificationSettings: (newSettings: NotificationSettings) => void;
   updateSystemSettings: (newSettings: Partial<SystemSettings>) => void;
+  updateMaintenanceSettings: (settings: MaintenanceSettings) => void;
   updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => void;
   updateTenantAutomations: (newAutomations: Partial<TenantAutomations>) => void;
   addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => void;

@@ -21,6 +21,7 @@ const translations: Record<string, Record<string, string>> = {
     paymentGateways: 'Payment Gateways',
     transactions: 'Transactions',
     templates: 'Templates',
+    maintenance: 'Maintenance',
   },
   es: {
     dashboard: 'Tablero',
@@ -39,6 +40,7 @@ const translations: Record<string, Record<string, string>> = {
     paymentGateways: 'Pasarelas de Pago',
     transactions: 'Transacciones',
     templates: 'Plantillas',
+    maintenance: 'Mantenimiento',
   },
   fr: {
     dashboard: 'Tableau de Bord',
@@ -57,6 +59,7 @@ const translations: Record<string, Record<string, string>> = {
     paymentGateways: 'Passerelles de Paiement',
     transactions: 'Transactions',
     templates: 'Modèles',
+    maintenance: 'Maintenance',
   }
 };
 

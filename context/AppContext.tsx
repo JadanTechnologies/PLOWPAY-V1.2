@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -405,6 +405,10 @@ const mockSystemSettings: SystemSettings = {
         { code: 'fr', name: 'Français', enabled: false },
     ],
     defaultLanguage: 'en',
+    maintenanceSettings: {
+        isActive: false,
+        message: 'The platform is currently undergoing scheduled maintenance. We expect to be back online shortly. Thank you for your patience.'
+    }
 };
 
 
@@ -902,6 +906,13 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
 
     const updateSystemSettings = useCallback((newSettings: Partial<SystemSettings>) => {
         setSystemSettings(prev => ({ ...prev, ...newSettings }));
+    }, []);
+
+    const updateMaintenanceSettings = useCallback((settings: MaintenanceSettings) => {
+        setSystemSettings(prev => ({
+            ...prev,
+            maintenanceSettings: settings
+        }));
     }, []);
     
     const updateCurrentTenantSettings = useCallback((newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => {
@@ -1417,6 +1428,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updatePaymentSettings,
         updateNotificationSettings,
         updateSystemSettings,
+        updateMaintenanceSettings,
         updateCurrentTenantSettings,
         updateTenantAutomations,
         addSubscriptionPlan,

@@ -1,9 +1,5 @@
 
 
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -15,10 +11,11 @@ import { FaqItem, PageContent } from './types';
 import Icon from './components/icons';
 import SignUp from './components/SignUp';
 import ForgotPassword from './components/ForgotPassword';
+import MaintenancePage from './components/MaintenancePage';
 
 
 export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'LOGISTICS' | 'PURCHASES' | 'ACCOUNTING' | 'REPORTS' | 'SETTINGS' | 'CREDIT_MANAGEMENT' | 'CONSIGNMENT' | 'BILLING' | 'CHECKOUT';
-export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENT_GATEWAYS' | 'PAYMENT_TRANSACTIONS' | 'NOTIFICATIONS' | 'TEMPLATE_MANAGEMENT' | 'SETTINGS' | 'ANNOUNCEMENTS';
+export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENT_GATEWAYS' | 'PAYMENT_TRANSACTIONS' | 'NOTIFICATIONS' | 'TEMPLATE_MANAGEMENT' | 'SETTINGS' | 'ANNOUNCEMENTS' | 'MAINTENANCE';
 export type View = 'landing' | 'login' | 'signup' | 'forgot_password' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq' | 'help' | 'api' | 'blog' | 'app';
 
 // InfoPage component to display text-based content
@@ -125,7 +122,9 @@ const App: React.FC = () => {
   };
   
   const RenderedView = () => {
-      const { brandConfig } = useAppContext();
+      const { brandConfig, systemSettings } = useAppContext();
+      const { isActive: isMaintenanceMode, message: maintenanceMessage } = systemSettings.maintenanceSettings || { isActive: false, message: '' };
+
       useEffect(() => {
         document.title = `${brandConfig.name} - SaaS POS`;
         const favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
@@ -133,6 +132,10 @@ const App: React.FC = () => {
             favicon.href = brandConfig.faviconUrl;
         }
     }, [brandConfig]);
+
+    if (isMaintenanceMode && userRole !== 'SUPER_ADMIN') {
+        return <MaintenancePage message={maintenanceMessage} />;
+    }
 
     switch (view) {
       case 'landing':

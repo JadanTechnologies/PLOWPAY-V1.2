@@ -1,6 +1,5 @@
 
 
-
 import React from 'react';
 import { SuperAdminPage } from '../../App';
 import Icon from '../icons';
@@ -69,6 +68,7 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
     { page: 'ANNOUNCEMENTS', icon: 'chat-bubble-left-right', label: 'Announcements', permission: 'manageAnnouncements' },
     { page: 'TEAM_MANAGEMENT', icon: 'users', label: 'Team', permission: 'manageTeam' },
     { page: 'ROLE_MANAGEMENT', icon: 'lock-closed', label: 'Roles', permission: 'manageRoles' },
+    { page: 'MAINTENANCE', icon: 'settings', label: 'Maintenance', permission: 'manageSystemSettings' },
     { page: 'SETTINGS', icon: 'settings', label: 'Settings', permission: 'manageSystemSettings' },
   ] as const;
 
