@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant } from '../types';
@@ -228,17 +227,20 @@ const PointOfSale: React.FC = () => {
           ) : (
             <ul className="space-y-3">
               {cart.map(item => (
-                <li key={item.variantId} className="flex items-center justify-between bg-gray-700 p-2 rounded-md">
-                  <div className="flex-1 mr-2">
-                    <p className="font-semibold truncate">{item.name}</p>
-                    <p className="text-sm text-gray-400">{item.variantName}</p>
-                    <p className="text-sm text-indigo-400">${item.sellingPrice.toFixed(2)}</p>
-                  </div>
-                  <div className="flex items-center">
-                    <button onClick={() => handleUpdateQuantity(item.variantId, -1)} className="p-1 rounded-full bg-gray-600 hover:bg-gray-500"><Icon name="minus" className="w-4 h-4" /></button>
-                    <span className="w-8 text-center font-bold">{item.quantity}</span>
-                    <button onClick={() => handleUpdateQuantity(item.variantId, 1)} className="p-1 rounded-full bg-gray-600 hover:bg-gray-500"><Icon name="plus" className="w-4 h-4" /></button>
-                  </div>
+                <li key={item.variantId} className="flex items-center justify-between bg-gray-700 p-3 rounded-md">
+                    <div className="flex-1 mr-2">
+                        <p className="font-semibold truncate">{item.name}</p>
+                        <p className="text-sm font-medium text-indigo-300">{item.variantName}</p>
+                        <p className="text-xs text-gray-400">{item.quantity} &times; ${item.sellingPrice.toFixed(2)}</p>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                        <p className="font-bold text-lg w-20 text-right">${(item.sellingPrice * item.quantity).toFixed(2)}</p>
+                        <div className="flex items-center">
+                            <button onClick={() => handleUpdateQuantity(item.variantId, -1)} className="p-1 rounded-full bg-gray-600 hover:bg-gray-500"><Icon name="minus" className="w-4 h-4" /></button>
+                            <span className="w-8 text-center font-bold">{item.quantity}</span>
+                            <button onClick={() => handleUpdateQuantity(item.variantId, 1)} className="p-1 rounded-full bg-gray-600 hover:bg-gray-500"><Icon name="plus" className="w-4 h-4" /></button>
+                        </div>
+                    </div>
                 </li>
               ))}
             </ul>
