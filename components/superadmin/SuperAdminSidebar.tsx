@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { SuperAdminPage } from '../../App';
 import Icon from '../icons';
@@ -61,8 +62,10 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
     { page: 'PLATFORM_DASHBOARD', icon: 'chart-pie', label: 'Dashboard', permission: 'viewPlatformDashboard' },
     { page: 'TENANTS', icon: 'briefcase', label: 'Tenants', permission: 'manageTenants' },
     { page: 'SUBSCRIPTIONS', icon: 'credit-card', label: 'Subscriptions', permission: 'manageSubscriptions' },
-    { page: 'PAYMENTS', icon: 'cash', label: 'Payments', permission: 'managePaymentGateways' },
-    { page: 'NOTIFICATIONS', icon: 'notification', label: 'Notifications', permission: 'manageNotificationSettings' },
+    { page: 'PAYMENT_TRANSACTIONS', icon: 'calculator', label: 'Transactions', permission: 'managePaymentGateways' },
+    { page: 'PAYMENT_GATEWAYS', icon: 'cash', label: 'Payment Gateways', permission: 'managePaymentGateways' },
+    { page: 'NOTIFICATIONS', icon: 'notification', label: 'Notification Settings', permission: 'manageNotificationSettings' },
+    { page: 'TEMPLATE_MANAGEMENT', icon: 'clipboard-document-list', label: 'Templates', permission: 'manageNotificationSettings' },
     { page: 'ANNOUNCEMENTS', icon: 'chat-bubble-left-right', label: 'Announcements', permission: 'manageAnnouncements' },
     { page: 'TEAM_MANAGEMENT', icon: 'users', label: 'Team', permission: 'manageTeam' },
     { page: 'ROLE_MANAGEMENT', icon: 'lock-closed', label: 'Roles', permission: 'manageRoles' },

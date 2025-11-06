@@ -17,6 +17,10 @@ const translations: Record<string, Record<string, string>> = {
     creditManagement: 'Credit Management',
     consignment: 'Consignment',
     billing: 'Billing',
+    checkout: 'Checkout',
+    paymentGateways: 'Payment Gateways',
+    transactions: 'Transactions',
+    templates: 'Templates',
   },
   es: {
     dashboard: 'Tablero',
@@ -31,6 +35,10 @@ const translations: Record<string, Record<string, string>> = {
     creditManagement: 'Gestión de Crédito',
     consignment: 'Consignación',
     billing: 'Facturación',
+    checkout: 'Pagar',
+    paymentGateways: 'Pasarelas de Pago',
+    transactions: 'Transacciones',
+    templates: 'Plantillas',
   },
   fr: {
     dashboard: 'Tableau de Bord',
@@ -45,6 +53,10 @@ const translations: Record<string, Record<string, string>> = {
     creditManagement: 'Gestion de Crédit',
     consignment: 'Consignation',
     billing: 'Facturation',
+    checkout: 'Paiement',
+    paymentGateways: 'Passerelles de Paiement',
+    transactions: 'Transactions',
+    templates: 'Modèles',
   }
 };
 

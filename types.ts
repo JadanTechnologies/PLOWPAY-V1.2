@@ -419,6 +419,40 @@ export interface SystemSettings {
   defaultLanguage: string;
 }
 
+export type PaymentTransactionStatus = 'COMPLETED' | 'PENDING' | 'FAILED' | 'REJECTED';
+
+export interface PaymentTransaction {
+    id: string;
+    tenantId: string;
+    planId: string;
+    amount: number;
+    method: string; // 'Stripe', 'Paystack', 'Manual'
+    status: PaymentTransactionStatus;
+    createdAt: Date;
+    proofOfPaymentUrl?: string;
+    transactionId?: string; // From payment gateway
+}
+
+export interface EmailTemplate {
+    id: string;
+    name: string;
+    subject: string;
+    body: string;
+}
+
+export interface SmsTemplate {
+    id: string;
+    name: string;
+    body: string;
+}
+
+export interface InAppNotification {
+  id: string;
+  userId: string; // Tenant ID for tenant notifications
+  message: string;
+  read: boolean;
+  createdAt: Date;
+}
 
 export interface AppContextType {
   products: Product[];
@@ -451,6 +485,10 @@ export interface AppContextType {
   customers: Customer[];
   consignments: Consignment[];
   categories: Category[];
+  paymentTransactions: PaymentTransaction[];
+  emailTemplates: EmailTemplate[];
+  smsTemplates: SmsTemplate[];
+  inAppNotifications: InAppNotification[];
   searchTerm: string;
   currentLanguage: string;
   currentCurrency: string;
@@ -508,5 +546,10 @@ export interface AppContextType {
   activateSubscription: (tenantId: string, planId: string) => void;
   changeSubscriptionPlan: (tenantId: string, newPlanId: string) => void;
   processExpiredTrials: () => { processed: number; suspended: number };
+  processSubscriptionPayment: (tenantId: string, planId: string, method: string, amount: number, success: boolean, proofOfPaymentUrl?: string) => Promise<{success: boolean, message: string}>;
+  updatePaymentTransactionStatus: (transactionId: string, newStatus: 'COMPLETED' | 'REJECTED') => void;
+  updateEmailTemplate: (templateId: string, newSubject: string, newBody: string) => void;
+  updateSmsTemplate: (templateId: string, newBody: string) => void;
+  markInAppNotificationAsRead: (notificationId: string) => void;
   logout?: () => void;
 }

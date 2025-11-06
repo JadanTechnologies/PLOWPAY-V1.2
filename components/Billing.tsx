@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { SubscriptionPlan } from '../types';
@@ -8,7 +9,7 @@ import { useCurrency } from '../hooks/useCurrency';
 const PlanCard: React.FC<{
     plan: SubscriptionPlan;
     isCurrent: boolean;
-    onSelect: (planId: string) => void;
+    onSelect: (plan: SubscriptionPlan) => void;
 }> = ({ plan, isCurrent, onSelect }) => {
     const { formatCurrency } = useCurrency();
     const isRecommended = plan.recommended;
@@ -31,7 +32,7 @@ const PlanCard: React.FC<{
                 ))}
             </ul>
             <button
-                onClick={() => onSelect(plan.id)}
+                onClick={() => onSelect(plan)}
                 disabled={isCurrent}
                 className={`w-full mt-8 py-3 px-6 rounded-lg font-semibold transition-colors ${isCurrent ? 'bg-indigo-600 text-white cursor-not-allowed' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
             >
@@ -41,32 +42,21 @@ const PlanCard: React.FC<{
     );
 };
 
+interface BillingProps {
+    onStartCheckout: (plan: SubscriptionPlan) => void;
+}
 
-const Billing: React.FC = () => {
-    const { currentTenant, subscriptionPlans, changeSubscriptionPlan } = useAppContext();
+const Billing: React.FC<BillingProps> = ({ onStartCheckout }) => {
+    const { currentTenant, subscriptionPlans } = useAppContext();
     const { formatCurrency } = useCurrency();
-    const [isLoading, setIsLoading] = useState(false);
-    const [showConfirmModal, setShowConfirmModal] = useState<SubscriptionPlan | null>(null);
 
     const currentPlan = useMemo(() => {
         return subscriptionPlans.find(p => p.id === currentTenant?.planId);
     }, [currentTenant, subscriptionPlans]);
 
-    const handleSelectPlan = (planId: string) => {
-        const selectedPlan = subscriptionPlans.find(p => p.id === planId);
-        if (selectedPlan && currentTenant && selectedPlan.id !== currentTenant.planId) {
-            setShowConfirmModal(selectedPlan);
-        }
-    };
-
-    const handleConfirmChange = () => {
-        if (showConfirmModal && currentTenant) {
-            setIsLoading(true);
-            setTimeout(() => { // Simulate API call
-                changeSubscriptionPlan(currentTenant.id, showConfirmModal.id);
-                setIsLoading(false);
-                setShowConfirmModal(null);
-            }, 1000);
+    const handleSelectPlan = (plan: SubscriptionPlan) => {
+        if (currentTenant && plan.id !== currentTenant.planId) {
+            onStartCheckout(plan);
         }
     };
     
@@ -136,26 +126,6 @@ const Billing: React.FC = () => {
                 ))}
               </div>
             </div>
-
-            {/* Confirmation Modal */}
-            {showConfirmModal && (
-                 <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-                    <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md text-center">
-                        <h3 className="text-xl font-bold mb-2">Confirm Plan Change</h3>
-                        <p className="text-gray-400 mb-4">You are about to switch to the <strong className="text-white">{showConfirmModal.name}</strong> plan for <strong className="text-white">{formatCurrency(showConfirmModal.price)}/mo</strong>.</p>
-                        <p className="text-xs text-gray-500 mb-6">Changes will be prorated and applied to your next billing cycle.</p>
-                        <div className="flex justify-center gap-4">
-                            <button onClick={() => setShowConfirmModal(null)} className="px-6 py-2 rounded-md bg-gray-600 hover:bg-gray-500 font-semibold" disabled={isLoading}>
-                                Cancel
-                            </button>
-                            <button onClick={handleConfirmChange} className="px-6 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 font-semibold flex items-center" disabled={isLoading}>
-                                {isLoading && <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>}
-                                {isLoading ? 'Switching...' : 'Confirm'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

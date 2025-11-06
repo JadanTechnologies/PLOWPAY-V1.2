@@ -1,11 +1,6 @@
 
-
-
-
-
-
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -432,6 +427,28 @@ const mockAnnouncements: Announcement[] = [
     }
 ];
 
+const mockPaymentTransactions: PaymentTransaction[] = [
+    { id: 'txn-1', tenantId: 'tenant-1', planId: 'plan_pro', amount: 79, method: 'Stripe', status: 'COMPLETED', createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), transactionId: 'pi_123' },
+    { id: 'txn-2', tenantId: 'tenant-2', planId: 'plan_basic', amount: 29, method: 'Manual', status: 'PENDING', createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), proofOfPaymentUrl: '/mock/proof.jpg' },
+    { id: 'txn-3', tenantId: 'tenant-4', planId: 'plan_pro', amount: 79, method: 'Stripe', status: 'FAILED', createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), transactionId: 'pi_456' },
+];
+
+const mockEmailTemplates: EmailTemplate[] = [
+    { id: 'email-welcome', name: 'Welcome Email', subject: 'Welcome to FlowPay, {{tenantName}}!', body: 'Hello {{tenantName}},\n\nWelcome aboard! We are excited to have you.\n\nThanks,\nThe FlowPay Team' },
+    { id: 'email-invoice', name: 'Invoice Notification', subject: 'Your Invoice for {{planName}} is ready', body: 'Hi {{tenantName}},\n\nThis is to inform you that your invoice for the amount of {{amount}} is now available.\n\nThanks,' },
+];
+
+const mockSmsTemplates: SmsTemplate[] = [
+    { id: 'sms-welcome', name: 'Welcome SMS', body: 'Welcome to FlowPay, {{tenantName}}! We are happy to have you.' },
+    { id: 'sms-payment-reminder', name: 'Payment Reminder', body: 'Hi {{tenantName}}, a friendly reminder that your payment of {{amount}} for your {{planName}} plan is due soon.' },
+];
+
+const mockInAppNotifications: InAppNotification[] = [
+    { id: 'notif-1', userId: 'tenant-1', message: 'Your stock for "Laptop" is running low in the Downtown branch.', read: false, createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
+    { id: 'notif-2', userId: 'tenant-1', message: 'A new announcement has been posted by the platform admin.', read: true, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
+];
+
+
 interface AppContextProviderProps {
     children: ReactNode;
     onLogout?: () => void;
@@ -517,7 +534,11 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
     const [consignments, setConsignments] = useState<Consignment[]>(mockConsignments);
     const [searchTerm, setSearchTerm] = useState('');
-    
+    const [paymentTransactions, setPaymentTransactions] = useState<PaymentTransaction[]>(mockPaymentTransactions);
+    const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>(mockEmailTemplates);
+    const [smsTemplates, setSmsTemplates] = useState<SmsTemplate[]>(mockSmsTemplates);
+    const [inAppNotifications, setInAppNotifications] = useState<InAppNotification[]>(mockInAppNotifications);
+
     useEffect(() => {
         if (currentTenant) {
             setCurrentLanguage(currentTenant.language || systemSettings.defaultLanguage);
@@ -1285,6 +1306,58 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         return { processed, suspended };
     }, []);
 
+    const processSubscriptionPayment = useCallback(async (tenantId: string, planId: string, method: string, amount: number, success: boolean, proofOfPaymentUrl?: string): Promise<{success: boolean, message: string}> => {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                const newTransaction: PaymentTransaction = {
+                    id: `txn-${Date.now()}`,
+                    tenantId,
+                    planId,
+                    amount,
+                    method,
+                    status: success ? (method === 'Manual' ? 'PENDING' : 'COMPLETED') : 'FAILED',
+                    createdAt: new Date(),
+                    proofOfPaymentUrl,
+                    transactionId: `mock-txn-${Date.now()}`
+                };
+                setPaymentTransactions(prev => [newTransaction, ...prev].sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    
+                if (success && method !== 'Manual') {
+                    activateSubscription(tenantId, planId);
+                    resolve({ success: true, message: 'Payment successful! Your plan has been activated.' });
+                } else if (success && method === 'Manual') {
+                    resolve({ success: true, message: 'Your proof of payment has been submitted for review. Your plan will be activated upon approval.' });
+                } else {
+                    resolve({ success: false, message: 'Payment failed. Please check your details and try again.' });
+                }
+            }, 500); // Simulate network delay
+        });
+    }, [activateSubscription]);
+    
+    const updatePaymentTransactionStatus = useCallback((transactionId: string, newStatus: 'COMPLETED' | 'REJECTED') => {
+        setPaymentTransactions(prev => prev.map(tx => {
+            if (tx.id === transactionId && tx.status === 'PENDING') {
+                if (newStatus === 'COMPLETED') {
+                    activateSubscription(tx.tenantId, tx.planId);
+                }
+                return { ...tx, status: newStatus };
+            }
+            return tx;
+        }));
+    }, [activateSubscription]);
+    
+    const updateEmailTemplate = useCallback((templateId: string, newSubject: string, newBody: string) => {
+        setEmailTemplates(prev => prev.map(t => t.id === templateId ? { ...t, subject: newSubject, body: newBody } : t));
+    }, []);
+    
+    const updateSmsTemplate = useCallback((templateId: string, newBody: string) => {
+        setSmsTemplates(prev => prev.map(t => t.id === templateId ? { ...t, body: newBody } : t));
+    }, []);
+    
+    const markInAppNotificationAsRead = useCallback((notificationId: string) => {
+        setInAppNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
+    }, []);
+
 
     const value: AppContextType = {
         products,
@@ -1317,6 +1390,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         customers,
         consignments,
         categories,
+        paymentTransactions,
+        emailTemplates,
+        smsTemplates,
+        inAppNotifications,
         searchTerm,
         currentLanguage,
         currentCurrency,
@@ -1374,6 +1451,11 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         activateSubscription,
         changeSubscriptionPlan,
         processExpiredTrials,
+        processSubscriptionPayment,
+        updatePaymentTransactionStatus,
+        updateEmailTemplate,
+        updateSmsTemplate,
+        markInAppNotificationAsRead,
         logout: onLogout,
     };
 

@@ -12,17 +12,24 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
-  const { logout, setSearchTerm: setGlobalSearchTerm, announcements, currentAdminUser, markAnnouncementAsRead } = useAppContext();
+  const { 
+    logout, setSearchTerm: setGlobalSearchTerm, 
+    announcements, currentAdminUser, markAnnouncementAsRead,
+    inAppNotifications, currentTenant, markInAppNotificationAsRead
+  } = useAppContext();
   const { t, currentLanguage, changeLanguage, availableLanguages } = useTranslation();
   
   const [isProfileOpen, setProfileOpen] = useState(false);
   const [isNotificationsOpen, setNotificationsOpen] = useState(false);
+  const [isAnnouncementsOpen, setAnnouncementsOpen] = useState(false);
   const [isLanguageOpen, setLanguageOpen] = useState(false);
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [time, setTime] = useState(new Date());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
+  const isSuperAdmin = !!currentAdminUser;
+  const userId = currentAdminUser?.id || currentTenant?.id || 'guest';
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -44,48 +51,57 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
 
   // Debounce search term update
   useEffect(() => {
-    // Set loading state immediately
     setIsSearching(true);
-    
-    // Set a timeout to update the global search term after 500ms
     const handler = setTimeout(() => {
       setGlobalSearchTerm(localSearchTerm);
       setIsSearching(false);
     }, 500);
-
-    // Cleanup function to clear the timeout if the user types again
-    return () => {
-      clearTimeout(handler);
-    };
+    return () => clearTimeout(handler);
   }, [localSearchTerm, setGlobalSearchTerm]);
 
   const handleClearSearch = () => {
     setLocalSearchTerm('');
   };
-  
-  const userId = currentAdminUser?.id || 'tenant-user-mock'; // Use admin ID or a mock ID for tenants
 
   const relevantAnnouncements = useMemo(() => {
-    const isSuperAdmin = !!currentAdminUser;
-    
     return announcements.filter(anno => {
         if (anno.targetAudience === 'ALL') return true;
         if (isSuperAdmin && anno.targetAudience === 'STAFF') return true;
         if (!isSuperAdmin && anno.targetAudience === 'TENANTS') return true;
         return false;
     }).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }, [announcements, currentAdminUser]);
+  }, [announcements, isSuperAdmin]);
 
-  const unreadCount = useMemo(() => {
+  const unreadAnnouncementsCount = useMemo(() => {
       return relevantAnnouncements.filter(anno => !anno.readBy.includes(userId)).length;
   }, [relevantAnnouncements, userId]);
 
-  const handleNotificationsToggle = () => {
-      setNotificationsOpen(!isNotificationsOpen);
-      if (!isNotificationsOpen) { // When opening
+  const userNotifications = useMemo(() => {
+      if(isSuperAdmin) return [];
+      return inAppNotifications.filter(n => n.userId === userId).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }, [inAppNotifications, userId, isSuperAdmin]);
+  
+  const unreadNotificationsCount = useMemo(() => {
+    return userNotifications.filter(n => !n.read).length;
+  }, [userNotifications]);
+
+  const handleAnnouncementsToggle = () => {
+      setAnnouncementsOpen(!isAnnouncementsOpen);
+      if (!isAnnouncementsOpen) {
           relevantAnnouncements.forEach(anno => {
               if (!anno.readBy.includes(userId)) {
                   markAnnouncementAsRead(anno.id, userId);
+              }
+          });
+      }
+  };
+  
+  const handleNotificationsToggle = () => {
+      setNotificationsOpen(!isNotificationsOpen);
+      if (!isNotificationsOpen) {
+          userNotifications.forEach(n => {
+              if(!n.read) {
+                  markInAppNotificationAsRead(n.id);
               }
           });
       }
@@ -96,11 +112,8 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
       setLanguageOpen(false);
   };
 
-  // Guard against undefined pageTitle and handle pre-formatted titles
   const title = pageTitle || '';
-  const formattedTitle = title.includes(' ')
-    ? title
-    : t(title.toLowerCase().replace(/_/g, ''));
+  const formattedTitle = title.includes(' ') ? title : t(title.toLowerCase().replace(/_/g, ''));
         
   return (
     <header className="flex items-center justify-between h-16 px-4 bg-gray-800 border-b border-gray-700 shadow-md">
@@ -141,11 +154,7 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
             className="w-full py-2 pl-10 pr-10 text-white bg-gray-700 border border-gray-600 rounded-md sm:w-48 md:w-64 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
           {localSearchTerm && (
-            <button
-              onClick={handleClearSearch}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-white transition-colors"
-              aria-label="Clear search"
-            >
+            <button onClick={handleClearSearch} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-white transition-colors" aria-label="Clear search">
               <Icon name="x-mark" className="w-5 h-5" />
             </button>
           )}
@@ -159,28 +168,47 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
                 <div className="absolute right-0 mt-2 w-40 bg-gray-700 rounded-md shadow-lg z-50 border border-gray-600">
                     <ul className="py-1">
                         {availableLanguages.map(lang => (
-                             <li key={lang.code}>
-                                <button onClick={() => handleLanguageChange(lang.code)} className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-600 ${currentLanguage === lang.code ? 'text-indigo-400 font-semibold' : 'text-gray-300'}`}>
-                                    {lang.name}
-                                </button>
-                            </li>
+                             <li key={lang.code}><button onClick={() => handleLanguageChange(lang.code)} className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-600 ${currentLanguage === lang.code ? 'text-indigo-400 font-semibold' : 'text-gray-300'}`}>{lang.name}</button></li>
                         ))}
                     </ul>
                 </div>
             )}
         </div>
 
+        {!isSuperAdmin && (
+             <div className="relative">
+                <button onClick={handleNotificationsToggle} className="relative p-2 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white focus:outline-none">
+                    <Icon name="notification" className="w-6 h-6" />
+                     {unreadNotificationsCount > 0 && (
+                        <span className="absolute top-0 right-0 h-4 w-4 bg-indigo-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">{unreadNotificationsCount}</span>
+                    )}
+                </button>
+                 {isNotificationsOpen && (
+                    <div className="absolute right-0 mt-2 w-80 bg-gray-700 rounded-md shadow-lg z-50 border border-gray-600">
+                        <div className="p-3 font-semibold text-white border-b border-gray-600">Notifications</div>
+                        <ul className="py-1 max-h-80 overflow-y-auto">
+                            {userNotifications.length > 0 ? userNotifications.map(n => (
+                                <li key={n.id} className={`px-4 py-3 hover:bg-gray-600 border-b border-gray-600/50 last:border-b-0 ${!n.read ? 'bg-indigo-900/50' : ''}`}>
+                                    <p className="text-sm text-gray-200">{n.message}</p>
+                                    <p className="text-right text-xs text-gray-400 mt-2">{n.createdAt.toLocaleDateString()}</p>
+                                </li>
+                            )) : (
+                                <li className="px-4 py-3 text-sm text-gray-400">No new notifications.</li>
+                            )}
+                        </ul>
+                    </div>
+                )}
+            </div>
+        )}
 
         <div className="relative">
-            <button onClick={handleNotificationsToggle} className="relative p-2 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white focus:outline-none">
-                <Icon name="notification" className="w-6 h-6" />
-                 {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
-                        {unreadCount}
-                    </span>
+            <button onClick={handleAnnouncementsToggle} className="relative p-2 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white focus:outline-none">
+                <Icon name="chat-bubble-left-right" className="w-6 h-6" />
+                 {unreadAnnouncementsCount > 0 && (
+                    <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">{unreadAnnouncementsCount}</span>
                 )}
             </button>
-             {isNotificationsOpen && (
+             {isAnnouncementsOpen && (
                 <div className="absolute right-0 mt-2 w-80 bg-gray-700 rounded-md shadow-lg z-50 border border-gray-600">
                     <div className="p-3 font-semibold text-white border-b border-gray-600">Announcements</div>
                     <ul className="py-1 max-h-80 overflow-y-auto">
@@ -201,14 +229,10 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
 
         <div className="relative">
           <button onClick={() => setProfileOpen(!isProfileOpen)} className="flex items-center space-x-2 focus:outline-none">
-            <img 
-              className="w-10 h-10 rounded-full" 
-              src="https://picsum.photos/100/100" 
-              alt="User Avatar"
-            />
+            <img className="w-10 h-10 rounded-full" src="https://picsum.photos/100/100" alt="User Avatar" />
             <div className='text-left hidden sm:block'>
-              <div className="font-medium text-white">Admin User</div>
-              <div className="text-sm text-gray-400">Tenant Business</div>
+              <div className="font-medium text-white">{isSuperAdmin ? currentAdminUser?.name : currentTenant?.ownerName}</div>
+              <div className="text-sm text-gray-400">{isSuperAdmin ? 'Super Admin' : currentTenant?.businessName}</div>
             </div>
           </button>
           {isProfileOpen && (

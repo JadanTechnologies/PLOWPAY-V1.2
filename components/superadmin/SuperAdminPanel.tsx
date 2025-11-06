@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
@@ -6,7 +7,7 @@ import PlatformDashboard from './PlatformDashboard';
 import TenantManagement from './TenantManagement';
 import TeamManagement from './TeamManagement';
 import RoleManagement from './RoleManagement';
-import PaymentSettings from './PaymentSettings';
+import PaymentGateways from './PaymentGateways';
 import NotificationSettings from './NotificationSettings';
 import SubscriptionManagement from './SubscriptionManagement';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -14,6 +15,8 @@ import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language }
 import Icon from '../icons';
 import { usePermissions } from '../../hooks/usePermissions';
 import Announcements from './Announcements';
+import PaymentTransactions from './PaymentTransactions';
+import TemplateManagement from './TemplateManagement';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
     return (
@@ -290,10 +293,14 @@ const SuperAdminPanel: React.FC = () => {
                 return hasPermission('manageTeam') ? <TeamManagement /> : <AccessDenied />;
             case 'ROLE_MANAGEMENT':
                 return hasPermission('manageRoles') ? <RoleManagement /> : <AccessDenied />;
-            case 'PAYMENTS':
-                return hasPermission('managePaymentGateways') ? <PaymentSettings /> : <AccessDenied />;
+            case 'PAYMENT_GATEWAYS':
+                return hasPermission('managePaymentGateways') ? <PaymentGateways /> : <AccessDenied />;
+            case 'PAYMENT_TRANSACTIONS':
+                return hasPermission('managePaymentGateways') ? <PaymentTransactions /> : <AccessDenied />;
             case 'NOTIFICATIONS':
                 return hasPermission('manageNotificationSettings') ? <NotificationSettings /> : <AccessDenied />;
+            case 'TEMPLATE_MANAGEMENT':
+                return hasPermission('manageNotificationSettings') ? <TemplateManagement /> : <AccessDenied />;
             case 'ANNOUNCEMENTS':
                 return hasPermission('manageAnnouncements') ? <Announcements /> : <AccessDenied />;
             case 'SETTINGS':
@@ -309,8 +316,10 @@ const SuperAdminPanel: React.FC = () => {
         SUBSCRIPTIONS: 'Subscription Plans',
         TEAM_MANAGEMENT: 'Team Management',
         ROLE_MANAGEMENT: 'Role Management',
-        PAYMENTS: 'Payment Gateways',
+        PAYMENT_GATEWAYS: 'Payment Gateways',
+        PAYMENT_TRANSACTIONS: 'Payment Transactions',
         NOTIFICATIONS: 'Notification Settings',
+        TEMPLATE_MANAGEMENT: 'Template Management',
         ANNOUNCEMENTS: 'Global Announcements',
         SETTINGS: 'System Settings',
     };

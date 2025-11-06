@@ -2,6 +2,8 @@
 
 
 
+
+
 import React, { useState, useCallback } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -17,15 +19,28 @@ import Accounting from './Accounting';
 import CreditManagement from './CreditManagement';
 import ConsignmentManagement from './ConsignmentManagement';
 import Billing from './Billing';
+import { SubscriptionPlan } from '../types';
+import Checkout from './Checkout';
 
 
 const TenantApp: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('DASHBOARD');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [checkoutPlan, setCheckoutPlan] = useState<SubscriptionPlan | null>(null);
 
   const handleSetPage = useCallback((page: Page) => {
     setCurrentPage(page);
   }, []);
+
+  const startCheckout = (plan: SubscriptionPlan) => {
+    setCheckoutPlan(plan);
+    setCurrentPage('CHECKOUT');
+  };
+
+  const onCheckoutComplete = () => {
+    setCheckoutPlan(null);
+    setCurrentPage('BILLING');
+  };
   
   const renderPage = () => {
     switch (currentPage) {
@@ -50,7 +65,9 @@ const TenantApp: React.FC = () => {
       case 'CONSIGNMENT':
         return <ConsignmentManagement />;
       case 'BILLING':
-        return <Billing />;
+        return <Billing onStartCheckout={startCheckout} />;
+      case 'CHECKOUT':
+        return checkoutPlan ? <Checkout plan={checkoutPlan} onComplete={onCheckoutComplete} /> : <Billing onStartCheckout={startCheckout} />;
       default:
         return <Dashboard />;
     }
