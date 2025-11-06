@@ -1,4 +1,3 @@
-
 import React, {useState, useMemo} from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, ProductVariant, StockLog } from '../types';
@@ -20,6 +19,7 @@ const Inventory: React.FC = () => {
     
     // Transfer Modal State
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+    const [isTransferConfirmOpen, setIsTransferConfirmOpen] = useState(false);
     const [transferFromBranchId, setTransferFromBranchId] = useState<string>('');
     const [transferToBranchId, setTransferToBranchId] = useState<string>('');
     const [transferQuantity, setTransferQuantity] = useState('');
@@ -81,15 +81,26 @@ const Inventory: React.FC = () => {
         setSelectedVariant(null);
     };
 
-    const handleStockTransfer = () => {
+    const initiateStockTransfer = () => {
         if(selectedProduct && selectedVariant && transferFromBranchId && transferToBranchId && transferQuantity) {
             const quantity = parseInt(transferQuantity, 10);
-            if(quantity > 0 && quantity <= (selectedVariant.stockByBranch[transferFromBranchId] || 0)) {
-                transferStock(selectedProduct.id, selectedVariant.id, transferFromBranchId, transferToBranchId, quantity);
-                closeTransferModal();
+            const availableStock = selectedVariant.stockByBranch[transferFromBranchId] || 0;
+            if(quantity > 0 && quantity <= availableStock) {
+                setIsTransferConfirmOpen(true);
             } else {
-                alert("Invalid quantity. Please ensure it's a positive number and not more than the available stock.");
+                alert(`Invalid quantity. Please ensure it's a positive number and not more than the available stock of ${availableStock}.`);
             }
+        } else {
+            alert("Please fill out all fields for the transfer.");
+        }
+    };
+
+    const confirmAndExecuteTransfer = () => {
+        if(selectedProduct && selectedVariant && transferFromBranchId && transferToBranchId && transferQuantity) {
+            const quantity = parseInt(transferQuantity, 10);
+            transferStock(selectedProduct.id, selectedVariant.id, transferFromBranchId, transferToBranchId, quantity);
+            setIsTransferConfirmOpen(false);
+            closeTransferModal();
         }
     };
 
@@ -457,7 +468,28 @@ const Inventory: React.FC = () => {
                         </div>
                         <div className="mt-6 flex justify-end space-x-3">
                             <button type="button" onClick={closeTransferModal} className="px-4 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-500 font-semibold">Cancel</button>
-                            <button type="button" onClick={handleStockTransfer} className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 font-semibold">Confirm Transfer</button>
+                            <button type="button" onClick={initiateStockTransfer} className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 font-semibold">Transfer Stock</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+             {/* Transfer Confirmation Modal */}
+            {isTransferConfirmOpen && selectedProduct && selectedVariant && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center" aria-modal="true" role="dialog">
+                    <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md text-center">
+                        <Icon name="truck" className="w-12 h-12 text-indigo-400 mx-auto mb-4" />
+                        <h3 className="text-xl font-bold mb-2 text-white">Confirm Transfer</h3>
+                        <p className="text-gray-400 mb-4">Please review the details below before confirming.</p>
+                        <div className="bg-gray-900/50 p-4 rounded-md text-left space-y-2">
+                            <div><span className="font-semibold text-gray-300">Product:</span> {selectedProduct.name} - {selectedVariant.name}</div>
+                            <div><span className="font-semibold text-gray-300">Quantity:</span> {transferQuantity}</div>
+                            <div><span className="font-semibold text-gray-300">From:</span> {branchMap.get(transferFromBranchId)}</div>
+                            <div><span className="font-semibold text-gray-300">To:</span> {branchMap.get(transferToBranchId)}</div>
+                        </div>
+                        <div className="mt-6 flex justify-center space-x-4">
+                            <button onClick={() => setIsTransferConfirmOpen(false)} className="px-6 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-500 font-semibold">Cancel</button>
+                            <button onClick={confirmAndExecuteTransfer} className="px-6 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 font-semibold">Confirm</button>
                         </div>
                     </div>
                 </div>
