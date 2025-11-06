@@ -1,9 +1,6 @@
 
-
-
-
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -12,6 +9,12 @@ const mockBranches: Branch[] = [
     { id: 'branch-2', name: 'Uptown' },
     { id: 'branch-3', name: 'Westside' },
     { id: 'branch-4', name: 'Eastside' },
+];
+
+const mockStaff: Staff[] = [
+    { id: 'staff-1', name: 'Alice Manager', email: 'alice@tenant.com', role: 'Manager', branchId: 'branch-1' },
+    { id: 'staff-2', name: 'Bob Cashier', email: 'bob@tenant.com', role: 'Cashier', branchId: 'branch-1' },
+    { id: 'staff-3', name: 'Charlie Logistics', email: 'charlie@tenant.com', role: 'Logistics', branchId: 'branch-2' },
 ];
 
 const mockSubscriptionPlans: SubscriptionPlan[] = [
@@ -186,30 +189,30 @@ const mockShipments: Shipment[] = [
         id: 'shp-001',
         shipmentCode: 'SHP2024001',
         origin: 'New York, NY',
-        destination: 'Los Angeles, CA',
+        destination: 'branch-1', // Downtown
         truckId: 'truck-1',
         status: 'IN_TRANSIT',
-        items: [{ productId: 'prod-1', variantId: 'var-1-0', productName: 'Laptop', quantity: 50 }],
+        items: [{ productId: 'prod-1', variantId: 'var-1-0', productName: 'Laptop', quantity: 50, price: 1200 }],
         estimatedDelivery: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) // 3 days from now
     },
     {
         id: 'shp-002',
         shipmentCode: 'SHP2024002',
         origin: 'Houston, TX',
-        destination: 'Chicago, IL',
+        destination: 'branch-2', // Uptown
         truckId: 'truck-2',
         status: 'PENDING',
-        items: [{ productId: 'prod-5', variantId: 'var-5-0', productName: 'T-Shirt', quantity: 200 }],
+        items: [{ productId: 'prod-5', variantId: 'var-5-0', productName: 'T-Shirt', quantity: 200, price: 25 }],
         estimatedDelivery: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000) // 5 days from now
     },
      {
         id: 'shp-003',
         shipmentCode: 'SHP2024003',
         origin: 'San Francisco, CA',
-        destination: 'Miami, FL',
+        destination: 'branch-3', // Westside
         truckId: 'truck-1',
         status: 'IN_TRANSIT',
-        items: [{ productId: 'prod-2', variantId: 'var-2-0', productName: 'Smartphone', quantity: 100 }],
+        items: [{ productId: 'prod-2', variantId: 'var-2-0', productName: 'Smartphone', quantity: 100, price: 800 }],
         estimatedDelivery: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000) // 4 days from now
     },
 ];
@@ -271,7 +274,8 @@ interface AppContextProviderProps {
 export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children, onLogout = () => {} }) => {
     const [products, setProducts] = useState<Product[]>(mockProducts);
     const [sales, setSales] = useState<Sale[]>(mockSales);
-    const [branches] = useState<Branch[]>(mockBranches);
+    const [branches, setBranches] = useState<Branch[]>(mockBranches);
+    const [staff, setStaff] = useState<Staff[]>(mockStaff);
     const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
     const [tenants] = useState<Tenant[]>(mockTenants);
     const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
@@ -560,7 +564,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                 ...shipmentData,
                 id: `shp-${Date.now()}`,
             }
-        ]);
+        ].sort((a,b) => b.estimatedDelivery.getTime() - a.estimatedDelivery.getTime()));
     }, []);
 
     const updateShipmentStatus = useCallback((shipmentId: string, status: Shipment['status']) => {
@@ -575,11 +579,91 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         ));
     }, []);
 
+    const addBranch = useCallback((branchName: string) => {
+        const newBranch: Branch = {
+            id: `branch-${Date.now()}`,
+            name: branchName,
+        };
+        setBranches(prev => [...prev, newBranch]);
+        setProducts(prev => prev.map(p => ({
+            ...p,
+            variants: p.variants.map(v => ({
+                ...v,
+                stockByBranch: {
+                    ...v.stockByBranch,
+                    [newBranch.id]: 0
+                }
+            }))
+        })));
+    }, []);
+
+    const addStaff = useCallback((staffData: Omit<Staff, 'id'>) => {
+        const newStaff: Staff = {
+            ...staffData,
+            id: `staff-${Date.now()}`
+        };
+        setStaff(prev => [...prev, newStaff]);
+    }, []);
+
+    const sellShipment = useCallback(async (shipmentId: string, customer: Sale['customer']): Promise<{success: boolean; message: string;}> => {
+        const shipment = shipments.find(s => s.id === shipmentId);
+        if (!shipment) return { success: false, message: 'Shipment not found.' };
+
+        // Create sale record from shipment
+        const total = shipment.items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+        const saleItems: Sale['items'] = shipment.items.map(item => ({
+             productId: item.productId,
+             variantId: item.variantId,
+             name: item.productName,
+             variantName: products.find(p => p.id === item.productId)?.variants.find(v => v.id === item.variantId)?.name || 'N/A',
+             quantity: item.quantity,
+             price: item.price,
+        }));
+        
+        const newSale: Sale = {
+            id: `sale-${Date.now()}`,
+            date: new Date(),
+            items: saleItems,
+            total,
+            branchId: 'DIRECT_SALE',
+            customer,
+        };
+        setSales(prev => [newSale, ...prev]);
+
+        // Update shipment status
+        updateShipmentStatus(shipmentId, 'SOLD_IN_TRANSIT');
+        
+        return { success: true, message: `Shipment ${shipment.shipmentCode} sold to ${customer.name}.` };
+    }, [shipments, products, updateShipmentStatus]);
+
+    const receiveShipment = useCallback((shipmentId: string) => {
+        const shipment = shipments.find(s => s.id === shipmentId);
+        if (!shipment || shipment.status !== 'IN_TRANSIT') return;
+
+        setProducts(prevProducts => {
+            const productsCopy = JSON.parse(JSON.stringify(prevProducts));
+            for (const item of shipment.items) {
+                const product = productsCopy.find((p: Product) => p.id === item.productId);
+                if (product) {
+                    const variant = product.variants.find((v: ProductVariant) => v.id === item.variantId);
+                    if (variant) {
+                        variant.stockByBranch[shipment.destination] = (variant.stockByBranch[shipment.destination] || 0) + item.quantity;
+                    }
+                }
+            }
+            return productsCopy;
+        });
+
+        updateShipmentStatus(shipmentId, 'DELIVERED');
+
+    }, [shipments, updateShipmentStatus]);
+
 
     const value: AppContextType = {
         products,
         sales,
         branches,
+        staff,
         stockLogs,
         tenants,
         subscriptionPlans,
@@ -619,6 +703,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addShipment,
         updateShipmentStatus,
         updateTrackerProvider,
+        addBranch,
+        addStaff,
+        sellShipment,
+        receiveShipment,
         logout: onLogout,
     };
 

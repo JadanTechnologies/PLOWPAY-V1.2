@@ -1,9 +1,15 @@
 
-
-
 export interface Branch {
   id: string;
   name: string;
+}
+
+export interface Staff {
+  id: string;
+  name: string;
+  email: string;
+  role: 'Manager' | 'Cashier' | 'Logistics';
+  branchId: string;
 }
 
 export interface ProductVariant {
@@ -79,12 +85,13 @@ export interface Shipment {
   origin: string;
   destination: string;
   truckId: string;
-  status: 'PENDING' | 'IN_TRANSIT' | 'DELIVERED' | 'DELAYED';
+  status: 'PENDING' | 'IN_TRANSIT' | 'DELIVERED' | 'DELAYED' | 'SOLD_IN_TRANSIT';
   items: {
     productId: string;
     variantId: string;
     productName: string;
     quantity: number;
+    price: number;
   }[];
   estimatedDelivery: Date;
 }
@@ -241,6 +248,7 @@ export interface AppContextType {
   products: Product[];
   sales: Sale[];
   branches: Branch[];
+  staff: Staff[];
   stockLogs: StockLog[];
   tenants: Tenant[];
   subscriptionPlans: SubscriptionPlan[];
@@ -280,5 +288,9 @@ export interface AppContextType {
   addShipment: (shipmentData: Omit<Shipment, 'id'>) => void;
   updateShipmentStatus: (shipmentId: string, status: Shipment['status']) => void;
   updateTrackerProvider: (providerId: string, settings: Partial<Omit<TrackerProvider, 'id' | 'name'>>) => void;
+  addBranch: (branchName: string) => void;
+  addStaff: (staffData: Omit<Staff, 'id'>) => void;
+  sellShipment: (shipmentId: string, customer: Sale['customer']) => Promise<{success: boolean; message: string;}>;
+  receiveShipment: (shipmentId: string) => void;
   logout?: () => void;
 }
