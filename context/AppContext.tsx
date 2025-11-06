@@ -64,13 +64,17 @@ const generateMockTenants = (): Tenant[] => {
 
     for (let i = 0; i < 8; i++) {
         const ownerFirstName = ownerNames[i].split(' ')[0].toLowerCase();
+        
+        // Special case for the demo tenant
+        const isDemoTenant = i === 0;
+
         tenants.push({
             id: `tenant-${i+1}`,
             businessName: businessNames[i],
             ownerName: ownerNames[i],
-            email: `${ownerFirstName}@example.com`,
-            username: ownerFirstName,
-            password: 'tenant12345',
+            email: isDemoTenant ? `tenant@example.com` : `${ownerFirstName}@example.com`,
+            username: isDemoTenant ? 'tenant' : ownerFirstName,
+            password: isDemoTenant ? 'tenant' : 'tenant12345',
             companyAddress: `${i+1}23 Market St, San Francisco, CA 94103`,
             companyPhone: `(555) 123-456${i}`,
             companyLogoUrl: '',

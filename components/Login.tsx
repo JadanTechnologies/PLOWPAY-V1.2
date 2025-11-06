@@ -20,20 +20,21 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack }) => {
     e.preventDefault();
     setError('');
 
-    const lowerCaseEmail = email.toLowerCase();
+    const lowerCaseInput = email.toLowerCase();
+
+    // Find a tenant that matches either the username or email
+    const tenant = mockTenants.find(t => t.username === lowerCaseInput || t.email === lowerCaseInput);
 
     // Mock authentication with specific credentials for each role
-    if (lowerCaseEmail === 'admin@flowpay.com' && password === 'admin12345') {
+    if (lowerCaseInput === 'super' && password === 'super') {
       onLoginSuccess('SUPER_ADMIN');
-    } else if (mockTenants.some(tenant => tenant.email === lowerCaseEmail) && password === 'tenant12345') {
-      onLoginSuccess('TENANT');
+    } else if (tenant && tenant.password === password) {
+       onLoginSuccess('TENANT');
     } else {
-      setError('Invalid email or password. Please try again.');
+      setError('Invalid credentials. Please try again.');
     }
   };
   
-  const exampleTenantEmail = mockTenants.length > 0 ? mockTenants[0].email : 'tenant@example.com';
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-950 p-4">
       <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-2xl shadow-2xl relative">
@@ -64,15 +65,15 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack }) => {
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email-address" className="sr-only">Email address</label>
+              <label htmlFor="email-address" className="sr-only">Username or Email</label>
               <input
                 id="email-address"
                 name="email"
-                type="email"
-                autoComplete="email"
+                type="text"
+                autoComplete="username"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-gray-200 placeholder-gray-400 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                placeholder="Username or Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -111,12 +112,12 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack }) => {
         </form>
 
         <div className="text-center text-sm text-gray-500 bg-gray-900/50 p-3 rounded-md border border-gray-700">
-            <p className="font-semibold text-gray-400 mb-2">Use these credentials to log in:</p>
-            <p><strong className="text-gray-300">Super Admin:</strong> admin@flowpay.com</p>
-            <p><strong className="text-gray-300">Password:</strong> admin12345</p>
+            <p className="font-semibold text-gray-400 mb-2">Use these credentials for the demo:</p>
+            <p><strong className="text-gray-300">Super Admin:</strong> super</p>
+            <p><strong className="text-gray-300">Password:</strong> super</p>
             <div className="my-2 border-t border-gray-700"></div>
-            <p><strong className="text-gray-300">Tenant (e.g.):</strong> {exampleTenantEmail}</p>
-            <p><strong className="text-gray-300">Password:</strong> tenant12345</p>
+            <p><strong className="text-gray-300">Tenant:</strong> tenant</p>
+            <p><strong className="text-gray-300">Password:</strong> tenant</p>
         </div>
       </div>
     </div>
