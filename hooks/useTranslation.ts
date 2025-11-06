@@ -13,6 +13,8 @@ const translations: Record<string, Record<string, string>> = {
     reports: 'Reports',
     settings: 'Settings',
     totalRevenue: 'Total Revenue',
+    creditManagement: 'Credit Management',
+    consignment: 'Consignment',
   },
   es: {
     dashboard: 'Tablero',
@@ -24,6 +26,8 @@ const translations: Record<string, Record<string, string>> = {
     reports: 'Informes',
     settings: 'Ajustes',
     totalRevenue: 'Ingresos Totales',
+    creditManagement: 'Gestión de Crédito',
+    consignment: 'Consignación',
   },
   fr: {
     dashboard: 'Tableau de Bord',
@@ -35,6 +39,8 @@ const translations: Record<string, Record<string, string>> = {
     reports: 'Rapports',
     settings: 'Paramètres',
     totalRevenue: 'Revenu Total',
+    creditManagement: 'Gestion de Crédit',
+    consignment: 'Consignation',
   }
 };
 

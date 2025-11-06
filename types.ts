@@ -49,7 +49,8 @@ export interface ProductVariant {
   sku: string;
   sellingPrice: number;
   costPrice: number;
-  stockByBranch: { [branchId: string]: number };
+  stockByBranch: { [branchId: string]: number }; // Owned stock
+  consignmentStockByBranch?: { [branchId: string]: number }; // Consignment stock
   batchNumber?: string;
   expiryDate?: string;
 }
@@ -77,23 +78,32 @@ export interface Payment {
   amount: number;
 }
 
+export interface Customer {
+    id: string;
+    name: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    creditBalance: number;
+    creditLimit?: number;
+}
+
 export interface Sale {
   id: string;
   date: Date;
   items: CartItem[];
   total: number;
   branchId: string;
-  customer: {
-    name: string;
-    phone?: string;
-  };
+  customerId: string;
   payments: Payment[];
   change: number;
   staffId: string;
   discount?: number;
+  status: 'PAID' | 'PARTIALLY_PAID' | 'UNPAID';
+  amountDue: number;
 }
 
-export type StockLogAction = 'ADJUSTMENT' | 'TRANSFER' | 'SALE' | 'PURCHASE_RECEIVED';
+export type StockLogAction = 'ADJUSTMENT' | 'TRANSFER' | 'SALE' | 'PURCHASE_RECEIVED' | 'CONSIGNMENT_IN';
 
 
 export interface StockLog {
@@ -336,6 +346,24 @@ export interface PurchaseOrder {
   createdAt: Date;
 }
 
+export interface ConsignmentItem {
+    variantId: string;
+    variantName: string;
+    productName: string;
+    quantityReceived: number;
+    quantitySold: number;
+    costPrice: number; // Agreed price per item
+}
+
+export interface Consignment {
+    id: string;
+    supplierId: string;
+    branchId: string;
+    receivedDate: Date;
+    items: ConsignmentItem[];
+    status: 'ACTIVE' | 'SETTLED';
+}
+
 export interface Account {
     id: string;
     name: string;
@@ -413,6 +441,8 @@ export interface AppContextType {
   accounts: Account[];
   journalEntries: JournalEntry[];
   announcements: Announcement[];
+  customers: Customer[];
+  consignments: Consignment[];
   searchTerm: string;
   currentLanguage: string;
   currentCurrency: string;
@@ -420,7 +450,7 @@ export interface AppContextType {
   setCurrentLanguage: (langCode: string) => void;
   setSearchTerm: (term: string) => void;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
-  addSale: (saleData: Omit<Sale, 'id' | 'date'>) => Promise<{success: boolean, message: string, newSale?: Sale}>;
+  addSale: (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'>) => Promise<{success: boolean, message: string, newSale?: Sale}>;
   adjustStock: (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => void;
   transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;
   addProduct: (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => void;
@@ -447,7 +477,7 @@ export interface AppContextType {
   updateTrackerProviders: (providers: TrackerProvider[]) => void;
   addBranch: (branchName: string) => void;
   addStaff: (staffData: Omit<Staff, 'id'>) => void;
-  sellShipment: (shipmentId: string, customer: Sale['customer']) => Promise<{success: boolean; message: string;}>;
+  sellShipment: (shipmentId: string, customer: Pick<Customer, 'name' | 'phone'>) => Promise<{success: boolean; message: string;}>;
   receiveShipment: (shipmentId: string) => void;
   addPurchaseOrder: (poData: Omit<PurchaseOrder, 'id' | 'poNumber' | 'total' | 'createdAt'>) => void;
   updatePurchaseOrderStatus: (poId: string, status: PurchaseOrder['status']) => void;
@@ -459,5 +489,8 @@ export interface AppContextType {
   addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status'>) => void;
   addAnnouncement: (announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => void;
   markAnnouncementAsRead: (announcementId: string, userId: string) => void;
+  addCustomer: (customerData: Omit<Customer, 'id' | 'creditBalance'>) => void;
+  recordCreditPayment: (customerId: string, amount: number) => void;
+  addConsignment: (consignmentData: Omit<Consignment, 'id' | 'status'>) => void;
   logout?: () => void;
 }

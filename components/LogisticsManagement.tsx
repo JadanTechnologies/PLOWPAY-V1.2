@@ -1,7 +1,8 @@
 
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import { Truck, Shipment, TrackerProvider, Branch, Staff, Sale, ProductVariant } from '../types';
+import { Truck, Shipment, TrackerProvider, Branch, Customer, Sale, ProductVariant } from '../types';
 import Icon from './icons';
 
 type ModalState = 'NONE' | 'TRUCK' | 'SHIPMENT' | 'SELL_SHIPMENT';
@@ -49,7 +50,8 @@ const LogisticsManagement: React.FC = () => {
 
     // Form states
     const [truckForm, setTruckForm] = useState({ licensePlate: '', driverName: '', status: 'IDLE' as Truck['status'] });
-    const [sellShipmentForm, setSellShipmentForm] = useState<Sale['customer']>({ name: '', phone: '' });
+    // FIX: Changed `Sale['customer']` to `Pick<Customer, 'name' | 'phone'>` to match the correct type.
+    const [sellShipmentForm, setSellShipmentForm] = useState<Pick<Customer, 'name' | 'phone'>>({ name: '', phone: '' });
     const [trackerSettingsForm, setTrackerSettingsForm] = useState<TrackerProvider[]>(trackerProviders);
 
     useEffect(() => {
@@ -286,8 +288,8 @@ const LogisticsManagement: React.FC = () => {
                         <h3 className="text-xl font-bold mb-4">Sell Cargo of {selectedShipment.shipmentCode}</h3>
                          <p className="text-sm text-gray-400 mb-4">This will create a direct sale for all items in the shipment to a single customer.</p>
                         <div className="space-y-4">
-                            <div><label className="text-sm">Customer Name</label><input type="text" onChange={e => setSellShipmentForm({...sellShipmentForm, name: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
-                            <div><label className="text-sm">Customer Phone (Optional)</label><input type="tel" onChange={e => setSellShipmentForm({...sellShipmentForm, phone: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
+                            <div><label className="text-sm">Customer Name</label><input type="text" value={sellShipmentForm.name} onChange={e => setSellShipmentForm({...sellShipmentForm, name: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
+                            <div><label className="text-sm">Customer Phone (Optional)</label><input type="tel" value={sellShipmentForm.phone} onChange={e => setSellShipmentForm({...sellShipmentForm, phone: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
                         </div>
                         <div className="flex justify-end gap-3 mt-6"><button onClick={handleCloseModal} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500">Cancel</button><button onClick={handleSellShipment} className="px-4 py-2 rounded-md bg-purple-600 hover:bg-purple-500">Confirm Sale</button></div>
                     </div>

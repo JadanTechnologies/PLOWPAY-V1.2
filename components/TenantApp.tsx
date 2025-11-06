@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -11,6 +12,8 @@ import Reports from './Reports';
 import Settings from './Settings';
 import PurchaseOrderManagement from './PurchaseOrderManagement';
 import Accounting from './Accounting';
+import CreditManagement from './CreditManagement';
+import ConsignmentManagement from './ConsignmentManagement';
 
 
 const TenantApp: React.FC = () => {
@@ -39,6 +42,10 @@ const TenantApp: React.FC = () => {
         return <Reports />;
       case 'SETTINGS':
         return <Settings />;
+      case 'CREDIT_MANAGEMENT':
+        return <CreditManagement />;
+      case 'CONSIGNMENT':
+        return <ConsignmentManagement />;
       default:
         return <Dashboard />;
     }

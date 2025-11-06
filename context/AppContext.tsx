@@ -1,8 +1,9 @@
 
 
 
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -23,6 +24,13 @@ const mockStaff: Staff[] = [
     { id: 'staff-1', name: 'Alice Manager', email: 'alice@tenant.com', username: 'alice', password: 'password123', roleId: 'staff-role-manager', branchId: 'branch-1' },
     { id: 'staff-2', name: 'Bob Cashier', email: 'bob@tenant.com', username: 'bob', password: 'password123', roleId: 'staff-role-cashier', branchId: 'branch-1' },
     { id: 'staff-3', name: 'Charlie Logistics', email: 'charlie@tenant.com', username: 'charlie', password: 'password123', roleId: 'staff-role-logistics', branchId: 'branch-2' },
+];
+
+const mockCustomers: Customer[] = [
+    { id: 'cust-walkin', name: 'Walk-in Customer', creditBalance: 0 },
+    { id: 'cust-1', name: 'John Doe', phone: '555-0101', email: 'john.d@example.com', creditBalance: 150.75, creditLimit: 500 },
+    { id: 'cust-2', name: 'Jane Smith', phone: '555-0102', email: 'jane.s@example.com', creditBalance: 0, creditLimit: 1000 },
+    { id: 'cust-3', name: 'Prestige Worldwide', phone: '555-0103', email: 'contact@prestigeww.com', creditBalance: 1250.00, creditLimit: 10000 },
 ];
 
 const mockSubscriptionPlans: SubscriptionPlan[] = [
@@ -124,8 +132,13 @@ const generateMockProducts = (): Product[] => {
                 isFavorite: Math.random() > 0.7,
                 variants: variants[category as keyof typeof variants].map((variant, index) => {
                     const stockByBranch: { [branchId: string]: number } = {};
+                    const consignmentStockByBranch: { [branchId: string]: number } = {};
+
                     mockBranches.forEach(branch => {
                         stockByBranch[branch.id] = Math.floor(Math.random() * 100);
+                        if (Math.random() > 0.6) { // 40% chance of having consignment stock
+                            consignmentStockByBranch[branch.id] = Math.floor(Math.random() * 50);
+                        }
                     });
                     
                     const expiryDate = new Date();
@@ -138,6 +151,7 @@ const generateMockProducts = (): Product[] => {
                         costPrice: variant.price * (Math.random() * 0.3 + 0.5), // Cost is 50-80% of selling price
                         sku: `${name.substring(0,3).toUpperCase()}-${index}`,
                         stockByBranch: stockByBranch,
+                        consignmentStockByBranch: consignmentStockByBranch,
                         batchNumber: hasBatch ? `B${Math.floor(Math.random() * 9000) + 1000}` : undefined,
                         expiryDate: hasBatch ? expiryDate.toISOString().split('T')[0] : undefined,
                     }
@@ -152,16 +166,13 @@ const generateMockProducts = (): Product[] => {
 
 const generateMockSales = (products: Product[]): Sale[] => {
     const sales: Sale[] = [];
-    const customers = [
-        { name: 'John Doe', phone: '555-0101' },
-        { name: 'Jane Smith', phone: '555-0102' },
-        { name: 'Walk-in Customer' }
-    ];
     for (let i = 0; i < 50; i++) {
         const product = products[Math.floor(Math.random() * products.length)];
         const variant = product.variants[Math.floor(Math.random() * product.variants.length)];
         const quantity = Math.floor(Math.random() * 3) + 1;
         const total = variant.sellingPrice * quantity;
+        const paidAmount = total * (Math.random() > 0.2 ? 1 : Math.random()); // 80% chance of full payment
+        
         sales.push({
             id: `sale-${i}`,
             date: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
@@ -176,11 +187,13 @@ const generateMockSales = (products: Product[]): Sale[] => {
             }],
             total: total,
             branchId: mockBranches[Math.floor(Math.random() * mockBranches.length)].id,
-            customer: customers[Math.floor(Math.random() * customers.length)],
-            payments: [{ method: 'Cash', amount: total }],
+            customerId: mockCustomers[Math.floor(Math.random() * mockCustomers.length)].id,
+            payments: [{ method: 'Cash', amount: paidAmount }],
             change: 0,
             staffId: mockStaff[Math.floor(Math.random() * mockStaff.length)].id,
             discount: 0,
+            status: paidAmount < total ? 'PARTIALLY_PAID' : 'PAID',
+            amountDue: total - paidAmount,
         });
     }
     return sales.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -277,11 +290,23 @@ const mockPurchaseOrders: PurchaseOrder[] = [
     }
 ];
 
+const mockConsignments: Consignment[] = [
+    {
+        id: 'con-1', supplierId: 'sup-2', branchId: 'branch-1', receivedDate: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000), status: 'ACTIVE',
+        items: [
+            { variantId: 'var-7-0', productName: 'Jacket', variantName: 'Medium', quantityReceived: 20, quantitySold: 5, costPrice: 50 },
+            { variantId: 'var-8-1', productName: 'Sneakers', variantName: 'Large', quantityReceived: 15, quantitySold: 10, costPrice: 40 },
+        ]
+    }
+];
+
+
 const mockAccounts: Account[] = [
     { id: 'acc-cash', name: 'Cash', type: 'ASSET', balance: 15000 },
     { id: 'acc-ar', name: 'Accounts Receivable', type: 'ASSET', balance: 5000 },
     { id: 'acc-inventory', name: 'Inventory', type: 'ASSET', balance: 25000 },
     { id: 'acc-ap', name: 'Accounts Payable', type: 'LIABILITY', balance: 8000 },
+    { id: 'acc-consign-liability', name: 'Consignment Liability', type: 'LIABILITY', balance: 0 },
     { id: 'acc-equity', name: 'Owner\'s Equity', type: 'EQUITY', balance: 40000 },
     { id: 'acc-sales', name: 'Sales Revenue', type: 'REVENUE', balance: 100000 },
     { id: 'acc-cogs', name: 'Cost of Goods Sold', type: 'EXPENSE', balance: 55000 },
@@ -469,6 +494,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
     const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntries);
     const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
+    const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
+    const [consignments, setConsignments] = useState<Consignment[]>(mockConsignments);
     const [searchTerm, setSearchTerm] = useState('');
     
     useEffect(() => {
@@ -491,8 +518,26 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         }
     };
 
-    const addSale = useCallback(async (saleData: Omit<Sale, 'id' | 'date'>): Promise<{success: boolean, message: string, newSale?: Sale}> => {
-        // 1. Decrease stock and create stock logs
+    const addSale = useCallback(async (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'>): Promise<{success: boolean, message: string, newSale?: Sale}> => {
+        const totalPaid = saleData.payments.reduce((acc, p) => acc + p.amount, 0) - saleData.change;
+        const amountDue = saleData.total - totalPaid;
+
+        const newSale: Sale = {
+            ...saleData,
+            id: `sale-${Date.now()}`,
+            date: new Date(),
+            amountDue: amountDue > 0 ? amountDue : 0,
+            status: amountDue <= 0 ? 'PAID' : 'PARTIALLY_PAID'
+        };
+
+        // 1. Update customer credit if there's an amount due
+        if (newSale.amountDue > 0) {
+            setCustomers(prevCustomers => prevCustomers.map(c => 
+                c.id === newSale.customerId ? { ...c, creditBalance: c.creditBalance + newSale.amountDue } : c
+            ));
+        }
+
+        // 2. Decrease stock and create stock logs
         const newStockLogs: StockLog[] = [];
         setProducts(currentProducts => {
             const productsCopy = JSON.parse(JSON.stringify(currentProducts));
@@ -500,19 +545,36 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                 const product = productsCopy.find((p: Product) => p.id === item.productId);
                 if (product) {
                     const variant = product.variants.find((v: ProductVariant) => v.id === item.variantId);
-                    if (variant && variant.stockByBranch[saleData.branchId] !== undefined) {
-                        variant.stockByBranch[saleData.branchId] -= item.quantity;
+                    if (variant) {
+                        // Prioritize deducting from consignment stock
+                        let qtyToDeduct = item.quantity;
+                        const consignmentStock = variant.consignmentStockByBranch?.[saleData.branchId] || 0;
+                        if (consignmentStock > 0) {
+                            const deductFromConsign = Math.min(qtyToDeduct, consignmentStock);
+                            variant.consignmentStockByBranch[saleData.branchId] -= deductFromConsign;
+                            qtyToDeduct -= deductFromConsign;
+
+                            // Record consignment sale
+                            setConsignments(prev => prev.map(con => {
+                                const conItem = con.items.find(ci => ci.variantId === item.variantId);
+                                if (con.branchId === saleData.branchId && conItem) {
+                                    return {...con, items: con.items.map(ci => ci.variantId === item.variantId ? {...ci, quantitySold: ci.quantitySold + deductFromConsign } : ci)};
+                                }
+                                return con;
+                            }));
+                        }
+                        
+                        // Deduct remaining from owned stock
+                        if (qtyToDeduct > 0) {
+                             variant.stockByBranch[saleData.branchId] -= qtyToDeduct;
+                        }
+
                         newStockLogs.push({
-                            id: `log-${Date.now()}-${item.variantId}`,
-                            date: new Date(),
-                            productId: item.productId,
-                            variantId: item.variantId,
-                            productName: item.name,
-                            variantName: item.variantName,
-                            action: 'SALE',
-                            quantity: -item.quantity,
-                            branchId: saleData.branchId,
-                            referenceId: `sale-${Date.now()}`
+                            id: `log-${Date.now()}-${item.variantId}`, date: new Date(),
+                            productId: item.productId, variantId: item.variantId,
+                            productName: item.name, variantName: item.variantName,
+                            action: 'SALE', quantity: -item.quantity,
+                            branchId: saleData.branchId, referenceId: newSale.id
                         });
                     }
                 }
@@ -520,28 +582,22 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             return productsCopy;
         });
     
-        // 2. Create sale record
-        const newSale: Sale = {
-            ...saleData,
-            id: `sale-${Date.now()}`,
-            date: new Date(),
-        };
         setSales(prev => [newSale, ...prev]);
         setStockLogs(prev => [...newStockLogs, ...prev]);
     
-        // 3. Handle notification
         let notificationMessage = '';
-        if (notificationSettings.sms.twilio.enabled && saleData.customer.phone) {
+        const customer = customers.find(c => c.id === newSale.customerId);
+        if (notificationSettings.sms.twilio.enabled && customer?.phone) {
              if (!notificationSettings.sms.twilio.accountSid || !notificationSettings.sms.twilio.apiKey || !notificationSettings.sms.twilio.fromNumber) {
                  notificationMessage = ' Twilio is enabled but not configured.';
             } else {
-                console.log(`Simulating Twilio SMS to ${saleData.customer.phone} from ${notificationSettings.sms.twilio.fromNumber}: Order confirmation for $${saleData.total.toFixed(2)}.`);
-                notificationMessage = ` SMS confirmation sent to ${saleData.customer.phone}.`;
+                console.log(`Simulating Twilio SMS to ${customer.phone} from ${notificationSettings.sms.twilio.fromNumber}: Order confirmation for $${saleData.total.toFixed(2)}.`);
+                notificationMessage = ` SMS confirmation sent to ${customer.phone}.`;
             }
         }
         
         return { success: true, message: `Sale completed!${notificationMessage}`, newSale: newSale };
-    }, [notificationSettings]);
+    }, [notificationSettings, customers]);
     
     const adjustStock = useCallback((productId: string, variantId: string, branchId: string, newStock: number, reason: string) => {
         let logEntry: StockLog | null = null;
@@ -726,6 +782,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                 t.id === CURRENT_TENANT_ID ? { ...t, ...newSettings } : t
             )
         );
+        if(newSettings.language) setCurrentLanguage(newSettings.language);
+        if(newSettings.currency) setCurrentCurrency(newSettings.currency);
     }, []);
     
     const updateTenantAutomations = useCallback((newAutomations: Partial<TenantAutomations>) => {
@@ -827,11 +885,13 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         setStaff(prev => [...prev, newStaff]);
     }, []);
 
-    const sellShipment = useCallback(async (shipmentId: string, customer: Sale['customer']): Promise<{success: boolean; message: string;}> => {
+    const sellShipment = useCallback(async (shipmentId: string, customerData: Pick<Customer, 'name' | 'phone'>): Promise<{success: boolean; message: string;}> => {
         const shipment = shipments.find(s => s.id === shipmentId);
         if (!shipment) return { success: false, message: 'Shipment not found.' };
 
-        // Create sale record from shipment
+        // For simplicity, this direct sale is always to a walk-in customer.
+        const customerId = 'cust-walkin'; 
+        
         const total = shipment.items.reduce((acc, item) => acc + item.sellingPrice * item.quantity, 0);
         const saleItems: CartItem[] = shipment.items.map(item => ({
              productId: item.productId,
@@ -843,25 +903,22 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
              costPrice: products.find(p => p.id === item.productId)?.variants.find(v => v.id === item.variantId)?.costPrice || 0,
         }));
         
-        const newSale: Sale = {
-            id: `sale-${Date.now()}`,
-            date: new Date(),
+        const newSale: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'> = {
             items: saleItems,
             total,
             branchId: 'DIRECT_SALE',
-            customer,
+            customerId,
             payments: [{ method: 'Cargo Sale', amount: total }],
             change: 0,
             staffId: 'staff-1', // Default staff for direct cargo sales
             discount: 0,
         };
-        setSales(prev => [newSale, ...prev]);
+        await addSale(newSale);
 
-        // Update shipment status
         updateShipmentStatus(shipmentId, 'SOLD_IN_TRANSIT');
         
-        return { success: true, message: `Shipment ${shipment.shipmentCode} sold to ${customer.name}.` };
-    }, [shipments, products, updateShipmentStatus]);
+        return { success: true, message: `Shipment ${shipment.shipmentCode} sold to ${customerData.name}.` };
+    }, [shipments, products, updateShipmentStatus, addSale]);
 
     const receiveShipment = useCallback((shipmentId: string) => {
         const shipment = shipments.find(s => s.id === shipmentId);
@@ -997,6 +1054,55 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         }));
     }, []);
 
+    const addCustomer = useCallback((customerData: Omit<Customer, 'id' | 'creditBalance'>) => {
+        const newCustomer: Customer = {
+            ...customerData,
+            id: `cust-${Date.now()}`,
+            creditBalance: 0,
+        };
+        setCustomers(prev => [newCustomer, ...prev]);
+    }, []);
+
+    const recordCreditPayment = useCallback((customerId: string, amount: number) => {
+        setCustomers(prev => prev.map(c => 
+            c.id === customerId ? { ...c, creditBalance: c.creditBalance - amount } : c
+        ));
+        addJournalEntry({
+            description: `Credit payment from customer ${customerId}`,
+            transactions: [
+                { accountId: 'acc-cash', amount: amount }, // Debit Cash
+                { accountId: 'acc-ar', amount: -amount } // Credit Accounts Receivable
+            ]
+        });
+    }, [addJournalEntry]);
+
+    const addConsignment = useCallback((consignmentData: Omit<Consignment, 'id' | 'status'>) => {
+        const newConsignment: Consignment = {
+            ...consignmentData,
+            id: `con-${Date.now()}`,
+            status: 'ACTIVE'
+        };
+        setConsignments(prev => [newConsignment, ...prev]);
+
+        // Add stock to products
+        setProducts(prevProducts => {
+            const productsCopy = JSON.parse(JSON.stringify(prevProducts));
+            newConsignment.items.forEach(item => {
+                const product = productsCopy.find((p: Product) => p.variants.some(v => v.id === item.variantId));
+                if (product) {
+                    const variant = product.variants.find((v: ProductVariant) => v.id === item.variantId);
+                    if (variant) {
+                        if (!variant.consignmentStockByBranch) {
+                            variant.consignmentStockByBranch = {};
+                        }
+                        variant.consignmentStockByBranch[newConsignment.branchId] = (variant.consignmentStockByBranch[newConsignment.branchId] || 0) + item.quantityReceived;
+                    }
+                }
+            });
+            return productsCopy;
+        });
+    }, []);
+
 
     const value: AppContextType = {
         products,
@@ -1026,6 +1132,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         accounts,
         journalEntries,
         announcements,
+        customers,
+        consignments,
         searchTerm,
         currentLanguage,
         currentCurrency,
@@ -1072,6 +1180,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addTenant,
         addAnnouncement,
         markAnnouncementAsRead,
+        addCustomer,
+        recordCreditPayment,
+        addConsignment,
         logout: onLogout,
     };
 

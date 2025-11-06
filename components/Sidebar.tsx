@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { Page } from '../App';
 import Icon from './icons';
@@ -62,7 +63,9 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
     { page: 'POS', icon: 'pos', label: t('pos'), key: 'pos' },
     { page: 'INVENTORY', icon: 'inventory', label: t('inventory'), key: 'inventory' },
     { page: 'PURCHASES', icon: 'clipboard-document-list', label: t('purchases'), key: 'purchases' },
+    { page: 'CONSIGNMENT', icon: 'briefcase', label: t('consignment'), key: 'consignment' },
     { page: 'LOGISTICS', icon: 'truck', label: t('logistics'), key: 'logistics' },
+    { page: 'CREDIT_MANAGEMENT', icon: 'users', label: t('creditManagement'), key: 'credit_management' },
     { page: 'ACCOUNTING', icon: 'calculator', label: t('accounting'), key: 'accounting' },
     { page: 'REPORTS', icon: 'reports', label: t('reports'), key: 'reports' },
     { page: 'SETTINGS', icon: 'settings', label: t('settings'), key: 'settings' },

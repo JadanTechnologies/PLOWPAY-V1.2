@@ -149,11 +149,13 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
 };
 
 const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, onClose }) => {
-    const { brandConfig, staff } = useAppContext();
+    const { brandConfig, staff, customers } = useAppContext();
     const { formatCurrency } = useCurrency();
     const subtotal = sale.items.reduce((acc, item) => acc + item.sellingPrice * item.quantity, 0);
     const tax = sale.total - subtotal + (sale.discount || 0);
     const cashier = staff.find(s => s.id === sale.staffId);
+    // FIX: Look up customer details using customerId from the sale object.
+    const customer = customers.find(c => c.id === sale.customerId);
 
     const handlePrint = () => {
         window.print();
@@ -180,8 +182,9 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
                              <p><strong>Cashier:</strong> {cashier?.name || 'N/A'}</p>
                         </div>
                         <div>
-                             <p><strong>Customer:</strong> {sale.customer.name}</p>
-                             {sale.customer.phone && <p><strong>Phone:</strong> {sale.customer.phone}</p>}
+                             {/* FIX: Used the looked-up customer object for name and phone. */}
+                             <p><strong>Customer:</strong> {customer?.name || 'N/A'}</p>
+                             {customer?.phone && <p><strong>Phone:</strong> {customer.phone}</p>}
                         </div>
                     </div>
 
@@ -397,11 +400,13 @@ const PointOfSale: React.FC = () => {
           finalPayments.push({ method: 'Credit', amount: total - totalPaid });
       }
       
-      const saleData = {
+      // FIX: Changed `customer` property to `customerId` to match the Sale type.
+      // There's no customer selection logic, so defaulting to 'cust-walkin'.
+      const saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'> = {
           items: cart,
           total: total,
           branchId: branches[0]?.id || 'branch-1', // Default to first branch
-          customer: customer,
+          customerId: 'cust-walkin', 
           payments: finalPayments,
           change: change,
           staffId: 'staff-1', // Mock: assume staff-1 is logged in
