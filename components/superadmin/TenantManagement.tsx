@@ -28,6 +28,8 @@ const TenantManagement: React.FC = () => {
             if (modalType === 'ACTIVATE') {
                 setSelectedPlanId(tenant.planId);
             }
+        } else {
+            setFormState(initialFormState);
         }
     };
 
@@ -125,4 +127,104 @@ const TenantManagement: React.FC = () => {
                                         </>
                                     )}
                                     {tenant.status === 'SUSPENDED' && (
-                                        <button onClick={() => openModal('ACTIVATE', tenant)} className="text-green-400 hover:text-green-300 font-semibold px-2 py-1 rounded-
+                                        <button onClick={() => openModal('ACTIVATE', tenant)} className="text-green-400 hover:text-green-300 font-semibold px-2 py-1 rounded-md text-xs">Activate</button>
+                                    )}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {modal === 'VIEW_TENANT' && selectedTenant && (
+                <TenantDetailModal 
+                    tenant={selectedTenant}
+                    planName={planMap.get(selectedTenant.planId) || 'N/A'}
+                    onClose={closeModal}
+                />
+            )}
+
+            {modal === 'ADD_TENANT' && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+                    <form onSubmit={handleSubmit} className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col border border-slate-700">
+                        <h3 className="text-xl font-bold mb-4 text-white">Add New Tenant</h3>
+                        <div className="flex-grow overflow-y-auto pr-2 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400">Business Name</label>
+                                    <input type="text" name="businessName" value={formState.businessName} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400">Owner Name</label>
+                                    <input type="text" name="ownerName" value={formState.ownerName} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400">Email</label>
+                                    <input type="email" name="email" value={formState.email} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400">Username</label>
+                                    <input type="text" name="username" value={formState.username} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
+                                </div>
+                                 <div>
+                                    <label className="block text-sm font-medium text-slate-400">Password</label>
+                                    <input type="password" name="password" value={formState.password || ''} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400">Plan</label>
+                                    <select name="planId" value={formState.planId} onChange={handleFormChange} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md">
+                                        {subscriptionPlans.map(plan => <option key={plan.id} value={plan.id}>{plan.name}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-700">
+                            <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500 font-semibold">Cancel</button>
+                            <button type="submit" className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold">Save Tenant</button>
+                        </div>
+                    </form>
+                </div>
+            )}
+
+            {modal === 'EXTEND_TRIAL' && selectedTenant && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+                    <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-slate-700">
+                        <h3 className="text-xl font-bold mb-4 text-white">Extend Trial for {selectedTenant.businessName}</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label htmlFor="extendDays" className="block text-sm font-medium text-slate-400">Days to Extend</label>
+                                <input type="number" id="extendDays" value={extendDays} onChange={(e) => setExtendDays(parseInt(e.target.value, 10))} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md" />
+                            </div>
+                        </div>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button onClick={closeModal} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500 font-semibold">Cancel</button>
+                            <button onClick={handleExtendTrial} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold">Extend Trial</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {modal === 'ACTIVATE' && selectedTenant && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+                    <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-slate-700">
+                        <h3 className="text-xl font-bold mb-4 text-white">Activate Subscription for {selectedTenant.businessName}</h3>
+                        <div className="space-y-4">
+                            <div>
+                                <label htmlFor="planId" className="block text-sm font-medium text-slate-400">Subscription Plan</label>
+                                <select id="planId" value={selectedPlanId} onChange={(e) => setSelectedPlanId(e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md">
+                                    {subscriptionPlans.map(plan => <option key={plan.id} value={plan.id}>{plan.name}</option>)}
+                                </select>
+                            </div>
+                        </div>
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button onClick={closeModal} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500 font-semibold">Cancel</button>
+                            <button onClick={handleActivate} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold">Activate</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default TenantManagement;
