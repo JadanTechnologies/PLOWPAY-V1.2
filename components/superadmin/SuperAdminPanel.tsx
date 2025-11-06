@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
@@ -7,7 +8,7 @@ import PlatformDashboard from './PlatformDashboard';
 import TenantManagement from './TenantManagement';
 import TeamManagement from './TeamManagement';
 import RoleManagement from './RoleManagement';
-import PaymentGateways from './PaymentGateways';
+import PaymentGateways from './PaymentSettings';
 import NotificationSettings from './NotificationSettings';
 import SubscriptionManagement from './SubscriptionManagement';
 import { useAppContext } from '../../hooks/useAppContext';
