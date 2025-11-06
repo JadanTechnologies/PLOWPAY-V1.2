@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Tenant, TenantStatus } from '../../types';
 import Icon from '../icons';
+import TenantDetailModal from './TenantDetailModal';
 
 const TenantManagement: React.FC = () => {
     const { tenants, subscriptionPlans, addTenant, extendTrial, activateSubscription } = useAppContext();
-    const [modal, setModal] = useState<'NONE' | 'ADD_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE'>('NONE');
+    const [modal, setModal] = useState<'NONE' | 'ADD_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE'>('NONE');
     const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
 
     const initialFormState: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate'> = {
@@ -19,7 +20,7 @@ const TenantManagement: React.FC = () => {
 
     const planMap = new Map(subscriptionPlans.map(p => [p.id, p.name]));
     
-    const openModal = (modalType: 'ADD_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE', tenant: Tenant | null = null) => {
+    const openModal = (modalType: 'ADD_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE', tenant: Tenant | null = null) => {
         setModal(modalType);
         if (tenant) {
             setSelectedTenant(tenant);
@@ -113,7 +114,7 @@ const TenantManagement: React.FC = () => {
                                     ) : 'N/A'}
                                 </td>
                                 <td className="p-3 text-center whitespace-nowrap space-x-2">
-                                     <button className="text-sky-400 hover:text-sky-300 font-semibold px-2 py-1 rounded-md text-sm">View</button>
+                                     <button onClick={() => openModal('VIEW_TENANT', tenant)} className="text-sky-400 hover:text-sky-300 font-semibold px-2 py-1 rounded-md text-sm">View</button>
                                      <button className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Edit</button>
                                      {tenant.status === 'TRIAL' && (
                                         <>
@@ -170,6 +171,14 @@ const TenantManagement: React.FC = () => {
                         </form>
                     </div>
                 </div>
+            )}
+
+            {modal === 'VIEW_TENANT' && selectedTenant && (
+                <TenantDetailModal 
+                    tenant={selectedTenant}
+                    planName={planMap.get(selectedTenant.planId) || 'N/A'}
+                    onClose={closeModal}
+                />
             )}
             
             {modal === 'EXTEND_TRIAL' && selectedTenant && (
