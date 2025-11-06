@@ -6,6 +6,8 @@ import PointOfSale from './PointOfSale';
 import Inventory from './Inventory';
 import { Page } from '../App';
 import LogisticsManagement from './LogisticsManagement';
+import Reports from './Reports';
+import Settings from './Settings';
 
 
 const TenantApp: React.FC = () => {
@@ -26,6 +28,10 @@ const TenantApp: React.FC = () => {
         return <Inventory />;
       case 'LOGISTICS':
         return <LogisticsManagement />;
+      case 'REPORTS':
+        return <Reports />;
+      case 'SETTINGS':
+        return <Settings />;
       default:
         return <Dashboard />;
     }
