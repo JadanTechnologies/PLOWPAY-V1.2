@@ -2,8 +2,9 @@
 
 
 
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -12,6 +13,13 @@ const mockBranches: Branch[] = [
     { id: 'branch-2', name: 'Uptown' },
     { id: 'branch-3', name: 'Westside' },
     { id: 'branch-4', name: 'Eastside' },
+];
+
+const mockCategories: Category[] = [
+    { id: 'cat-1', name: 'Electronics' },
+    { id: 'cat-2', name: 'Apparel' },
+    { id: 'cat-3', name: 'Groceries' },
+    { id: 'cat-4', name: 'Books' },
 ];
 
 const mockStaffRoles: StaffRole[] = [
@@ -104,33 +112,33 @@ const generateMockTenants = (): Tenant[] => {
 };
 
 const generateMockProducts = (): Product[] => {
-    const categories = ['Electronics', 'Apparel', 'Groceries', 'Books'];
     const productNames = {
-        'Electronics': ['Laptop', 'Smartphone', 'Headphones', 'Smart Watch'],
-        'Apparel': ['T-Shirt', 'Jeans', 'Jacket', 'Sneakers'],
-        'Groceries': ['Milk', 'Bread', 'Eggs', 'Cheese'],
-        'Books': ['Sci-Fi Novel', 'Cookbook', 'History Book', 'Biography']
+        [mockCategories[0].id]: ['Laptop', 'Smartphone', 'Headphones', 'Smart Watch'],
+        [mockCategories[1].id]: ['T-Shirt', 'Jeans', 'Jacket', 'Sneakers'],
+        [mockCategories[2].id]: ['Milk', 'Bread', 'Eggs', 'Cheese'],
+        [mockCategories[3].id]: ['Sci-Fi Novel', 'Cookbook', 'History Book', 'Biography']
     };
     const variants = {
-        'Electronics': [{name: '16GB RAM', price: 1200}, {name: '32GB RAM', price: 1500}],
-        'Apparel': [{name: 'Medium', price: 25}, {name: 'Large', price: 28}],
-        'Groceries': [{name: '1 Gallon', price: 4}, {name: 'Half Gallon', price: 2.5}],
-        'Books': [{name: 'Hardcover', price: 30}, {name: 'Paperback', price: 15}]
+        [mockCategories[0].id]: [{name: '16GB RAM', price: 1200}, {name: '32GB RAM', price: 1500}],
+        [mockCategories[1].id]: [{name: 'Medium', price: 25}, {name: 'Large', price: 28}],
+        [mockCategories[2].id]: [{name: '1 Gallon', price: 4}, {name: 'Half Gallon', price: 2.5}],
+        [mockCategories[3].id]: [{name: 'Hardcover', price: 30}, {name: 'Paperback', price: 15}]
     };
 
     let products: Product[] = [];
     let productId = 1;
 
-    categories.forEach(category => {
-        productNames[category as keyof typeof productNames].forEach(name => {
-            const hasBatch = category === 'Groceries' || (category === 'Electronics' && Math.random() > 0.5);
+    mockCategories.forEach(category => {
+        const categoryProductNames = productNames[category.id as keyof typeof productNames] || [];
+        categoryProductNames.forEach(name => {
+            const hasBatch = category.name === 'Groceries' || (category.name === 'Electronics' && Math.random() > 0.5);
             
             const product: Product = {
                 id: `prod-${productId++}`,
                 name: name,
-                category: category,
+                categoryId: category.id,
                 isFavorite: Math.random() > 0.7,
-                variants: variants[category as keyof typeof variants].map((variant, index) => {
+                variants: (variants[category.id as keyof typeof variants] || []).map((variant, index) => {
                     const stockByBranch: { [branchId: string]: number } = {};
                     const consignmentStockByBranch: { [branchId: string]: number } = {};
 
@@ -472,6 +480,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     }, [tenants]);
 
     const [branches, setBranches] = useState<Branch[]>(mockBranches);
+    const [categories, setCategories] = useState<Category[]>(mockCategories);
     const [staff, setStaff] = useState<Staff[]>(mockStaff);
     const [staffRoles, setStaffRoles] = useState<StaffRole[]>(mockStaffRoles);
     const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
@@ -1103,6 +1112,27 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         });
     }, []);
 
+    const addCategory = useCallback((categoryName: string) => {
+        const newCategory: Category = {
+            id: `cat-${Date.now()}`,
+            name: categoryName,
+        };
+        setCategories(prev => [...prev, newCategory]);
+    }, []);
+
+    const updateCategory = useCallback((categoryId: string, newName: string) => {
+        setCategories(prev => prev.map(cat => cat.id === categoryId ? { ...cat, name: newName } : cat));
+    }, []);
+
+    const deleteCategory = useCallback((categoryId: string) => {
+        const isCategoryInUse = products.some(p => p.categoryId === categoryId);
+        if (isCategoryInUse) {
+            alert("Cannot delete category. It is currently assigned to one or more products.");
+            return;
+        }
+        setCategories(prev => prev.filter(cat => cat.id !== categoryId));
+    }, [products]);
+
 
     const value: AppContextType = {
         products,
@@ -1134,6 +1164,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         announcements,
         customers,
         consignments,
+        categories,
         searchTerm,
         currentLanguage,
         currentCurrency,
@@ -1183,6 +1214,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addCustomer,
         recordCreditPayment,
         addConsignment,
+        addCategory,
+        updateCategory,
+        deleteCategory,
         logout: onLogout,
     };
 

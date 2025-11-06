@@ -21,7 +21,7 @@ const MetricCard: React.FC<{ title: string; value: string | number; iconName: st
 
 
 const Reports: React.FC = () => {
-  const { sales, products, branches, staff } = useAppContext();
+  const { sales, products, branches, staff, categories } = useAppContext();
   const { formatCurrency } = useCurrency();
   
   const [dateRange, setDateRange] = useState(() => {
@@ -89,17 +89,19 @@ const Reports: React.FC = () => {
   }, [filteredSales]);
 
   const salesByCategory = useMemo(() => {
+    const categoryMap = new Map(categories.map(c => [c.id, c.name]));
     const categoryData: { [key: string]: number } = {};
     filteredSales.forEach(sale => {
       sale.items.forEach(item => {
         const product = products.find(p => p.id === item.productId);
         if (product) {
-          categoryData[product.category] = (categoryData[product.category] || 0) + item.sellingPrice * item.quantity;
+          const categoryName = categoryMap.get(product.categoryId) || 'Uncategorized';
+          categoryData[categoryName] = (categoryData[categoryName] || 0) + item.sellingPrice * item.quantity;
         }
       });
     });
     return Object.entries(categoryData).map(([name, value]) => ({ name, value }));
-  }, [filteredSales, products]);
+  }, [filteredSales, products, categories]);
   
   const topSellingProducts = useMemo(() => {
     const productData: { [key: string]: { name: string; variantName: string; quantity: number } } = {};

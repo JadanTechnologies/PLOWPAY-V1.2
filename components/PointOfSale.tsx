@@ -9,6 +9,8 @@ const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, 
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
   const [isAdding, setIsAdding] = useState(false);
   const { formatCurrency } = useCurrency();
+  const { categories } = useAppContext();
+  const category = useMemo(() => categories.find(c => c.id === product.categoryId)?.name || 'Uncategorized', [categories, product.categoryId]);
 
   const handleAddToCartClick = () => {
       setIsAdding(true);
@@ -24,7 +26,7 @@ const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, 
         <img className="w-full aspect-[4/3] object-cover rounded-t-lg" src={`https://picsum.photos/seed/${product.id}/400/300`} alt={product.name} />
         <div className="p-4 flex-grow">
           <h3 className="font-bold text-lg text-white mb-1 truncate">{product.name}</h3>
-          <p className="text-gray-400 text-sm mb-2">{product.category}</p>
+          <p className="text-gray-400 text-sm mb-2">{category}</p>
         </div>
       </div>
       <div className="p-4 pt-0 mt-auto">
@@ -245,10 +247,10 @@ interface HeldOrder {
 
 
 const PointOfSale: React.FC = () => {
-  const { products, searchTerm, addSale, branches } = useAppContext();
+  const { products, searchTerm, addSale, branches, categories } = useAppContext();
   const { formatCurrency } = useCurrency();
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedCategoryId, setSelectedCategoryId] = useState('All');
   const [showFavorites, setShowFavorites] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [discount, setDiscount] = useState(0);
@@ -321,16 +323,16 @@ const PointOfSale: React.FC = () => {
     });
   };
 
-  const categories = useMemo(() => ['All', ...new Set(products.map(p => p.category))], [products]);
+  const categoryOptions = useMemo(() => [{ id: 'All', name: 'All Categories' }, ...categories], [categories]);
 
   const filteredProducts = useMemo(() => {
     return products.filter(product => {
-      const matchesCategory = selectedCategory === 'All' || product.category === selectedCategory;
+      const matchesCategory = selectedCategoryId === 'All' || product.categoryId === selectedCategoryId;
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesFavorites = !showFavorites || product.isFavorite;
       return matchesCategory && matchesSearch && matchesFavorites;
     });
-  }, [products, searchTerm, selectedCategory, showFavorites]);
+  }, [products, searchTerm, selectedCategoryId, showFavorites]);
 
   const subtotal = useMemo(() => cart.reduce((acc, item) => acc + item.sellingPrice * item.quantity, 0), [cart]);
   const tax = subtotal * 0.08;
@@ -437,11 +439,11 @@ const PointOfSale: React.FC = () => {
       <div className="flex-1 flex flex-col bg-gray-800/50 rounded-lg p-4">
         <div className="mb-4 flex flex-col sm:flex-row gap-4">
           <select 
-            value={selectedCategory}
-            onChange={e => setSelectedCategory(e.target.value)}
+            value={selectedCategoryId}
+            onChange={e => setSelectedCategoryId(e.target.value)}
             className="bg-gray-700 border border-gray-600 rounded-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
-            {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            {categoryOptions.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
           </select>
           <button onClick={() => setShowFavorites(!showFavorites)} className={`p-2 rounded-md transition-colors ${showFavorites ? 'bg-yellow-500 text-white' : 'bg-gray-700 text-gray-300'}`}>
             <Icon name="star" className="w-5 h-5" />

@@ -55,10 +55,15 @@ export interface ProductVariant {
   expiryDate?: string;
 }
 
+export interface Category {
+  id: string;
+  name: string;
+}
+
 export interface Product {
   id:string;
   name: string;
-  category: string;
+  categoryId: string;
   variants: ProductVariant[];
   isFavorite?: boolean;
 }
@@ -443,6 +448,7 @@ export interface AppContextType {
   announcements: Announcement[];
   customers: Customer[];
   consignments: Consignment[];
+  categories: Category[];
   searchTerm: string;
   currentLanguage: string;
   currentCurrency: string;
@@ -492,5 +498,8 @@ export interface AppContextType {
   addCustomer: (customerData: Omit<Customer, 'id' | 'creditBalance'>) => void;
   recordCreditPayment: (customerId: string, amount: number) => void;
   addConsignment: (consignmentData: Omit<Consignment, 'id' | 'status'>) => void;
+  addCategory: (categoryName: string) => void;
+  updateCategory: (categoryId: string, newName: string) => void;
+  deleteCategory: (categoryId: string) => void;
   logout?: () => void;
 }

@@ -2,16 +2,17 @@
 
 import React, {useState, useMemo} from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import { Product, ProductVariant, StockLog } from '../types';
+import { Product, ProductVariant, StockLog, Category } from '../types';
 import Icon from './icons';
 import { useCurrency } from '../hooks/useCurrency';
 
 type NewVariant = Omit<ProductVariant, 'id'>;
 
 const Inventory: React.FC = () => {
-    const { products, branches, adjustStock, transferStock, addProduct, stockLogs, searchTerm } = useAppContext();
+    const { products, branches, categories, adjustStock, transferStock, addProduct, stockLogs, searchTerm, addCategory, updateCategory, deleteCategory } = useAppContext();
     const { formatCurrency } = useCurrency();
-    const [activeTab, setActiveTab] = useState<'inventory' | 'history'>('inventory');
+    const [activeTab, setActiveTab] = useState<'inventory' | 'history' | 'categories'>('inventory');
+    const [categoryFilter, setCategoryFilter] = useState('all');
     
     // Adjust Modal State
     const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
@@ -31,16 +32,25 @@ const Inventory: React.FC = () => {
     // Add Product Modal State
     const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
     const [newProductName, setNewProductName] = useState('');
-    const [newProductCategory, setNewProductCategory] = useState('');
+    const [newProductCategoryId, setNewProductCategoryId] = useState(categories[0]?.id || '');
     const [newProductVariants, setNewProductVariants] = useState<NewVariant[]>([
         { name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}), batchNumber: '', expiryDate: '' }
     ]);
 
-    const filteredProducts = products.filter(p => 
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        p.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.variants.some(v => v.sku.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    // Category Modal State
+    const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [categoryFormName, setCategoryFormName] = useState('');
+
+    const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c.name])), [categories]);
+
+    const filteredProducts = products.filter(p => {
+        const matchesCategory = categoryFilter === 'all' || p.categoryId === categoryFilter;
+        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+            (categoryMap.get(p.categoryId) || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            p.variants.some(v => v.sku.toLowerCase().includes(searchTerm.toLowerCase()));
+        return matchesCategory && matchesSearch;
+    });
 
     const openAdjustModal = (product: Product, variant: ProductVariant) => {
         setSelectedProduct(product);
@@ -110,7 +120,7 @@ const Inventory: React.FC = () => {
 
     const resetAddProductForm = () => {
         setNewProductName('');
-        setNewProductCategory('');
+        setNewProductCategoryId(categories[0]?.id || '');
         setNewProductVariants([{ name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}), batchNumber: '', expiryDate: '' }]);
     };
 
@@ -120,13 +130,13 @@ const Inventory: React.FC = () => {
     };
 
     const handleAddProduct = () => {
-        if (!newProductName || !newProductCategory || newProductVariants.some(v => !v.name || !v.sku)) {
+        if (!newProductName || !newProductCategoryId || newProductVariants.some(v => !v.name || !v.sku)) {
             alert('Please fill out all required product and variant fields.');
             return;
         }
         addProduct({
             name: newProductName,
-            category: newProductCategory,
+            categoryId: newProductCategoryId,
             variants: newProductVariants
         });
         closeAddProductModal();
@@ -152,6 +162,40 @@ const Inventory: React.FC = () => {
         if (newProductVariants.length > 1) {
             const updatedVariants = newProductVariants.filter((_, i) => i !== index);
             setNewProductVariants(updatedVariants);
+        }
+    };
+
+    const openCategoryModal = (category: Category | null) => {
+        if (category) {
+            setEditingCategory(category);
+            setCategoryFormName(category.name);
+        } else {
+            setEditingCategory(null);
+            setCategoryFormName('');
+        }
+        setCategoryModalOpen(true);
+    };
+
+    const closeCategoryModal = () => {
+        setCategoryModalOpen(false);
+    };
+
+    const handleSaveCategory = () => {
+        if (categoryFormName.trim() === '') {
+            alert('Category name cannot be empty.');
+            return;
+        }
+        if (editingCategory) {
+            updateCategory(editingCategory.id, categoryFormName);
+        } else {
+            addCategory(categoryFormName);
+        }
+        closeCategoryModal();
+    };
+
+    const handleDeleteCategory = (categoryId: string) => {
+        if (window.confirm("Are you sure you want to delete this category? This cannot be undone.")) {
+            deleteCategory(categoryId);
         }
     };
 
@@ -190,6 +234,9 @@ const Inventory: React.FC = () => {
                         <button onClick={() => setActiveTab('inventory')} className={`px-3 py-2 font-medium text-sm rounded-t-md ${activeTab === 'inventory' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}>
                             Current Inventory
                         </button>
+                        <button onClick={() => setActiveTab('categories')} className={`px-3 py-2 font-medium text-sm rounded-t-md ${activeTab === 'categories' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+                            Categories
+                        </button>
                         <button onClick={() => setActiveTab('history')} className={`px-3 py-2 font-medium text-sm rounded-t-md ${activeTab === 'history' ? 'bg-indigo-600 text-white' : 'text-gray-400 hover:text-white'}`}>
                             History
                         </button>
@@ -197,58 +244,94 @@ const Inventory: React.FC = () => {
                 </div>
                 
                 {activeTab === 'inventory' && (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="border-b border-gray-700">
-                                <tr>
-                                    <th className="p-3 text-sm font-semibold tracking-wide">Product Name</th>
-                                    <th className="p-3 text-sm font-semibold tracking-wide">Category</th>
-                                    <th className="p-3 text-sm font-semibold tracking-wide">Variant</th>
-                                    <th className="p-3 text-sm font-semibold tracking-wide">SKU</th>
-                                    <th className="p-3 text-sm font-semibold tracking-wide">Batch #</th>
-                                    <th className="p-3 text-sm font-semibold tracking-wide">Expiry Date</th>
-                                    <th className="p-3 text-sm font-semibold tracking-wide text-right">Selling Price</th>
-                                    {branches.map(branch => (
-                                        <th key={branch.id} className="p-3 text-sm font-semibold tracking-wide text-right">{branch.name}</th>
-                                    ))}
-                                    <th className="p-3 text-sm font-semibold tracking-wide text-center">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredProducts.flatMap((product) => 
-                                    product.variants.map((variant, vIndex) => (
-                                        <tr key={`${product.id}-${variant.id}`} className="border-b border-gray-700 hover:bg-gray-700/50">
-                                            {vIndex === 0 && (
-                                                <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap font-medium border-r border-gray-700">{product.name}</td>
-                                            )}
-                                            {vIndex === 0 && (
-                                                <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap border-r border-gray-700">{product.category}</td>
-                                            )}
-                                            <td className="p-3 whitespace-nowrap">{variant.name}</td>
-                                            <td className="p-3 whitespace-nowrap text-gray-400">{variant.sku}</td>
-                                            <td className="p-3 whitespace-nowrap text-gray-400">{variant.batchNumber || 'N/A'}</td>
-                                            <td className="p-3 whitespace-nowrap text-gray-400">{variant.expiryDate || 'N/A'}</td>
-                                            <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">{formatCurrency(variant.sellingPrice)}</td>
-                                            {branches.map(branch => {
-                                                const stock = variant.stockByBranch[branch.id] || 0;
-                                                return (
-                                                    <td key={branch.id} className={`p-3 whitespace-nowrap text-right font-bold ${stock < 10 ? 'text-red-500' : 'text-green-500'}`}>
-                                                        {stock}
-                                                    </td>
-                                                );
-                                            })}
-                                            <td className="p-3 text-center whitespace-nowrap space-x-2">
-                                                <button onClick={() => openAdjustModal(product, variant)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Adjust</button>
-                                                <button onClick={() => openTransferModal(product, variant)} className="text-indigo-400 hover:text-indigo-300 font-semibold px-2 py-1 rounded-md text-sm">Transfer</button>
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
-                         {filteredProducts.length === 0 && (
-                            <p className="text-center text-gray-400 py-8">No products found.</p>
-                        )}
+                    <div>
+                        <div className="mb-4">
+                            <select 
+                                value={categoryFilter}
+                                onChange={e => setCategoryFilter(e.target.value)}
+                                className="bg-gray-700 border border-gray-600 rounded-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 max-w-xs"
+                            >
+                                <option value="all">All Categories</option>
+                                {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                            </select>
+                        </div>
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="border-b border-gray-700">
+                                    <tr>
+                                        <th className="p-3 text-sm font-semibold tracking-wide">Product Name</th>
+                                        <th className="p-3 text-sm font-semibold tracking-wide">Category</th>
+                                        <th className="p-3 text-sm font-semibold tracking-wide">Variant</th>
+                                        <th className="p-3 text-sm font-semibold tracking-wide">SKU</th>
+                                        <th className="p-3 text-sm font-semibold tracking-wide">Batch #</th>
+                                        <th className="p-3 text-sm font-semibold tracking-wide">Expiry Date</th>
+                                        <th className="p-3 text-sm font-semibold tracking-wide text-right">Selling Price</th>
+                                        {branches.map(branch => (
+                                            <th key={branch.id} className="p-3 text-sm font-semibold tracking-wide text-right">{branch.name}</th>
+                                        ))}
+                                        <th className="p-3 text-sm font-semibold tracking-wide text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredProducts.flatMap((product) => 
+                                        product.variants.map((variant, vIndex) => (
+                                            <tr key={`${product.id}-${variant.id}`} className="border-b border-gray-700 hover:bg-gray-700/50">
+                                                {vIndex === 0 && (
+                                                    <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap font-medium border-r border-gray-700">{product.name}</td>
+                                                )}
+                                                {vIndex === 0 && (
+                                                    <td rowSpan={product.variants.length} className="p-3 align-top whitespace-nowrap border-r border-gray-700">{categoryMap.get(product.categoryId)}</td>
+                                                )}
+                                                <td className="p-3 whitespace-nowrap">{variant.name}</td>
+                                                <td className="p-3 whitespace-nowrap text-gray-400">{variant.sku}</td>
+                                                <td className="p-3 whitespace-nowrap text-gray-400">{variant.batchNumber || 'N/A'}</td>
+                                                <td className="p-3 whitespace-nowrap text-gray-400">{variant.expiryDate || 'N/A'}</td>
+                                                <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">{formatCurrency(variant.sellingPrice)}</td>
+                                                {branches.map(branch => {
+                                                    const stock = variant.stockByBranch[branch.id] || 0;
+                                                    return (
+                                                        <td key={branch.id} className={`p-3 whitespace-nowrap text-right font-bold ${stock < 10 ? 'text-red-500' : 'text-green-500'}`}>
+                                                            {stock}
+                                                        </td>
+                                                    );
+                                                })}
+                                                <td className="p-3 text-center whitespace-nowrap space-x-2">
+                                                    <button onClick={() => openAdjustModal(product, variant)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Adjust</button>
+                                                    <button onClick={() => openTransferModal(product, variant)} className="text-indigo-400 hover:text-indigo-300 font-semibold px-2 py-1 rounded-md text-sm">Transfer</button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                            {filteredProducts.length === 0 && (
+                                <p className="text-center text-gray-400 py-8">No products found for the selected criteria.</p>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {activeTab === 'categories' && (
+                    <div>
+                        <div className="flex justify-between items-center mb-4">
+                            <h3 className="text-xl font-semibold text-white">Manage Categories</h3>
+                            <button onClick={() => openCategoryModal(null)} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
+                                <Icon name="plus" className="w-5 h-5 mr-2" />Add Category
+                            </button>
+                        </div>
+                        <div className="bg-gray-900/50 rounded-lg p-4 max-w-2xl mx-auto">
+                            <ul className="space-y-2">
+                                {categories.map(cat => (
+                                    <li key={cat.id} className="flex justify-between items-center p-3 bg-gray-700/50 rounded-md">
+                                        <span className="font-medium text-white">{cat.name}</span>
+                                        <div className="space-x-3">
+                                            <button onClick={() => openCategoryModal(cat)} className="text-yellow-400 hover:text-yellow-300 font-semibold text-sm">Edit</button>
+                                            <button onClick={() => handleDeleteCategory(cat.id)} className="text-red-500 hover:text-red-400 font-semibold text-sm">Delete</button>
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
                     </div>
                 )}
 
@@ -325,7 +408,9 @@ const Inventory: React.FC = () => {
                                 </div>
                                 <div>
                                     <label htmlFor="prodCat" className="block text-sm font-medium text-gray-400">Category</label>
-                                    <input type="text" id="prodCat" value={newProductCategory} onChange={e => setNewProductCategory(e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                                    <select id="prodCat" value={newProductCategoryId} onChange={e => setNewProductCategoryId(e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                        {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                                    </select>
                                 </div>
                             </div>
 
@@ -387,6 +472,24 @@ const Inventory: React.FC = () => {
                     </div>
                 </div>
             )}
+            
+            {/* Category Add/Edit Modal */}
+            {isCategoryModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+                    <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+                        <h3 className="text-xl font-bold mb-4 text-white">{editingCategory ? 'Edit' : 'Add'} Category</h3>
+                        <div>
+                            <label htmlFor="catName" className="block text-sm font-medium text-gray-400">Category Name</label>
+                            <input type="text" id="catName" value={categoryFormName} onChange={e => setCategoryFormName(e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                            <button onClick={closeCategoryModal} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500 font-semibold">Cancel</button>
+                            <button onClick={handleSaveCategory} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 font-semibold">Save</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
 
             {/* Stock Adjustment Modal */}
             {isAdjustModalOpen && selectedProduct && selectedVariant && (
