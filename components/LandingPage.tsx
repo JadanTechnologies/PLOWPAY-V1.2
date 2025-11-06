@@ -61,7 +61,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             </div>
             <div className="flex items-center space-x-4">
               <button onClick={() => onNavigate('login')} className="text-gray-300 hover:text-white transition-colors">Log In</button>
-              <button onClick={() => onNavigate('login')} className="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-indigo-500 transition-colors">
+              <button onClick={() => onNavigate('signup')} className="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-indigo-500 transition-colors">
                 Get Started
               </button>
             </div>
@@ -81,7 +81,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               From point of sale to inventory management, {brandConfig.name} provides the tools you need to streamline operations, delight customers, and grow your business.
             </p>
             <div className="mt-8 flex justify-center space-x-4">
-              <button onClick={() => onNavigate('login')} className="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-md hover:bg-indigo-500 transition-transform transform hover:scale-105">
+              <button onClick={() => onNavigate('signup')} className="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-md hover:bg-indigo-500 transition-transform transform hover:scale-105">
                 Get Started for Free
               </button>
               <button className="bg-gray-700 text-white font-semibold px-6 py-3 rounded-md hover:bg-gray-600 transition-transform transform hover:scale-105">
@@ -137,7 +137,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                       </li>
                     ))}
                   </ul>
-                  <button onClick={() => onNavigate('login')} className={`w-full mt-8 py-3 px-6 rounded-lg font-semibold transition-colors ${plan.recommended ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-gray-700 text-white hover:bg-gray-600'}`}>
+                  <button onClick={() => onNavigate('signup')} className={`w-full mt-8 py-3 px-6 rounded-lg font-semibold transition-colors ${plan.recommended ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-gray-700 text-white hover:bg-gray-600'}`}>
                     Choose Plan
                   </button>
                 </div>

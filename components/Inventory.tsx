@@ -9,7 +9,7 @@ import { useCurrency } from '../hooks/useCurrency';
 type NewVariant = Omit<ProductVariant, 'id'>;
 
 const Inventory: React.FC = () => {
-    const { products, branches, categories, adjustStock, transferStock, addProduct, stockLogs, searchTerm, addCategory, updateCategory, deleteCategory } = useAppContext();
+    const { products, branches, categories, adjustStock, transferStock, addProduct, updateProductVariant, stockLogs, searchTerm, addCategory, updateCategory, deleteCategory } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [activeTab, setActiveTab] = useState<'inventory' | 'history' | 'categories'>('inventory');
     const [categoryFilter, setCategoryFilter] = useState('all');
@@ -21,6 +21,11 @@ const Inventory: React.FC = () => {
     const [newStockValue, setNewStockValue] = useState('');
     const [adjustmentReason, setAdjustmentReason] = useState('Correction');
     const [adjustmentBranchId, setAdjustmentBranchId] = useState<string>(branches[0]?.id || '');
+
+    // Edit Variant Modal State
+    const [isEditModalOpen, setEditModalOpen] = useState(false);
+    const [editingVariant, setEditingVariant] = useState<ProductVariant | null>(null);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     
     // Transfer Modal State
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
@@ -77,6 +82,26 @@ const Inventory: React.FC = () => {
             } else {
                 alert("Please enter a valid, non-negative number for the stock.");
             }
+        }
+    };
+
+    const openEditModal = (product: Product, variant: ProductVariant) => {
+        setEditingProduct(product);
+        setEditingVariant({ ...variant });
+        setEditModalOpen(true);
+    };
+
+    const closeEditModal = () => {
+        setEditModalOpen(false);
+        setEditingProduct(null);
+        setEditingVariant(null);
+    };
+    
+    const handleVariantUpdate = () => {
+        if (editingProduct && editingVariant) {
+            const { id, stockByBranch, ...variantData } = editingVariant;
+            updateProductVariant(editingProduct.id, id, variantData);
+            closeEditModal();
         }
     };
     
@@ -199,6 +224,23 @@ const Inventory: React.FC = () => {
         }
     };
 
+    const getExpiryDateStyles = (dateString?: string) => {
+        if (!dateString) return 'text-gray-400';
+        const expiryDate = new Date(dateString);
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const thirtyDaysFromNow = new Date();
+        thirtyDaysFromNow.setDate(today.getDate() + 30);
+
+        if (expiryDate < today) {
+            return 'text-red-500 font-bold'; // Expired
+        }
+        if (expiryDate <= thirtyDaysFromNow) {
+            return 'text-yellow-400'; // Expiring soon
+        }
+        return 'text-gray-400';
+    };
+
 
     const availableFromBranches = useMemo(() => {
         if (!selectedVariant) return [];
@@ -285,7 +327,7 @@ const Inventory: React.FC = () => {
                                                 <td className="p-3 whitespace-nowrap">{variant.name}</td>
                                                 <td className="p-3 whitespace-nowrap text-gray-400">{variant.sku}</td>
                                                 <td className="p-3 whitespace-nowrap text-gray-400">{variant.batchNumber || 'N/A'}</td>
-                                                <td className="p-3 whitespace-nowrap text-gray-400">{variant.expiryDate || 'N/A'}</td>
+                                                <td className={`p-3 whitespace-nowrap ${getExpiryDateStyles(variant.expiryDate)}`}>{variant.expiryDate || 'N/A'}</td>
                                                 <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">{formatCurrency(variant.sellingPrice)}</td>
                                                 {branches.map(branch => {
                                                     const stock = variant.stockByBranch[branch.id] || 0;
@@ -298,6 +340,7 @@ const Inventory: React.FC = () => {
                                                 <td className="p-3 text-center whitespace-nowrap space-x-2">
                                                     <button onClick={() => openAdjustModal(product, variant)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Adjust</button>
                                                     <button onClick={() => openTransferModal(product, variant)} className="text-indigo-400 hover:text-indigo-300 font-semibold px-2 py-1 rounded-md text-sm">Transfer</button>
+                                                    <button onClick={() => openEditModal(product, variant)} className="text-cyan-400 hover:text-cyan-300 font-semibold px-2 py-1 rounded-md text-sm">Edit</button>
                                                 </td>
                                             </tr>
                                         ))
@@ -485,6 +528,43 @@ const Inventory: React.FC = () => {
                         <div className="flex justify-end gap-3 mt-6">
                             <button onClick={closeCategoryModal} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500 font-semibold">Cancel</button>
                             <button onClick={handleSaveCategory} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 font-semibold">Save</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Variant Modal */}
+            {isEditModalOpen && editingVariant && editingProduct && (
+                 <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
+                    <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg">
+                        <h3 className="text-xl font-bold mb-4 text-white">Edit Variant: {editingVariant.name}</h3>
+                         <div className="space-y-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400">SKU</label>
+                                    <input type="text" value={editingVariant.sku} onChange={e => setEditingVariant({...editingVariant, sku: e.target.value})} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400">Batch Number</label>
+                                    <input type="text" value={editingVariant.batchNumber || ''} onChange={e => setEditingVariant({...editingVariant, batchNumber: e.target.value})} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                </div>
+                                 <div>
+                                    <label className="block text-sm font-medium text-gray-400">Cost Price</label>
+                                    <input type="number" value={editingVariant.costPrice} onChange={e => setEditingVariant({...editingVariant, costPrice: parseFloat(e.target.value) || 0})} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-400">Selling Price</label>
+                                    <input type="number" value={editingVariant.sellingPrice} onChange={e => setEditingVariant({...editingVariant, sellingPrice: parseFloat(e.target.value) || 0})} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400">Expiry Date</label>
+                                <input type="date" value={editingVariant.expiryDate || ''} onChange={e => setEditingVariant({...editingVariant, expiryDate: e.target.value})} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                            </div>
+                        </div>
+                        <div className="mt-6 flex justify-end space-x-3">
+                            <button type="button" onClick={closeEditModal} className="px-4 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-500 font-semibold">Cancel</button>
+                            <button type="button" onClick={handleVariantUpdate} className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 font-semibold">Save Changes</button>
                         </div>
                     </div>
                 </div>

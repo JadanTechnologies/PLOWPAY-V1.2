@@ -788,6 +788,22 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         });
     }, []);
 
+    const updateProductVariant = useCallback((productId: string, variantId: string, variantData: Partial<Omit<ProductVariant, 'id' | 'stockByBranch'>>) => {
+        setProducts(prevProducts =>
+            prevProducts.map(p => {
+                if (p.id === productId) {
+                    return {
+                        ...p,
+                        variants: p.variants.map(v =>
+                            v.id === variantId ? { ...v, ...variantData } : v
+                        )
+                    };
+                }
+                return p;
+            })
+        );
+    }, []);
+
     const addAdminUser = useCallback((userData: Omit<AdminUser, 'id' | 'joinDate' | 'status'>) => {
         setAdminUsers(prev => [
             ...prev,
@@ -1300,6 +1316,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         adjustStock,
         transferStock,
         addProduct,
+        updateProductVariant,
         addAdminUser,
         updateAdminUser,
         updateAdminRole,

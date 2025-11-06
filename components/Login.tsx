@@ -1,15 +1,17 @@
 
+
 import React, { useState } from 'react';
 import Icon from './icons';
 import { mockTenants } from '../context/AppContext';
 import { useAppContext } from '../hooks/useAppContext';
+import { View } from '../App';
 
 interface LoginProps {
   onLoginSuccess: (role: 'TENANT' | 'SUPER_ADMIN') => void;
-  onBack: () => void;
+  onNavigate: (view: View) => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack }) => {
+const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -39,7 +41,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack }) => {
     <div className="flex items-center justify-center min-h-screen bg-gray-950 p-4">
       <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-2xl shadow-2xl relative">
         <button 
-          onClick={onBack} 
+          onClick={() => onNavigate('landing')} 
           className="absolute top-4 left-4 text-gray-400 hover:text-indigo-400 transition-colors flex items-center text-sm font-semibold"
         >
             <Icon name="chevronLeft" className="w-5 h-5 mr-1" />
@@ -93,6 +95,15 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack }) => {
               />
             </div>
           </div>
+          
+          <div className="flex items-center justify-end">
+            <div className="text-sm">
+                <button onClick={() => onNavigate('forgot_password')} className="font-medium text-indigo-400 hover:text-indigo-300">
+                    Forgot your password?
+                </button>
+            </div>
+          </div>
+
 
           {error && (
             <div className="flex items-center text-red-400">
@@ -110,6 +121,13 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onBack }) => {
             </button>
           </div>
         </form>
+
+        <p className="text-center text-sm text-gray-400">
+            Don't have an account?{' '}
+            <button onClick={() => onNavigate('signup')} className="font-medium text-indigo-400 hover:text-indigo-300">
+                Sign up
+            </button>
+        </p>
 
         <div className="text-center text-sm text-gray-500 bg-gray-900/50 p-3 rounded-md border border-gray-700">
             <p className="font-semibold text-gray-400 mb-2">Use these credentials for the demo:</p>

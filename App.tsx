@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -9,11 +10,13 @@ import Login from './components/Login';
 import { useAppContext } from './hooks/useAppContext';
 import { FaqItem, PageContent } from './types';
 import Icon from './components/icons';
+import SignUp from './components/SignUp';
+import ForgotPassword from './components/ForgotPassword';
 
 
 export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'LOGISTICS' | 'PURCHASES' | 'ACCOUNTING' | 'REPORTS' | 'SETTINGS' | 'CREDIT_MANAGEMENT' | 'CONSIGNMENT';
 export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENTS' | 'NOTIFICATIONS' | 'SETTINGS' | 'ANNOUNCEMENTS';
-export type View = 'landing' | 'login' | 'app' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq' | 'help' | 'api' | 'blog';
+export type View = 'landing' | 'login' | 'signup' | 'forgot_password' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq' | 'help' | 'api' | 'blog';
 
 // InfoPage component to display text-based content
 const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ pageKey, setView }) => {
@@ -104,67 +107,7 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
     );
 };
 
-const AppContent: React.FC = () => {
-  const [view, setView] = useState<View>('landing');
-  const [userRole, setUserRole] = useState<'TENANT' | 'SUPER_ADMIN' | null>(null);
-  const { brandConfig } = useAppContext();
-
-  useEffect(() => {
-    document.title = brandConfig.name;
-    const favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-    if (favicon) {
-      favicon.href = brandConfig.faviconUrl;
-    }
-  }, [brandConfig]);
-
-
-  const handleLoginSuccess = (role: 'TENANT' | 'SUPER_ADMIN') => {
-    setUserRole(role);
-    setView('app');
-  };
-
-  const handleLogout = () => {
-    setUserRole(null);
-    setView('landing');
-  };
-
-  switch (view) {
-    case 'landing':
-      return <LandingPage onNavigate={setView} />;
-    case 'login':
-      return <Login onLoginSuccess={handleLoginSuccess} onBack={() => setView('landing')} />;
-    case 'terms':
-    case 'privacy':
-    case 'refund':
-    case 'contact':
-    case 'about':
-    case 'faq':
-        return <InfoPage pageKey={view} setView={setView} />;
-    case 'app':
-      if (userRole) {
-        // Pass handleLogout to the context provider
-        return userRole === 'TENANT' ? <TenantApp /> : <SuperAdminPanel />;
-      }
-      // If role is null for some reason, send back to login
-      setView('login');
-      return <Login onLoginSuccess={handleLoginSuccess} onBack={() => setView('landing')} />;
-    default:
-      // Fallback to landing page for any unknown state
-      return <LandingPage onNavigate={setView} />;
-  }
-};
-
 const App: React.FC = () => {
-  // We need a dummy logout handler here for the provider, 
-  // the real one is inside AppContent and will be passed via context value.
-  // This is a bit of a workaround because the logout logic depends on state within AppContent.
-  // A better solution would be to lift all state up, but this keeps changes minimal.
-  // The actual `logout` function used by components will come from the context value, which
-  // AppContextProvider will receive from AppContent's `handleLogout`.
-  // Let's reconsider. The `onLogout` needs to be passed to the provider. The state that it changes is in AppContent.
-  // This creates a dependency issue.
-  // The simplest fix is to merge AppContent back into App, and pass onLogout to the provider.
-
   const [view, setView] = useState<View>('landing');
   const [userRole, setUserRole] = useState<'TENANT' | 'SUPER_ADMIN' | null>(null);
 
@@ -192,7 +135,11 @@ const App: React.FC = () => {
       case 'landing':
         return <LandingPage onNavigate={setView} />;
       case 'login':
-        return <Login onLoginSuccess={handleLoginSuccess} onBack={() => setView('landing')} />;
+        return <Login onLoginSuccess={handleLoginSuccess} onNavigate={setView} />;
+      case 'signup':
+        return <SignUp onNavigate={setView} />;
+      case 'forgot_password':
+        return <ForgotPassword onNavigate={setView} />;
       case 'terms':
       case 'privacy':
       case 'refund':
@@ -207,10 +154,8 @@ const App: React.FC = () => {
         if (userRole) {
           return userRole === 'TENANT' ? <TenantApp /> : <SuperAdminPanel />;
         }
-        // This will trigger a re-render, so we should call setView in an effect or ensure it's idempotent.
-        // For simplicity, we just set state and return the login component.
         setTimeout(() => setView('login'), 0); 
-        return <Login onLoginSuccess={handleLoginSuccess} onBack={() => setView('landing')} />;
+        return <Login onLoginSuccess={handleLoginSuccess} onNavigate={setView} />;
       default:
         return <LandingPage onNavigate={setView} />;
     }
