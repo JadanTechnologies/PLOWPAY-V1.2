@@ -19,6 +19,7 @@ import Announcements from './Announcements';
 import PaymentTransactions from './PaymentTransactions';
 import TemplateManagement from './TemplateManagement';
 import Maintenance from './Maintenance';
+import AccessManagement from './AccessManagement';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
     return (
@@ -307,6 +308,8 @@ const SuperAdminPanel: React.FC = () => {
                 return hasPermission('manageAnnouncements') ? <Announcements /> : <AccessDenied />;
             case 'MAINTENANCE':
                 return hasPermission('manageSystemSettings') ? <Maintenance /> : <AccessDenied />;
+            case 'ACCESS_MANAGEMENT':
+                return hasPermission('manageSystemSettings') ? <AccessManagement /> : <AccessDenied />;
             case 'SETTINGS':
                  return hasPermission('manageSystemSettings') ? <Settings /> : <AccessDenied />;
             default:
@@ -326,6 +329,7 @@ const SuperAdminPanel: React.FC = () => {
         TEMPLATE_MANAGEMENT: 'Template Management',
         ANNOUNCEMENTS: 'Global Announcements',
         MAINTENANCE: 'Platform Maintenance',
+        ACCESS_MANAGEMENT: 'Access Management',
         SETTINGS: 'System Settings',
     };
 

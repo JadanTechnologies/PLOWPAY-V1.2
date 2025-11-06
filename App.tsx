@@ -12,10 +12,11 @@ import Icon from './components/icons';
 import SignUp from './components/SignUp';
 import ForgotPassword from './components/ForgotPassword';
 import MaintenancePage from './components/MaintenancePage';
+import AccessDeniedPage from './components/AccessDeniedPage';
 
 
 export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'LOGISTICS' | 'PURCHASES' | 'ACCOUNTING' | 'REPORTS' | 'SETTINGS' | 'CREDIT_MANAGEMENT' | 'CONSIGNMENT' | 'BILLING' | 'CHECKOUT';
-export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENT_GATEWAYS' | 'PAYMENT_TRANSACTIONS' | 'NOTIFICATIONS' | 'TEMPLATE_MANAGEMENT' | 'SETTINGS' | 'ANNOUNCEMENTS' | 'MAINTENANCE';
+export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENT_GATEWAYS' | 'PAYMENT_TRANSACTIONS' | 'NOTIFICATIONS' | 'TEMPLATE_MANAGEMENT' | 'SETTINGS' | 'ANNOUNCEMENTS' | 'MAINTENANCE' | 'ACCESS_MANAGEMENT';
 export type View = 'landing' | 'login' | 'signup' | 'forgot_password' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq' | 'help' | 'api' | 'blog' | 'app';
 
 // InfoPage component to display text-based content
@@ -124,6 +125,8 @@ const App: React.FC = () => {
   const RenderedView = () => {
       const { brandConfig, systemSettings } = useAppContext();
       const { isActive: isMaintenanceMode, message: maintenanceMessage } = systemSettings.maintenanceSettings || { isActive: false, message: '' };
+      const { accessControlSettings } = systemSettings;
+      const [isBlocked, setIsBlocked] = useState(false);
 
       useEffect(() => {
         document.title = `${brandConfig.name} - SaaS POS`;
@@ -131,7 +134,65 @@ const App: React.FC = () => {
         if (favicon) {
             favicon.href = brandConfig.faviconUrl;
         }
-    }, [brandConfig]);
+      }, [brandConfig]);
+
+      useEffect(() => {
+        if (userRole === 'SUPER_ADMIN') {
+            setIsBlocked(false);
+            return;
+        }
+
+        const checkAccess = () => {
+            const { mode, ipBlacklist, countryBlacklist, browserBlacklist, deviceBlacklist, ipWhitelist, countryWhitelist, browserWhitelist, deviceWhitelist } = accessControlSettings;
+            if (mode === 'ALLOW_ALL') return false;
+
+            // --- SIMULATION CONTEXT ---
+            // In a real app, this data would come from the user's request, GeoIP lookup, and user-agent parsing.
+            // For this demo, we'll simulate a user from a blocked country (Iran) on a blocked browser (IE).
+            const userAgent = navigator.userAgent;
+            let browser = "Other";
+            if (userAgent.includes("Chrome")) browser = "Chrome";
+            else if (userAgent.includes("Firefox")) browser = "Firefox";
+            else if (userAgent.includes("Safari")) browser = "Safari";
+            else if (userAgent.includes("MSIE") || userAgent.includes("Trident/")) browser = "IE";
+            
+            let device: 'desktop' | 'mobile' | 'tablet' = 'desktop';
+            if (/Mobi|Android/i.test(userAgent)) device = 'mobile';
+            else if (/Tablet|iPad/i.test(userAgent)) device = 'tablet';
+
+
+            const userContext = {
+                ip: '81.91.130.5', // A sample IP from Iran for demo purposes
+                country: 'IR', // Simulating a user from Iran
+                browser: browser,
+                device: device
+            };
+
+            if (mode === 'BLOCK_LISTED') {
+                if (ipBlacklist.some(ip => ip === userContext.ip)) return true;
+                if (countryBlacklist.includes(userContext.country)) return true;
+                if (browserBlacklist.includes(userContext.browser)) return true;
+                if (deviceBlacklist.includes(userContext.device)) return true;
+            }
+
+            if (mode === 'ALLOW_LISTED') {
+                if (ipWhitelist.length > 0 && !ipWhitelist.some(ip => ip === userContext.ip)) return true;
+                if (countryWhitelist.length > 0 && !countryWhitelist.includes(userContext.country)) return true;
+                if (browserWhitelist.length > 0 && !browserWhitelist.includes(userContext.browser)) return true;
+                if (deviceWhitelist.length > 0 && !deviceWhitelist.includes(userContext.device)) return true;
+            }
+            
+            return false; // If no rules match to block, allow.
+        };
+
+        setIsBlocked(checkAccess());
+
+    }, [accessControlSettings, userRole]);
+
+
+    if (isBlocked) {
+        return <AccessDeniedPage />;
+    }
 
     if (isMaintenanceMode && userRole !== 'SUPER_ADMIN') {
         return <MaintenancePage message={maintenanceMessage} />;

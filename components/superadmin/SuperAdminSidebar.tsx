@@ -69,6 +69,7 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
     { page: 'TEAM_MANAGEMENT', icon: 'users', label: 'Team', permission: 'manageTeam' },
     { page: 'ROLE_MANAGEMENT', icon: 'lock-closed', label: 'Roles', permission: 'manageRoles' },
     { page: 'MAINTENANCE', icon: 'settings', label: 'Maintenance', permission: 'manageSystemSettings' },
+    { page: 'ACCESS_MANAGEMENT', icon: 'lock-closed', label: 'Access Management', permission: 'manageSystemSettings' },
     { page: 'SETTINGS', icon: 'settings', label: 'Settings', permission: 'manageSystemSettings' },
   ] as const;
 

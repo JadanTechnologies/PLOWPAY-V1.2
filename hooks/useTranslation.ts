@@ -22,6 +22,7 @@ const translations: Record<string, Record<string, string>> = {
     transactions: 'Transactions',
     templates: 'Templates',
     maintenance: 'Maintenance',
+    accessManagement: 'Access Management',
   },
   es: {
     dashboard: 'Tablero',
@@ -41,6 +42,7 @@ const translations: Record<string, Record<string, string>> = {
     transactions: 'Transacciones',
     templates: 'Plantillas',
     maintenance: 'Mantenimiento',
+    accessManagement: 'Gestión de Acceso',
   },
   fr: {
     dashboard: 'Tableau de Bord',
@@ -60,6 +62,7 @@ const translations: Record<string, Record<string, string>> = {
     transactions: 'Transactions',
     templates: 'Modèles',
     maintenance: 'Maintenance',
+    accessManagement: 'Gestion d\'accès',
   }
 };
 

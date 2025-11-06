@@ -417,12 +417,27 @@ export interface MaintenanceSettings {
   message: string;
 }
 
+export interface AccessControlSettings {
+  mode: 'ALLOW_ALL' | 'BLOCK_LISTED' | 'ALLOW_LISTED';
+  ipWhitelist: string[];
+  ipBlacklist: string[];
+  countryWhitelist: string[];
+  countryBlacklist: string[];
+  regionWhitelist: string[];
+  regionBlacklist: string[];
+  browserWhitelist: string[];
+  browserBlacklist: string[];
+  deviceWhitelist: ('desktop' | 'mobile' | 'tablet')[];
+  deviceBlacklist: ('desktop' | 'mobile' | 'tablet')[];
+}
+
 export interface SystemSettings {
   currencies: Currency[];
   defaultCurrency: string;
   languages: Language[];
   defaultLanguage: string;
   maintenanceSettings: MaintenanceSettings;
+  accessControlSettings: AccessControlSettings;
 }
 
 export type PaymentTransactionStatus = 'COMPLETED' | 'PENDING' | 'FAILED' | 'REJECTED';
@@ -519,6 +534,7 @@ export interface AppContextType {
   updateNotificationSettings: (newSettings: NotificationSettings) => void;
   updateSystemSettings: (newSettings: Partial<SystemSettings>) => void;
   updateMaintenanceSettings: (settings: MaintenanceSettings) => void;
+  updateAccessControlSettings: (settings: AccessControlSettings) => void;
   updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => void;
   updateTenantAutomations: (newAutomations: Partial<TenantAutomations>) => void;
   addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => void;

@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -408,6 +408,19 @@ const mockSystemSettings: SystemSettings = {
     maintenanceSettings: {
         isActive: false,
         message: 'The platform is currently undergoing scheduled maintenance. We expect to be back online shortly. Thank you for your patience.'
+    },
+    accessControlSettings: {
+        mode: 'ALLOW_ALL',
+        ipWhitelist: [],
+        ipBlacklist: ['81.91.130.5'],
+        countryWhitelist: [],
+        countryBlacklist: ['IR', 'KP'],
+        regionWhitelist: [],
+        regionBlacklist: [],
+        browserWhitelist: [],
+        browserBlacklist: ['IE'],
+        deviceWhitelist: [],
+        deviceBlacklist: [],
     }
 };
 
@@ -912,6 +925,13 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         setSystemSettings(prev => ({
             ...prev,
             maintenanceSettings: settings
+        }));
+    }, []);
+
+    const updateAccessControlSettings = useCallback((settings: AccessControlSettings) => {
+        setSystemSettings(prev => ({
+            ...prev,
+            accessControlSettings: settings
         }));
     }, []);
     
@@ -1429,6 +1449,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updateNotificationSettings,
         updateSystemSettings,
         updateMaintenanceSettings,
+        updateAccessControlSettings,
         updateCurrentTenantSettings,
         updateTenantAutomations,
         addSubscriptionPlan,
