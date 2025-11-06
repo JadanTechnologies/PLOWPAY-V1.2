@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState } from 'react';
 import {
     ResponsiveContainer,
@@ -16,12 +17,12 @@ import { useAppContext } from '../../hooks/useAppContext';
 import Icon from '../icons';
 
 const MetricCard: React.FC<{ title: string; value: string; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
-  <div className="p-4 bg-gray-800 rounded-lg shadow-md flex items-center">
+  <div className="p-4 bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-700">
     <div className={`p-3 rounded-full ${iconBgColor} mr-4`}>
       <Icon name={iconName} className="w-6 h-6 text-white" />
     </div>
     <div>
-      <p className="text-sm text-gray-400">{title}</p>
+      <p className="text-sm text-slate-400">{title}</p>
       <p className="text-2xl font-bold text-white">{value}</p>
     </div>
   </div>
@@ -109,38 +110,38 @@ const PlatformDashboard: React.FC = () => {
         }, 1000);
     };
 
-    const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
+    const COLORS = ['#14b8a6', '#06b6d4', '#f59e0b', '#ef4444'];
 
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                <MetricCard title="Monthly Recurring Revenue" value={`$${platformMetrics.mrr.toLocaleString()}`} iconName="dashboard" iconBgColor="bg-emerald-500" />
-                <MetricCard title="Active Tenants" value={platformMetrics.activeTenants.toLocaleString()} iconName="briefcase" iconBgColor="bg-sky-500" />
-                <MetricCard title="New Tenants (30d)" value={platformMetrics.newTenants.toLocaleString()} iconName="user" iconBgColor="bg-amber-500" />
-                <MetricCard title="Churn Rate" value="2.1%" iconName="reports" iconBgColor="bg-rose-500" />
+                <MetricCard title="Monthly Recurring Revenue" value={`$${platformMetrics.mrr.toLocaleString()}`} iconName="cash" iconBgColor="bg-gradient-to-br from-teal-500 to-green-600" />
+                <MetricCard title="Active Tenants" value={platformMetrics.activeTenants.toLocaleString()} iconName="briefcase" iconBgColor="bg-gradient-to-br from-cyan-500 to-sky-600" />
+                <MetricCard title="New Tenants (30d)" value={platformMetrics.newTenants.toLocaleString()} iconName="user" iconBgColor="bg-gradient-to-br from-amber-500 to-orange-600" />
+                <MetricCard title="Churn Rate" value="2.1%" iconName="chart-bar" iconBgColor="bg-gradient-to-br from-rose-500 to-red-600" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-gray-800 rounded-lg shadow-md p-6">
+                <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
                     <h3 className="mb-4 text-lg font-semibold text-white">Tenant Growth</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <AreaChart data={tenantGrowthData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                             <defs>
                                 <linearGradient id="colorTenants" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.8}/>
+                                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                            <XAxis dataKey="name" stroke="#9ca3af" />
-                            <YAxis stroke="#9ca3af" allowDecimals={false} />
-                            <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }} />
-                            <Area type="monotone" dataKey="tenants" name="Total Tenants" stroke="#10b981" fillOpacity={1} fill="url(#colorTenants)" />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                            <XAxis dataKey="name" stroke="#94a3b8" />
+                            <YAxis stroke="#94a3b8" allowDecimals={false} />
+                            <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155' }} />
+                            <Area type="monotone" dataKey="tenants" name="Total Tenants" stroke="#14b8a6" fillOpacity={1} fill="url(#colorTenants)" />
                         </AreaChart>
                     </ResponsiveContainer>
                 </div>
 
-                <div className="bg-gray-800 rounded-lg shadow-md p-6">
+                <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
                     <h3 className="mb-4 text-lg font-semibold text-white">MRR by Plan</h3>
                     <ResponsiveContainer width="100%" height={300}>
                        <PieChart>
@@ -159,19 +160,19 @@ const PlatformDashboard: React.FC = () => {
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #374151' }} formatter={(value: number) => `$${value.toLocaleString()}`} />
+                            <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155' }} formatter={(value: number) => `$${value.toLocaleString()}`} />
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
             </div>
 
-            <div className="bg-gray-800 rounded-lg shadow-md p-6">
+            <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
                 <h3 className="mb-4 text-lg font-semibold text-white">System Cron Jobs</h3>
-                <div className="bg-gray-900/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="bg-slate-900/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-slate-700">
                     <div>
                         <h4 className="font-semibold text-white">Process Expired Trials</h4>
-                        <p className="text-sm text-gray-400 mt-1">
+                        <p className="text-sm text-slate-400 mt-1">
                             Checks for tenants whose trial period has ended and updates their status to 'Suspended'. 
                             This is a simulation of a daily automated job.
                         </p>
@@ -179,7 +180,7 @@ const PlatformDashboard: React.FC = () => {
                     </div>
                     <button
                         onClick={handleRunJob}
-                        className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center flex-shrink-0"
+                        className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-2 px-4 rounded-md flex items-center flex-shrink-0"
                     >
                         <Icon name="play" className="w-5 h-5 mr-2" />
                         Run Job Manually

@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useState, useEffect } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -58,16 +59,16 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
         return (
             <div className="space-y-4">
                 {items.map(item => (
-                    <div key={item.id} className="border-b-2 border-gray-800">
+                    <div key={item.id} className="border-b border-slate-800">
                         <button
                             onClick={() => setOpenId(openId === item.id ? null : item.id)}
                             className="w-full text-left flex justify-between items-center py-4 focus:outline-none"
                         >
                             <h3 className="text-lg font-semibold text-white">{item.question}</h3>
-                            <Icon name={openId === item.id ? 'minus' : 'plus'} className="w-6 h-6 text-indigo-400" />
+                            <Icon name={openId === item.id ? 'minus' : 'plus'} className="w-6 h-6 text-cyan-400" />
                         </button>
                         {openId === item.id && (
-                            <div className="pb-4 text-gray-400 prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: item.answer.replace(/\n/g, '<br />') }}/>
+                            <div className="pb-4 text-slate-400 prose prose-invert max-w-none" dangerouslySetInnerHTML={{ __html: item.answer.replace(/\n/g, '<br />') }}/>
                         )}
                     </div>
                 ))}
@@ -76,21 +77,21 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
     };
 
     return (
-        <div className="min-h-screen bg-gray-950 text-gray-300">
-             <header className="bg-gray-900/80 backdrop-blur-sm border-b border-gray-800">
+        <div className="min-h-screen bg-slate-950 text-slate-300">
+             <header className="bg-slate-900/80 backdrop-blur-sm border-b border-slate-800">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16">
                      <a href="#" onClick={(e) => { e.preventDefault(); setView('landing'); }} className="flex items-center">
                        {brandConfig.logoUrl ? (
                             <img src={brandConfig.logoUrl} alt={`${brandConfig.name} Logo`} className="h-8 w-auto" />
                         ) : (
-                            <svg className="w-8 h-8 text-indigo-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
+                            <svg className="w-8 h-8 text-cyan-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.825-1.106-2.156 0-2.981.54-.403 1.25-.624 1.968-.624a4.58 4.58 0 0 1 .844.119" />
                             </svg>
                         )}
                         <span className="ml-2 text-2xl font-bold text-white">{brandConfig.name}</span>
                     </a>
-                    <button onClick={() => setView('landing')} className="bg-indigo-600 text-white font-semibold px-4 py-2 rounded-md hover:bg-indigo-500 transition-colors">
+                    <button onClick={() => setView('landing')} className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold px-4 py-2 rounded-md hover:from-cyan-600 hover:to-teal-600 transition-colors">
                         Back to Home
                     </button>
                 </div>
@@ -98,11 +99,11 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
             </header>
             <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <h1 className="text-4xl font-bold text-white mb-8">{title}</h1>
-                <div className="bg-gray-900 p-8 rounded-lg">
+                <div className="bg-slate-900 p-8 rounded-lg border border-slate-800">
                     {pageKey === 'faq' ? (
                         <FaqAccordion items={content as FaqItem[]} />
                     ) : (
-                       <div className="prose prose-invert max-w-none text-gray-300" dangerouslySetInnerHTML={{ __html: (content as string).replace(/\n/g, '<br />') }}></div>
+                       <div className="prose prose-invert max-w-none text-slate-300" dangerouslySetInnerHTML={{ __html: (content as string).replace(/\n/g, '<br />') }}></div>
                     )}
                 </div>
             </main>

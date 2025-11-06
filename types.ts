@@ -1,6 +1,7 @@
 
 
 
+
 export interface Branch {
   id: string;
   name: string;
@@ -230,6 +231,8 @@ export interface AdminUser {
   id: string;
   name: string;
   email: string;
+  username?: string;
+  password?: string;
   roleId: string;
   status: AdminUserStatus;
   joinDate: Date;
@@ -440,6 +443,12 @@ export interface AccessControlSettings {
   deviceBlacklist: ('desktop' | 'mobile' | 'tablet')[];
 }
 
+export interface LandingPageMetrics {
+    businesses: { value: number; label: string };
+    users: { value: number; label: string };
+    revenue: { value: number; label: string };
+}
+
 export interface SystemSettings {
   currencies: Currency[];
   defaultCurrency: string;
@@ -447,6 +456,7 @@ export interface SystemSettings {
   defaultLanguage: string;
   maintenanceSettings: MaintenanceSettings;
   accessControlSettings: AccessControlSettings;
+  landingPageMetrics: LandingPageMetrics;
 }
 
 export type PaymentTransactionStatus = 'COMPLETED' | 'PENDING' | 'FAILED' | 'REJECTED';
@@ -544,6 +554,7 @@ export interface AppContextType {
   updateSystemSettings: (newSettings: Partial<SystemSettings>) => void;
   updateMaintenanceSettings: (settings: MaintenanceSettings) => void;
   updateAccessControlSettings: (settings: AccessControlSettings) => void;
+  updateLandingPageMetrics: (metrics: LandingPageMetrics) => void;
   updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => void;
   updateTenantAutomations: (newAutomations: Partial<TenantAutomations>) => void;
   addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => void;

@@ -1,6 +1,8 @@
 
+
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -38,12 +40,9 @@ const mockCustomers: Customer[] = [
 ];
 
 const mockSubscriptionPlans: SubscriptionPlan[] = [
-    // FIX: Added missing 'priceYearly' property to satisfy the SubscriptionPlan type.
-    { id: 'plan_basic', name: 'Basic', price: 29, priceYearly: 290, description: 'For small businesses just getting started.', features: ['1 Branch', 'Up to 1,000 Products', 'Core POS Features', 'Basic Reporting'], recommended: false },
-    // FIX: Added missing 'priceYearly' property to satisfy the SubscriptionPlan type.
-    { id: 'plan_pro', name: 'Pro', price: 79, priceYearly: 790, description: 'For growing businesses that need more power.', features: ['Up to 5 Branches', 'Unlimited Products', 'Advanced POS Features', 'Full Reporting Suite', 'Staff Management'], recommended: true },
-    // FIX: Added missing 'priceYearly' property to satisfy the SubscriptionPlan type.
-    { id: 'plan_premium', name: 'Premium', price: 149, priceYearly: 1490, description: 'For large businesses and enterprises.', features: ['Unlimited Branches', 'Everything in Pro', 'API Access', 'Dedicated Support', 'Advanced Automations'], recommended: false },
+    { id: 'plan_basic', name: 'Basic', price: 29, priceYearly: 278, description: 'For small businesses just getting started.', features: ['1 Branch', 'Up to 1,000 Products', 'Core POS Features', 'Basic Reporting'], recommended: false },
+    { id: 'plan_pro', name: 'Pro', price: 79, priceYearly: 758, description: 'For growing businesses that need more power.', features: ['Up to 5 Branches', 'Unlimited Products', 'Advanced POS Features', 'Full Reporting Suite', 'Staff Management'], recommended: true },
+    { id: 'plan_premium', name: 'Premium', price: 149, priceYearly: 1430, description: 'For large businesses and enterprises.', features: ['Unlimited Branches', 'Everything in Pro', 'API Access', 'Dedicated Support', 'Advanced Automations'], recommended: false },
 ];
 
 export const allPermissions: Permission[] = [
@@ -66,19 +65,20 @@ const mockAdminRoles: AdminRole[] = [
 
 
 const generateMockAdminUsers = (): AdminUser[] => {
-    return [
-        { id: 'admin-1', name: 'Super Admin', email: 'admin@flowpay.com', roleId: 'role-admin', status: 'ACTIVE', joinDate: new Date('2023-01-15') },
-        { id: 'admin-2', name: 'Jane Smith (Support)', email: 'jane.s@flowpay.com', roleId: 'role-support', status: 'ACTIVE', joinDate: new Date('2023-05-20') },
-        { id: 'admin-3', name: 'Mike Johnson (Developer)', email: 'mike.j@flowpay.com', roleId: 'role-developer', status: 'ACTIVE', joinDate: new Date('2023-08-01') },
-        { id: 'admin-4', name: 'Emily Davis (Support)', email: 'emily.d@flowpay.com', roleId: 'role-support', status: 'SUSPENDED', joinDate: new Date('2023-10-11') },
+    // FIX: Explicitly type the initial array to prevent `status` from being widened to `string`.
+    const users: Omit<AdminUser, 'phone'>[] = [
+        { id: 'admin-1', name: 'Super Admin', email: 'super@flowpay.com', username: 'super', password: 'super', roleId: 'role-admin', status: 'ACTIVE', joinDate: new Date('2023-01-15'), avatarUrl: 'https://i.pravatar.cc/150?u=admin-1' },
+        { id: 'admin-2', name: 'Jane Smith (Support)', email: 'jane.s@flowpay.com', username: 'jane', password: 'password', roleId: 'role-support', status: 'ACTIVE', joinDate: new Date('2023-05-20'), avatarUrl: 'https://i.pravatar.cc/150?u=admin-2' },
+        { id: 'admin-3', name: 'Mike Johnson (Developer)', email: 'mike.j@flowpay.com', username: 'mike', password: 'password', roleId: 'role-developer', status: 'ACTIVE', joinDate: new Date('2023-08-01'), avatarUrl: 'https://i.pravatar.cc/150?u=admin-3' },
+        { id: 'admin-4', name: 'Emily Davis (Support)', email: 'emily.d@flowpay.com', username: 'emily', password: 'password', roleId: 'role-support', status: 'SUSPENDED', joinDate: new Date('2023-10-11'), avatarUrl: 'https://i.pravatar.cc/150?u=admin-4' },
     ];
+    return users.map(u => ({...u, phone: `555-123-${String(Math.floor(Math.random() * 9000) + 1000)}`}));
 };
 
 const generateMockTenants = (): Tenant[] => {
     const tenants: Tenant[] = [];
     const businessNames = ['Innovate Inc.', 'Quantum Solutions', 'Stellar Goods', 'Apex Retail', 'Zenith Supplies', 'Synergy Corp', 'Momentum Trading', 'Odyssey Services'];
     const ownerNames = ['Alice Johnson', 'Bob Williams', 'Charlie Brown', 'Diana Miller', 'Ethan Davis', 'Fiona Garcia', 'George Rodriguez', 'Helen Martinez'];
-    // FIX: Added UNVERIFIED to the list of possible statuses.
     const statuses: TenantStatus[] = ['ACTIVE', 'TRIAL', 'SUSPENDED', 'UNVERIFIED'];
 
     for (let i = 0; i < 8; i++) {
@@ -93,7 +93,6 @@ const generateMockTenants = (): Tenant[] => {
             trialEndDate = new Date(joinDate.getTime() + 14 * 24 * 60 * 60 * 1000);
         }
 
-        // FIX: Added missing 'isVerified' and 'billingCycle' properties to satisfy the Tenant type.
         tenants.push({
             id: `tenant-${i+1}`,
             businessName: businessNames[i],
@@ -102,6 +101,9 @@ const generateMockTenants = (): Tenant[] => {
             username: isDemoTenant ? 'tenant' : ownerFirstName,
             password: isDemoTenant ? 'tenant' : 'tenant12345',
             companyAddress: `${i+1}23 Market St, San Francisco, CA 94103`,
+            country: 'US',
+            state: 'CA',
+            phoneCountryCode: '+1',
             companyPhone: `(555) 123-456${i}`,
             companyLogoUrl: '',
             status: status,
@@ -428,6 +430,11 @@ const mockSystemSettings: SystemSettings = {
         browserBlacklist: ['IE'],
         deviceWhitelist: [],
         deviceBlacklist: [],
+    },
+    landingPageMetrics: {
+        businesses: { value: 2500, label: 'Businesses Powered' },
+        users: { value: 15000, label: 'Active Users Daily' },
+        revenue: { value: 50, label: 'Million in Revenue Secured' },
     }
 };
 
@@ -539,7 +546,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
     const [adminRoles, setAdminRoles] = useState<AdminRole[]>(mockAdminRoles);
-    const [currentAdminUser, setCurrentAdminUser] = useState<AdminUser | null>(mockAdminUsers.find(u => u.email === 'admin@flowpay.com') || null);
+    const [currentAdminUser, setCurrentAdminUser] = useState<AdminUser | null>(mockAdminUsers.find(u => u.email === 'super@flowpay.com') || null);
     const [brandConfig, setBrandConfig] = useState<BrandConfig>(mockBrandConfig);
     const [pageContent, setPageContent] = useState<PageContent>(mockPageContent);
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(mockPaymentSettings);
@@ -942,6 +949,13 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         }));
     }, []);
     
+    const updateLandingPageMetrics = useCallback((metrics: LandingPageMetrics) => {
+        setSystemSettings(prev => ({
+            ...prev,
+            landingPageMetrics: metrics,
+        }));
+    }, []);
+
     const updateCurrentTenantSettings = useCallback((newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => {
         setTenants(prevTenants =>
             prevTenants.map(t =>
@@ -1191,7 +1205,6 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         });
     }, []);
 
-    // FIX: Updated addTenant to set default values and return a promise, matching its type definition.
     const addTenant = useCallback(async (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle'>): Promise<{ success: boolean; message: string }> => {
         const joinDate = new Date();
         const newTenant: Tenant = {
@@ -1402,7 +1415,6 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         setInAppNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
     }, []);
 
-    // FIX: Implemented missing functions from AppContextType.
     const verifyTenant = useCallback((email: string) => {
         setTenants(prev => prev.map(t => {
             if (t.email === email && t.status === 'UNVERIFIED') {
@@ -1482,6 +1494,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updateSystemSettings,
         updateMaintenanceSettings,
         updateAccessControlSettings,
+        updateLandingPageMetrics,
         updateCurrentTenantSettings,
         updateTenantAutomations,
         addSubscriptionPlan,
@@ -1504,7 +1517,6 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addAccount,
         addJournalEntry,
         addTenant,
-        // FIX: Added missing functions to the context value.
         verifyTenant,
         updateTenantProfile,
         updateAdminProfile,
