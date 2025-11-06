@@ -11,9 +11,11 @@ const SubscriptionManagement: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
 
+    // FIX: Add missing 'priceYearly' property.
     const initialFormState: Omit<SubscriptionPlan, 'id'> = {
         name: '',
         price: 0,
+        priceYearly: 0,
         description: '',
         features: [''],
         recommended: false
@@ -23,7 +25,8 @@ const SubscriptionManagement: React.FC = () => {
     const openModal = (plan: SubscriptionPlan | null = null) => {
         if (plan) {
             setEditingPlan(plan);
-            setFormData({ name: plan.name, price: plan.price, description: plan.description, features: plan.features, recommended: plan.recommended });
+            // FIX: Include priceYearly when setting form data for an existing plan.
+            setFormData({ name: plan.name, price: plan.price, priceYearly: plan.priceYearly, description: plan.description, features: plan.features, recommended: plan.recommended });
         } else {
             setEditingPlan(null);
             setFormData(initialFormState);
@@ -127,9 +130,15 @@ const SubscriptionManagement: React.FC = () => {
                                 <label className="text-sm text-gray-400">Plan Name</label>
                                 <input name="name" value={formData.name} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1" required />
                             </div>
-                            <div>
-                                <label className="text-sm text-gray-400">Price (per month)</label>
-                                <input name="price" type="number" value={formData.price} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1" required />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm text-gray-400">Price (per month)</label>
+                                    <input name="price" type="number" value={formData.price} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1" required />
+                                </div>
+                                <div>
+                                    <label className="text-sm text-gray-400">Price (per year)</label>
+                                    <input name="priceYearly" type="number" value={formData.priceYearly} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1" required />
+                                </div>
                             </div>
                             <div>
                                 <label className="text-sm text-gray-400">Description</label>
@@ -155,7 +164,7 @@ const SubscriptionManagement: React.FC = () => {
                         </form>
                          <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-700">
                             <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500">Cancel</button>
-                            <button type="button" onClick={handleSubmit} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500">
+                            <button type="submit" onClick={handleSubmit} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500">
                                 {editingPlan ? 'Save Changes' : 'Create Plan'}
                             </button>
                         </div>

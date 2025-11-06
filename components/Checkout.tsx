@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { SubscriptionPlan } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
@@ -7,18 +8,21 @@ import { useCurrency } from '../hooks/useCurrency';
 
 interface CheckoutProps {
     plan: SubscriptionPlan;
+    billingCycle: 'monthly' | 'yearly';
     onComplete: () => void;
 }
 
 type PaymentStatus = 'IDLE' | 'PROCESSING' | 'SUCCESS' | 'ERROR' | 'PENDING_MANUAL';
 
-const Checkout: React.FC<CheckoutProps> = ({ plan, onComplete }) => {
+const Checkout: React.FC<CheckoutProps> = ({ plan, billingCycle, onComplete }) => {
     const { paymentSettings, currentTenant, processSubscriptionPayment } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
     const [proofOfPayment, setProofOfPayment] = useState<File | null>(null);
     const [status, setStatus] = useState<PaymentStatus>('IDLE');
     const [statusMessage, setStatusMessage] = useState('');
+    
+    const price = billingCycle === 'yearly' ? plan.priceYearly : plan.price;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -40,14 +44,16 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, onComplete }) => {
             }
             // Simulate file upload and get a URL
             const mockProofUrl = `/uploads/proof_${Date.now()}.jpg`;
-            const { success, message } = await processSubscriptionPayment(currentTenant.id, plan.id, method, plan.price, true, mockProofUrl);
+            // FIX: Pass the billingCycle argument to processSubscriptionPayment.
+            const { success, message } = await processSubscriptionPayment(currentTenant.id, plan.id, method, price, billingCycle, true, mockProofUrl);
             setStatus(success ? 'PENDING_MANUAL' : 'ERROR');
             setStatusMessage(message);
         } else {
             // Simulate online payment API call
             setTimeout(async () => {
                 const isSuccess = Math.random() > 0.1; // 90% success rate
-                const { success, message } = await processSubscriptionPayment(currentTenant.id, plan.id, method, plan.price, isSuccess);
+                // FIX: Pass the billingCycle argument to processSubscriptionPayment.
+                const { success, message } = await processSubscriptionPayment(currentTenant.id, plan.id, method, price, billingCycle, isSuccess);
                 setStatus(success ? 'SUCCESS' : 'ERROR');
                 setStatusMessage(message);
             }, 2000);
@@ -88,7 +94,7 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, onComplete }) => {
         <div className="max-w-4xl mx-auto">
             <div className="p-6 bg-gray-800 rounded-lg shadow-md mb-6">
                 <h2 className="text-2xl font-bold text-white">Checkout</h2>
-                <p className="text-gray-400 mt-1">You are changing your subscription to the <span className="font-bold text-indigo-400">{plan.name}</span> plan.</p>
+                <p className="text-gray-400 mt-1">You are changing your subscription to the <span className="font-bold text-indigo-400">{plan.name} ({billingCycle})</span> plan.</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -97,12 +103,12 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, onComplete }) => {
                     <h3 className="text-xl font-semibold mb-4 text-white">Order Summary</h3>
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                            <span className="text-gray-400">{plan.name} Plan</span>
-                            <span className="font-semibold text-white">{formatCurrency(plan.price)}</span>
+                            <span className="text-gray-400">{plan.name} Plan ({billingCycle})</span>
+                            <span className="font-semibold text-white">{formatCurrency(price)}</span>
                         </div>
                          <div className="flex justify-between items-center text-lg font-bold border-t border-gray-700 pt-3">
                             <span className="text-white">Total Due Today</span>
-                            <span className="text-indigo-400">{formatCurrency(plan.price)}</span>
+                            <span className="text-indigo-400">{formatCurrency(price)}</span>
                         </div>
                     </div>
                 </div>

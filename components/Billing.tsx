@@ -2,7 +2,8 @@
 
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import { SubscriptionPlan } from '../types';
+// FIX: Import TenantStatus type.
+import { SubscriptionPlan, TenantStatus } from '../types';
 import Icon from './icons';
 import { useCurrency } from '../hooks/useCurrency';
 
@@ -10,9 +11,11 @@ const PlanCard: React.FC<{
     plan: SubscriptionPlan;
     isCurrent: boolean;
     onSelect: (plan: SubscriptionPlan) => void;
-}> = ({ plan, isCurrent, onSelect }) => {
+    billingCycle: 'monthly' | 'yearly';
+}> = ({ plan, isCurrent, onSelect, billingCycle }) => {
     const { formatCurrency } = useCurrency();
     const isRecommended = plan.recommended;
+    const price = billingCycle === 'yearly' ? plan.priceYearly : plan.price;
 
     return (
         <div className={`bg-gray-800 p-8 rounded-lg border-2 ${isCurrent ? 'border-indigo-500' : isRecommended ? 'border-cyan-500' : 'border-gray-700'} relative flex flex-col`}>
@@ -20,8 +23,8 @@ const PlanCard: React.FC<{
             <h3 className="text-2xl font-semibold text-white">{plan.name}</h3>
             <p className="text-gray-400 mt-2 h-10">{plan.description}</p>
             <div className="mt-4">
-                <span className="text-5xl font-extrabold text-white">{formatCurrency(plan.price).replace(/\.00$/, '')}</span>
-                <span className="text-lg text-gray-400">/mo</span>
+                <span className="text-5xl font-extrabold text-white">{formatCurrency(price).replace(/\.00$/, '')}</span>
+                <span className="text-lg text-gray-400">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
             </div>
             <ul className="mt-6 space-y-3 text-gray-400 flex-grow">
                 {plan.features.map((feature, i) => (
@@ -43,12 +46,13 @@ const PlanCard: React.FC<{
 };
 
 interface BillingProps {
-    onStartCheckout: (plan: SubscriptionPlan) => void;
+    onStartCheckout: (plan: SubscriptionPlan, billingCycle: 'monthly' | 'yearly') => void;
 }
 
 const Billing: React.FC<BillingProps> = ({ onStartCheckout }) => {
     const { currentTenant, subscriptionPlans } = useAppContext();
     const { formatCurrency } = useCurrency();
+    const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>(currentTenant?.billingCycle || 'monthly');
 
     const currentPlan = useMemo(() => {
         return subscriptionPlans.find(p => p.id === currentTenant?.planId);
@@ -56,7 +60,7 @@ const Billing: React.FC<BillingProps> = ({ onStartCheckout }) => {
 
     const handleSelectPlan = (plan: SubscriptionPlan) => {
         if (currentTenant && plan.id !== currentTenant.planId) {
-            onStartCheckout(plan);
+            onStartCheckout(plan, billingCycle);
         }
     };
     
@@ -64,11 +68,13 @@ const Billing: React.FC<BillingProps> = ({ onStartCheckout }) => {
         return <div>Loading...</div>;
     }
     
-    const getStatusBadge = (status: 'ACTIVE' | 'SUSPENDED' | 'TRIAL') => {
-        const styles = {
+    // FIX: Update function signature to accept all TenantStatus values and add 'UNVERIFIED' style.
+    const getStatusBadge = (status: TenantStatus) => {
+        const styles: {[key in TenantStatus]: string} = {
             ACTIVE: 'bg-green-500/20 text-green-300',
             SUSPENDED: 'bg-red-500/20 text-red-300',
             TRIAL: 'bg-yellow-500/20 text-yellow-300',
+            UNVERIFIED: 'bg-gray-500/20 text-gray-300',
         };
         return <span className={`px-2 py-1 text-xs font-semibold rounded-full ${styles[status]}`}>{status}</span>;
     };
@@ -102,8 +108,8 @@ const Billing: React.FC<BillingProps> = ({ onStartCheckout }) => {
                         )}
                     </div>
                     <div className="text-left md:text-right bg-gray-900/50 p-4 rounded-md">
-                        <p className="text-gray-400">Monthly cost</p>
-                        <p className="text-4xl font-extrabold text-white">{formatCurrency(currentPlan.price)}</p>
+                        <p className="text-gray-400 capitalize">{currentTenant.billingCycle} cost</p>
+                        <p className="text-4xl font-extrabold text-white">{formatCurrency(currentTenant.billingCycle === 'yearly' ? currentPlan.priceYearly : currentPlan.price)}</p>
                         <p className="text-gray-500">Next payment due: July 15, 2024</p>
                     </div>
                 </div>
@@ -113,7 +119,13 @@ const Billing: React.FC<BillingProps> = ({ onStartCheckout }) => {
              <div className="py-8">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-white">Change Your Plan</h2>
-                <p className="mt-4 text-lg text-gray-400">Upgrade or downgrade to the plan that fits your needs.</p>
+                <div className="mt-4 inline-flex items-center bg-gray-700 p-1 rounded-full text-sm font-semibold">
+                    <button onClick={() => setBillingCycle('monthly')} className={`px-4 py-1 rounded-full transition-colors ${billingCycle === 'monthly' ? 'bg-indigo-600 text-white' : 'text-gray-300'}`}>Monthly</button>
+                    <button onClick={() => setBillingCycle('yearly')} className={`px-4 py-1 rounded-full transition-colors relative ${billingCycle === 'yearly' ? 'bg-indigo-600 text-white' : 'text-gray-300'}`}>
+                        Yearly
+                        <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">Save 20%</span>
+                    </button>
+                </div>
               </div>
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
                 {subscriptionPlans.map((plan) => (
@@ -122,6 +134,7 @@ const Billing: React.FC<BillingProps> = ({ onStartCheckout }) => {
                     plan={plan}
                     isCurrent={plan.id === currentPlan.id}
                     onSelect={handleSelectPlan}
+                    billingCycle={billingCycle}
                   />
                 ))}
               </div>

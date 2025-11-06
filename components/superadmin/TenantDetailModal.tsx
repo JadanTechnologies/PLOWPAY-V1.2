@@ -19,10 +19,12 @@ const DetailItem: React.FC<{ icon: string; label: string; value?: string | React
 );
 
 const getStatusBadge = (status: Tenant['status']) => {
+    // FIX: Add UNVERIFIED to styles object
     const styles: {[key in Tenant['status']]: string} = {
         ACTIVE: 'bg-green-500/20 text-green-300',
         SUSPENDED: 'bg-red-500/20 text-red-300',
         TRIAL: 'bg-yellow-500/20 text-yellow-300',
+        UNVERIFIED: 'bg-gray-500/20 text-gray-300',
     };
     return (
         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${styles[status]}`}>
