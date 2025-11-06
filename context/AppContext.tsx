@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -154,7 +154,8 @@ const generateMockSales = (products: Product[]): Sale[] => {
                 name: product.name,
                 variantName: variant.name,
                 quantity: quantity,
-                sellingPrice: variant.sellingPrice
+                sellingPrice: variant.sellingPrice,
+                costPrice: variant.costPrice,
             }],
             total: total,
             branchId: mockBranches[Math.floor(Math.random() * mockBranches.length)].id,
@@ -162,6 +163,7 @@ const generateMockSales = (products: Product[]): Sale[] => {
             payments: [{ method: 'Cash', amount: total }],
             change: 0,
             staffId: mockStaff[Math.floor(Math.random() * mockStaff.length)].id,
+            discount: 0,
         });
     }
     return sales.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -337,7 +339,35 @@ interface AppContextProviderProps {
 
 export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children, onLogout = () => {} }) => {
     const [products, setProducts] = useState<Product[]>(mockProducts);
-    const [sales, setSales] = useState<Sale[]>(mockSales);
+    
+    const SALES_STORAGE_KEY = 'flowpay-sales';
+
+    const [sales, setSales] = useState<Sale[]>(() => {
+        try {
+            const storedSales = window.localStorage.getItem(SALES_STORAGE_KEY);
+            if (storedSales) {
+                const parsedSales = JSON.parse(storedSales);
+                // Convert date strings back to Date objects
+                return parsedSales.map((sale: any) => ({
+                    ...sale,
+                    date: new Date(sale.date),
+                }));
+            }
+        } catch (error) {
+            console.error("Error reading sales from local storage", error);
+        }
+        return mockSales; // Fallback to mock sales
+    });
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(sales));
+        } catch (error) {
+            console.error("Error saving sales to local storage", error);
+        }
+    }, [sales]);
+
+
     const [branches, setBranches] = useState<Branch[]>(mockBranches);
     const [staff, setStaff] = useState<Staff[]>(mockStaff);
     const [staffRoles, setStaffRoles] = useState<StaffRole[]>(mockStaffRoles);
@@ -699,6 +729,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
              variantName: products.find(p => p.id === item.productId)?.variants.find(v => v.id === item.variantId)?.name || 'N/A',
              quantity: item.quantity,
              sellingPrice: item.sellingPrice,
+             costPrice: products.find(p => p.id === item.productId)?.variants.find(v => v.id === item.variantId)?.costPrice || 0,
         }));
         
         const newSale: Sale = {
@@ -711,6 +742,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             payments: [{ method: 'Cargo Sale', amount: total }],
             change: 0,
             staffId: 'staff-1', // Default staff for direct cargo sales
+            discount: 0,
         };
         setSales(prev => [newSale, ...prev]);
 

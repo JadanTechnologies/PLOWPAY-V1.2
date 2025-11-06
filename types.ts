@@ -66,6 +66,7 @@ export interface CartItem {
   variantName: string;
   quantity: number;
   sellingPrice: number;
+  costPrice: number;
 }
 
 export interface Payment {
@@ -86,6 +87,7 @@ export interface Sale {
   payments: Payment[];
   change: number;
   staffId: string;
+  discount?: number;
 }
 
 export type StockLogAction = 'ADJUSTMENT' | 'TRANSFER' | 'SALE' | 'PURCHASE_RECEIVED';

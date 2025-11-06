@@ -149,7 +149,7 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
 const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, onClose }) => {
     const { brandConfig, staff } = useAppContext();
     const subtotal = sale.items.reduce((acc, item) => acc + item.sellingPrice * item.quantity, 0);
-    const tax = sale.total - subtotal;
+    const tax = sale.total - subtotal + (sale.discount || 0);
     const cashier = staff.find(s => s.id === sale.staffId);
 
     const handlePrint = () => {
@@ -206,6 +206,7 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
                     <div className="space-y-1 text-sm mb-4">
                         <div className="flex justify-between"><span className="text-gray-400">Subtotal:</span><span>${subtotal.toFixed(2)}</span></div>
                         <div className="flex justify-between"><span className="text-gray-400">Tax:</span><span>${tax.toFixed(2)}</span></div>
+                         {sale.discount && sale.discount > 0 && <div className="flex justify-between"><span className="text-gray-400">Discount:</span><span className="text-red-400">-${sale.discount.toFixed(2)}</span></div>}
                         <div className="flex justify-between font-bold text-lg"><span>Total:</span><span>${sale.total.toFixed(2)}</span></div>
                     </div>
                     
@@ -235,6 +236,7 @@ const PointOfSale: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [showFavorites, setShowFavorites] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
+  const [discount, setDiscount] = useState(0);
 
   const defaultCustomer = { name: 'Walk-in Customer', phone: '' };
   const [customer, setCustomer] = useState(defaultCustomer);
@@ -267,7 +269,8 @@ const PointOfSale: React.FC = () => {
           name: product.name,
           variantName: variant.name,
           quantity: 1, 
-          sellingPrice: variant.sellingPrice
+          sellingPrice: variant.sellingPrice,
+          costPrice: variant.costPrice
         }];
     });
   }, []);
@@ -294,7 +297,20 @@ const PointOfSale: React.FC = () => {
 
   const subtotal = useMemo(() => cart.reduce((acc, item) => acc + item.sellingPrice * item.quantity, 0), [cart]);
   const tax = subtotal * 0.08;
-  const total = subtotal + tax;
+  const total = subtotal + tax - discount;
+
+  const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let value = parseFloat(e.target.value);
+    if (isNaN(value) || value < 0) {
+        value = 0;
+    }
+    const maxDiscount = subtotal + tax;
+    if (value > maxDiscount) {
+        value = maxDiscount;
+    }
+    setDiscount(value);
+  };
+
 
   const handleConfirmPayment = async (payments: Payment[], change: number) => {
       if (cart.length === 0) return;
@@ -314,6 +330,7 @@ const PointOfSale: React.FC = () => {
           payments: finalPayments,
           change: change,
           staffId: 'staff-1', // Mock: assume staff-1 is logged in
+          discount: discount
       };
 
       const result = await addSale(saleData);
@@ -326,6 +343,7 @@ const PointOfSale: React.FC = () => {
 
           // Reset POS
           setCart([]);
+          setDiscount(0);
           setCustomer(defaultCustomer);
           setIsEditingCustomer(false);
       } else {
@@ -337,7 +355,7 @@ const PointOfSale: React.FC = () => {
     <div className="flex flex-col lg:flex-row h-[calc(100vh-8rem)] gap-6">
       {isCalculatorOpen && <Calculator onClose={() => setIsCalculatorOpen(false)} />}
       
-      {isPaymentModalOpen && <PaymentModal totalDue={total} onClose={() => setPaymentModalOpen(false)} onConfirm={handleConfirmPayment} />}
+      {isPaymentModalOpen && <PaymentModal totalDue={total > 0 ? total : 0} onClose={() => setPaymentModalOpen(false)} onConfirm={handleConfirmPayment} />}
       {isInvoiceModalOpen && lastCompletedSale && <InvoiceModal sale={lastCompletedSale} onClose={() => setInvoiceModalOpen(false)} />}
       
       {/* Product Grid */}
@@ -380,7 +398,7 @@ const PointOfSale: React.FC = () => {
                     </div>
                     <div>
                         <label className="text-xs text-gray-400">Phone Number (for SMS confirmation)</label>
-                        <input type="tel" value={customer.phone} onChange={e => setCustomer({...customer, phone: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-md py-1 px-2 text-sm" placeholder="Optional"/>
+                        <input type="tel" value={customer.phone || ''} onChange={e => setCustomer({...customer, phone: e.target.value})} className="w-full bg-gray-700 border border-gray-600 rounded-md py-1 px-2 text-sm" placeholder="Optional"/>
                     </div>
                     <button onClick={() => setIsEditingCustomer(false)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm py-1 rounded-md">Done</button>
                 </div>
@@ -428,10 +446,24 @@ const PointOfSale: React.FC = () => {
             <div className="space-y-2 text-lg">
               <div className="flex justify-between"><span>Subtotal</span><span>${subtotal.toFixed(2)}</span></div>
               <div className="flex justify-between text-gray-400"><span>Tax (8%)</span><span>${tax.toFixed(2)}</span></div>
-              <div className="flex justify-between font-bold text-2xl"><span>Total</span><span>${total.toFixed(2)}</span></div>
+              <div className="flex justify-between items-center text-gray-400">
+                <label htmlFor="discount">Discount</label>
+                <div className="flex items-center">
+                    <span className="mr-1">$</span>
+                    <input
+                        id="discount"
+                        type="number"
+                        value={discount === 0 ? '' : discount}
+                        onChange={handleDiscountChange}
+                        className="w-24 bg-gray-900 text-right font-semibold rounded-md p-1 border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        placeholder="0.00"
+                    />
+                </div>
+              </div>
+              <div className="flex justify-between font-bold text-2xl"><span>Total</span><span>${total < 0 ? '0.00' : total.toFixed(2)}</span></div>
             </div>
             <div className="mt-4 grid grid-cols-3 gap-2">
-                <button className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-md flex items-center justify-center" onClick={() => setCart([])}>
+                <button className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-md flex items-center justify-center" onClick={() => {setCart([]); setDiscount(0);}}>
                     <Icon name="trash" className="w-5 h-5 mr-2"/> Clear
                 </button>
                  <button className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-2 px-4 rounded-md">Hold</button>
