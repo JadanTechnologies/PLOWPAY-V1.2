@@ -51,6 +51,7 @@ export interface ProductVariant {
   costPrice: number;
   stockByBranch: { [branchId: string]: number }; // Owned stock
   consignmentStockByBranch?: { [branchId: string]: number }; // Consignment stock
+  reorderPointByBranch?: { [branchId: string]: number }; // Reorder point
   batchNumber?: string;
   expiryDate?: string;
 }
@@ -505,6 +506,7 @@ export interface AppContextType {
   deleteCategory: (categoryId: string) => void;
   extendTrial: (tenantId: string, days: number) => void;
   activateSubscription: (tenantId: string, planId: string) => void;
+  changeSubscriptionPlan: (tenantId: string, newPlanId: string) => void;
   processExpiredTrials: () => { processed: number; suspended: number };
   logout?: () => void;
 }

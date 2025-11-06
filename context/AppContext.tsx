@@ -149,9 +149,11 @@ const generateMockProducts = (): Product[] => {
                 variants: (variants[category.id as keyof typeof variants] || []).map((variant, index) => {
                     const stockByBranch: { [branchId: string]: number } = {};
                     const consignmentStockByBranch: { [branchId: string]: number } = {};
+                    const reorderPointByBranch: { [branchId: string]: number } = {};
 
                     mockBranches.forEach(branch => {
                         stockByBranch[branch.id] = Math.floor(Math.random() * 100);
+                        reorderPointByBranch[branch.id] = Math.floor(Math.random() * 15) + 5; // Reorder point between 5 and 20
                         if (Math.random() > 0.6) { // 40% chance of having consignment stock
                             consignmentStockByBranch[branch.id] = Math.floor(Math.random() * 50);
                         }
@@ -168,6 +170,7 @@ const generateMockProducts = (): Product[] => {
                         sku: `${name.substring(0,3).toUpperCase()}-${index}`,
                         stockByBranch: stockByBranch,
                         consignmentStockByBranch: consignmentStockByBranch,
+                        reorderPointByBranch: reorderPointByBranch,
                         batchNumber: hasBatch ? `B${Math.floor(Math.random() * 9000) + 1000}` : undefined,
                         expiryDate: hasBatch ? expiryDate.toISOString().split('T')[0] : undefined,
                     }
@@ -1251,6 +1254,15 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             return t;
         }));
     }, []);
+    
+    const changeSubscriptionPlan = useCallback((tenantId: string, newPlanId: string) => {
+        setTenants(prev => prev.map(t => {
+            if (t.id === tenantId) {
+                return { ...t, planId: newPlanId };
+            }
+            return t;
+        }));
+    }, []);
 
     const processExpiredTrials = useCallback(() => {
         const now = new Date();
@@ -1360,6 +1372,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         deleteCategory,
         extendTrial,
         activateSubscription,
+        changeSubscriptionPlan,
         processExpiredTrials,
         logout: onLogout,
     };

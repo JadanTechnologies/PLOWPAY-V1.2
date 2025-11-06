@@ -1,4 +1,5 @@
 
+
 import { useMemo } from 'react';
 import { useAppContext } from './useAppContext';
 
@@ -15,6 +16,7 @@ const translations: Record<string, Record<string, string>> = {
     totalRevenue: 'Total Revenue',
     creditManagement: 'Credit Management',
     consignment: 'Consignment',
+    billing: 'Billing',
   },
   es: {
     dashboard: 'Tablero',
@@ -28,6 +30,7 @@ const translations: Record<string, Record<string, string>> = {
     totalRevenue: 'Ingresos Totales',
     creditManagement: 'Gestión de Crédito',
     consignment: 'Consignación',
+    billing: 'Facturación',
   },
   fr: {
     dashboard: 'Tableau de Bord',
@@ -41,6 +44,7 @@ const translations: Record<string, Record<string, string>> = {
     totalRevenue: 'Revenu Total',
     creditManagement: 'Gestion de Crédit',
     consignment: 'Consignation',
+    billing: 'Facturation',
   }
 };
 

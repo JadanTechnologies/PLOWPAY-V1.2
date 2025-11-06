@@ -1,6 +1,7 @@
 
 
 
+
 import React from 'react';
 import { Page } from '../App';
 import Icon from './icons';
@@ -68,6 +69,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
     { page: 'CREDIT_MANAGEMENT', icon: 'users', label: t('creditManagement'), key: 'credit_management' },
     { page: 'ACCOUNTING', icon: 'calculator', label: t('accounting'), key: 'accounting' },
     { page: 'REPORTS', icon: 'reports', label: t('reports'), key: 'reports' },
+    { page: 'BILLING', icon: 'credit-card', label: t('billing'), key: 'billing' },
     { page: 'SETTINGS', icon: 'settings', label: t('settings'), key: 'settings' },
   ];
 

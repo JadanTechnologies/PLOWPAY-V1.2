@@ -1,5 +1,6 @@
 
 
+
 import React, {useState, useMemo} from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, ProductVariant, StockLog, Category } from '../types';
@@ -39,7 +40,7 @@ const Inventory: React.FC = () => {
     const [newProductName, setNewProductName] = useState('');
     const [newProductCategoryId, setNewProductCategoryId] = useState(categories[0]?.id || '');
     const [newProductVariants, setNewProductVariants] = useState<NewVariant[]>([
-        { name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}), batchNumber: '', expiryDate: '' }
+        { name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}), reorderPointByBranch: branches.reduce((acc, b) => ({...acc, [b.id]: 10}), {}), batchNumber: '', expiryDate: '' }
     ]);
 
     // Category Modal State
@@ -146,7 +147,7 @@ const Inventory: React.FC = () => {
     const resetAddProductForm = () => {
         setNewProductName('');
         setNewProductCategoryId(categories[0]?.id || '');
-        setNewProductVariants([{ name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}), batchNumber: '', expiryDate: '' }]);
+        setNewProductVariants([{ name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}), reorderPointByBranch: branches.reduce((acc, b) => ({...acc, [b.id]: 10}), {}), batchNumber: '', expiryDate: '' }]);
     };
 
     const closeAddProductModal = () => {
@@ -180,7 +181,7 @@ const Inventory: React.FC = () => {
     }
 
     const addVariantRow = () => {
-        setNewProductVariants([...newProductVariants, { name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}), batchNumber: '', expiryDate: '' }]);
+        setNewProductVariants([...newProductVariants, { name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}), reorderPointByBranch: branches.reduce((acc, b) => ({...acc, [b.id]: 10}), {}), batchNumber: '', expiryDate: '' }]);
     };
 
     const removeVariantRow = (index: number) => {
@@ -241,6 +242,11 @@ const Inventory: React.FC = () => {
         return 'text-gray-400';
     };
 
+    const getStockLevelStyles = (stock: number, reorderPoint?: number) => {
+        if (stock <= 0) return 'text-red-500';
+        if (reorderPoint !== undefined && stock <= reorderPoint) return 'text-orange-400';
+        return 'text-green-500';
+    };
 
     const availableFromBranches = useMemo(() => {
         if (!selectedVariant) return [];
@@ -331,9 +337,10 @@ const Inventory: React.FC = () => {
                                                 <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">{formatCurrency(variant.sellingPrice)}</td>
                                                 {branches.map(branch => {
                                                     const stock = variant.stockByBranch[branch.id] || 0;
+                                                    const reorderPoint = variant.reorderPointByBranch?.[branch.id];
                                                     return (
-                                                        <td key={branch.id} className={`p-3 whitespace-nowrap text-right font-bold ${stock < 10 ? 'text-red-500' : 'text-green-500'}`}>
-                                                            {stock}
+                                                        <td key={branch.id} className="p-3 whitespace-nowrap text-right font-bold">
+                                                            <span className={getStockLevelStyles(stock, reorderPoint)}>{stock}</span>
                                                         </td>
                                                     );
                                                 })}
@@ -536,9 +543,9 @@ const Inventory: React.FC = () => {
             {/* Edit Variant Modal */}
             {isEditModalOpen && editingVariant && editingProduct && (
                  <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
-                    <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg">
+                    <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
                         <h3 className="text-xl font-bold mb-4 text-white">Edit Variant: {editingVariant.name}</h3>
-                         <div className="space-y-4">
+                         <div className="space-y-4 overflow-y-auto pr-2 -mr-2">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-400">SKU</label>
@@ -557,12 +564,37 @@ const Inventory: React.FC = () => {
                                     <input type="number" value={editingVariant.sellingPrice} onChange={e => setEditingVariant({...editingVariant, sellingPrice: parseFloat(e.target.value) || 0})} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
                                 </div>
                             </div>
-                            <div>
+                            <div className="sm:col-span-2">
                                 <label className="block text-sm font-medium text-gray-400">Expiry Date</label>
                                 <input type="date" value={editingVariant.expiryDate || ''} onChange={e => setEditingVariant({...editingVariant, expiryDate: e.target.value})} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
                             </div>
+                             <div className="sm:col-span-2">
+                                <h4 className="text-md font-medium text-gray-300 mt-2 border-t border-gray-700 pt-3">Reorder Points</h4>
+                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                    {branches.map(branch => (
+                                        <div key={branch.id}>
+                                            <label className="block text-xs font-medium text-gray-400">{branch.name}</label>
+                                            <input 
+                                                type="number"
+                                                value={editingVariant.reorderPointByBranch?.[branch.id] || 0}
+                                                onChange={e => {
+                                                    const value = parseInt(e.target.value, 10) || 0;
+                                                    setEditingVariant({
+                                                        ...editingVariant,
+                                                        reorderPointByBranch: {
+                                                            ...editingVariant.reorderPointByBranch,
+                                                            [branch.id]: value
+                                                        }
+                                                    });
+                                                }}
+                                                className="w-full mt-1 py-1 px-2 text-white bg-gray-700 border border-gray-600 rounded-md"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                        <div className="mt-6 flex justify-end space-x-3">
+                        <div className="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-700">
                             <button type="button" onClick={closeEditModal} className="px-4 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-500 font-semibold">Cancel</button>
                             <button type="button" onClick={handleVariantUpdate} className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 font-semibold">Save Changes</button>
                         </div>
