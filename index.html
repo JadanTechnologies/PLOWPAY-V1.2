@@ -30,6 +30,34 @@
         }
       }
     </script>
+    <style>
+      @media print {
+        body * {
+          visibility: hidden;
+        }
+        #invoice-modal, #invoice-modal * {
+          visibility: visible;
+        }
+        #invoice-modal {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: auto;
+          background: white !important;
+          color: black !important;
+        }
+        #invoice-content {
+            color: black !important;
+        }
+        #invoice-content * {
+            color: black !important;
+        }
+        .no-print {
+          display: none !important;
+        }
+      }
+    </style>
   <script type="importmap">
 {
   "imports": {

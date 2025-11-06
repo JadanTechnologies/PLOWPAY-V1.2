@@ -68,6 +68,11 @@ export interface CartItem {
   sellingPrice: number;
 }
 
+export interface Payment {
+  method: string;
+  amount: number;
+}
+
 export interface Sale {
   id: string;
   date: Date;
@@ -78,6 +83,8 @@ export interface Sale {
     name: string;
     phone?: string;
   };
+  payments: Payment[];
+  change: number;
 }
 
 export type StockLogAction = 'ADJUSTMENT' | 'TRANSFER' | 'SALE' | 'PURCHASE_RECEIVED';
@@ -356,7 +363,7 @@ export interface AppContextType {
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
-  addSale: (saleData: Omit<Sale, 'id' | 'date'>) => Promise<{success: boolean, message: string}>;
+  addSale: (saleData: Omit<Sale, 'id' | 'date'>) => Promise<{success: boolean, message: string, newSale?: Sale}>;
   adjustStock: (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => void;
   transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;
   addProduct: (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => void;

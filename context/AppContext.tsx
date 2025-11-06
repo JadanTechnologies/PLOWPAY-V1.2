@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -154,7 +154,9 @@ const generateMockSales = (products: Product[]): Sale[] => {
             }],
             total: total,
             branchId: mockBranches[Math.floor(Math.random() * mockBranches.length)].id,
-            customer: customers[Math.floor(Math.random() * customers.length)]
+            customer: customers[Math.floor(Math.random() * customers.length)],
+            payments: [{ method: 'Cash', amount: total }],
+            change: 0,
         });
     }
     return sales.sort((a, b) => b.date.getTime() - a.date.getTime());
@@ -366,7 +368,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         }
     };
 
-    const addSale = useCallback(async (saleData: Omit<Sale, 'id' | 'date'>): Promise<{success: boolean, message: string}> => {
+    const addSale = useCallback(async (saleData: Omit<Sale, 'id' | 'date'>): Promise<{success: boolean, message: string, newSale?: Sale}> => {
         // 1. Decrease stock and create stock logs
         const newStockLogs: StockLog[] = [];
         setProducts(currentProducts => {
@@ -415,7 +417,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             }
         }
         
-        return { success: true, message: `Sale completed!${notificationMessage}` };
+        return { success: true, message: `Sale completed!${notificationMessage}`, newSale: newSale };
     }, [notificationSettings]);
     
     const adjustStock = useCallback((productId: string, variantId: string, branchId: string, newStock: number, reason: string) => {
@@ -701,6 +703,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             total,
             branchId: 'DIRECT_SALE',
             customer,
+            payments: [{ method: 'Cargo Sale', amount: total }],
+            change: 0
         };
         setSales(prev => [newSale, ...prev]);
 
