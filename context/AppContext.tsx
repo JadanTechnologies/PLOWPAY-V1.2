@@ -528,72 +528,143 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     };
 
     const addSale = useCallback(async (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'>): Promise<{success: boolean, message: string, newSale?: Sale}> => {
+        // Create a mutable deep copy of items to update cost prices.
+        const processedItems: CartItem[] = JSON.parse(JSON.stringify(saleData.items));
+    
+        // This array will hold functions to update state, to be run after calculations.
+        const stateUpdateQueue: (() => void)[] = [];
+    
+        for (const item of processedItems) {
+            const product = products.find(p => p.id === item.productId);
+            const variant = product?.variants.find(v => v.id === item.variantId);
+    
+            if (variant) {
+                let totalCostForItem = 0;
+                let qtyToDeduct = item.quantity;
+                let deductedFromConsign = 0;
+                const branchId = saleData.branchId;
+    
+                // 1. Fulfill from consignment stock first
+                const consignmentStock = variant.consignmentStockByBranch?.[branchId] || 0;
+                if (consignmentStock > 0) {
+                    const qtyFromConsign = Math.min(qtyToDeduct, consignmentStock);
+                    
+                    const activeConsignment = consignments.find(c => 
+                        c.branchId === branchId &&
+                        c.status === 'ACTIVE' &&
+                        c.items.some(ci => ci.variantId === item.variantId)
+                    );
+    
+                    if (activeConsignment) {
+                        const consignmentItem = activeConsignment.items.find(ci => ci.variantId === item.variantId);
+                        if (consignmentItem) {
+                            totalCostForItem += qtyFromConsign * consignmentItem.costPrice;
+                            qtyToDeduct -= qtyFromConsign;
+                            deductedFromConsign = qtyFromConsign;
+    
+                            // Queue up consignment update.
+                            stateUpdateQueue.push(() => {
+                                setConsignments(prev => prev.map(con => {
+                                    if (con.id === activeConsignment.id) {
+                                        return {
+                                            ...con,
+                                            items: con.items.map(ci => 
+                                                ci.variantId === item.variantId 
+                                                    ? { ...ci, quantitySold: ci.quantitySold + qtyFromConsign } 
+                                                    : ci
+                                            )
+                                        };
+                                    }
+                                    return con;
+                                }));
+                            });
+                        }
+                    }
+                }
+    
+                // 2. Fulfill remaining from owned stock.
+                if (qtyToDeduct > 0) {
+                    totalCostForItem += qtyToDeduct * variant.costPrice;
+                }
+    
+                // 3. Calculate average cost for this cart item and update it.
+                item.costPrice = item.quantity > 0 ? totalCostForItem / item.quantity : 0;
+    
+                // 4. Queue up product stock update for both stock types.
+                const qtyFromOwned = item.quantity - deductedFromConsign;
+                stateUpdateQueue.push(() => {
+                    setProducts(prevProducts => {
+                        return prevProducts.map(p => {
+                            if (p.id === item.productId) {
+                                return {
+                                    ...p,
+                                    variants: p.variants.map(v => {
+                                        if (v.id === item.variantId) {
+                                            const newStockByBranch = { ...v.stockByBranch };
+                                            if (qtyFromOwned > 0) {
+                                                newStockByBranch[branchId] = (newStockByBranch[branchId] || 0) - qtyFromOwned;
+                                            }
+    
+                                            const newConsignmentStockByBranch = { ...(v.consignmentStockByBranch || {}) };
+                                            if (deductedFromConsign > 0) {
+                                                newConsignmentStockByBranch[branchId] = (newConsignmentStockByBranch[branchId] || 0) - deductedFromConsign;
+                                            }
+    
+                                            return {
+                                                ...v,
+                                                stockByBranch: newStockByBranch,
+                                                consignmentStockByBranch: newConsignmentStockByBranch,
+                                            };
+                                        }
+                                        return v;
+                                    })
+                                };
+                            }
+                            return p;
+                        });
+                    });
+                });
+            }
+        }
+        
+        // Now, create the new Sale object with the processed items
         const totalPaid = saleData.payments.reduce((acc, p) => acc + p.amount, 0) - saleData.change;
         const amountDue = saleData.total - totalPaid;
-
+    
         const newSale: Sale = {
             ...saleData,
+            items: processedItems, // Use the items with correct cost prices
             id: `sale-${Date.now()}`,
             date: new Date(),
             amountDue: amountDue > 0 ? amountDue : 0,
             status: amountDue <= 0 ? 'PAID' : 'PARTIALLY_PAID'
         };
-
-        // 1. Update customer credit if there's an amount due
+        
+        // Execute all queued state updates for stock and consignments
+        stateUpdateQueue.forEach(updateFn => updateFn());
+    
+        // Update customer credit balance if necessary
         if (newSale.amountDue > 0) {
             setCustomers(prevCustomers => prevCustomers.map(c => 
                 c.id === newSale.customerId ? { ...c, creditBalance: c.creditBalance + newSale.amountDue } : c
             ));
         }
-
-        // 2. Decrease stock and create stock logs
-        const newStockLogs: StockLog[] = [];
-        setProducts(currentProducts => {
-            const productsCopy = JSON.parse(JSON.stringify(currentProducts));
-            for (const item of saleData.items) {
-                const product = productsCopy.find((p: Product) => p.id === item.productId);
-                if (product) {
-                    const variant = product.variants.find((v: ProductVariant) => v.id === item.variantId);
-                    if (variant) {
-                        // Prioritize deducting from consignment stock
-                        let qtyToDeduct = item.quantity;
-                        const consignmentStock = variant.consignmentStockByBranch?.[saleData.branchId] || 0;
-                        if (consignmentStock > 0) {
-                            const deductFromConsign = Math.min(qtyToDeduct, consignmentStock);
-                            variant.consignmentStockByBranch[saleData.branchId] -= deductFromConsign;
-                            qtyToDeduct -= deductFromConsign;
-
-                            // Record consignment sale
-                            setConsignments(prev => prev.map(con => {
-                                const conItem = con.items.find(ci => ci.variantId === item.variantId);
-                                if (con.branchId === saleData.branchId && conItem) {
-                                    return {...con, items: con.items.map(ci => ci.variantId === item.variantId ? {...ci, quantitySold: ci.quantitySold + deductFromConsign } : ci)};
-                                }
-                                return con;
-                            }));
-                        }
-                        
-                        // Deduct remaining from owned stock
-                        if (qtyToDeduct > 0) {
-                             variant.stockByBranch[saleData.branchId] -= qtyToDeduct;
-                        }
-
-                        newStockLogs.push({
-                            id: `log-${Date.now()}-${item.variantId}`, date: new Date(),
-                            productId: item.productId, variantId: item.variantId,
-                            productName: item.name, variantName: item.variantName,
-                            action: 'SALE', quantity: -item.quantity,
-                            branchId: saleData.branchId, referenceId: newSale.id
-                        });
-                    }
-                }
-            }
-            return productsCopy;
-        });
-    
-        setSales(prev => [newSale, ...prev]);
+        
+        // Create stock logs for the sale
+        const newStockLogs: StockLog[] = processedItems.map(item => ({
+            id: `log-${Date.now()}-${item.variantId}`, date: new Date(),
+            productId: item.productId, variantId: item.variantId,
+            productName: item.name, variantName: item.variantName,
+            action: 'SALE', quantity: -item.quantity,
+            branchId: saleData.branchId, referenceId: newSale.id
+        }));
+        
         setStockLogs(prev => [...newStockLogs, ...prev]);
+        
+        // Add the new sale to the sales list
+        setSales(prev => [newSale, ...prev]);
     
+        // Handle SMS notifications
         let notificationMessage = '';
         const customer = customers.find(c => c.id === newSale.customerId);
         if (notificationSettings.sms.twilio.enabled && customer?.phone) {
@@ -606,7 +677,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         }
         
         return { success: true, message: `Sale completed!${notificationMessage}`, newSale: newSale };
-    }, [notificationSettings, customers]);
+    }, [products, consignments, customers, notificationSettings]);
     
     const adjustStock = useCallback((productId: string, variantId: string, branchId: string, newStock: number, reason: string) => {
         let logEntry: StockLog | null = null;
