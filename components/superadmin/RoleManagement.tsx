@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminRole, Permission } from '../../types';
@@ -14,12 +13,13 @@ const permissionLabels: Record<Permission, string> = {
     manageSystemSettings: 'Manage System Settings',
     managePaymentGateways: 'Manage Payment Gateways',
     manageNotificationSettings: 'Manage Notification Settings',
+    manageAnnouncements: 'Manage Announcements',
 };
 
 const permissionGroups: Record<string, Permission[]> = {
     'Platform Management': ['viewPlatformDashboard', 'manageSystemSettings'],
     'User & Tenant Management': ['manageTenants', 'manageSubscriptions', 'manageTeam', 'manageRoles'],
-    'Financial & Communications': ['managePaymentGateways', 'manageNotificationSettings']
+    'Financial & Communications': ['managePaymentGateways', 'manageNotificationSettings', 'manageAnnouncements']
 };
 
 const CollapsibleSection: React.FC<{

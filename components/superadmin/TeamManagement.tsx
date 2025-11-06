@@ -15,6 +15,8 @@ const permissionLabels: Record<Permission, string> = {
     manageSystemSettings: 'Manage System Settings',
     managePaymentGateways: 'Manage Payment Gateways',
     manageNotificationSettings: 'Manage Notification Settings',
+    // FIX: Added missing permission label for 'manageAnnouncements'.
+    manageAnnouncements: 'Manage Announcements',
 };
 
 const TeamManagement: React.FC = () => {

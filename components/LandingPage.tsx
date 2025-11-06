@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import Icon from './icons';
 import { View } from '../App';
@@ -207,9 +206,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
              <div>
                 <h4 className="font-semibold text-white">Resources</h4>
                 <ul className="mt-4 space-y-2">
-                    <li><a href="#" className="text-gray-400 hover:text-white">Blog</a></li>
-                    <li><a href="#" className="text-gray-400 hover:text-white">Help Center</a></li>
-                    <li><a href="#" className="text-gray-400 hover:text-white">API Docs</a></li>
+                    <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigate('blog'); }} className="text-gray-400 hover:text-white">Blog</a></li>
+                    <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigate('help'); }} className="text-gray-400 hover:text-white">Help Center</a></li>
+                    <li><a href="#" onClick={(e) => { e.preventDefault(); onNavigate('api'); }} className="text-gray-400 hover:text-white">API Docs</a></li>
                 </ul>
             </div>
              <div>

@@ -1,6 +1,6 @@
 
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -37,7 +37,8 @@ export const allPermissions: Permission[] = [
     'manageRoles',
     'manageSystemSettings',
     'managePaymentGateways',
-    'manageNotificationSettings'
+    'manageNotificationSettings',
+    'manageAnnouncements'
 ];
 
 const mockAdminRoles: AdminRole[] = [
@@ -295,6 +296,9 @@ const mockPageContent: PageContent = {
     terms: "## Terms of Service\n\nBy using FlowPay, you agree to our terms and conditions. Please read them carefully. These terms govern your use of our services...",
     privacy: "## Privacy Policy\n\nYour privacy is important to us. This policy explains what information we collect and how we use it...",
     refund: "## Refund Policy\n\nWe offer a 30-day money-back guarantee on all our subscription plans. If you are not satisfied, you can request a full refund within 30 days of purchase.",
+    helpCenter: "## Welcome to the Help Center\n\nFind answers to common questions here. You can browse topics by category or use the search bar to find what you're looking for.",
+    apiDocs: "## API Documentation\n\nIntegrate with FlowPay using our powerful REST API. Find detailed information about endpoints, parameters, and authentication.",
+    blog: "## Our Latest News\n\nCheck out the latest updates, articles, and case studies from the FlowPay team.",
     faqs: [
         { id: 'faq-1', question: "What is FlowPay?", answer: "FlowPay is an all-in-one SaaS platform for retail businesses, offering POS, inventory, and analytics." },
         { id: 'faq-2', question: "Is there a free trial?", answer: "Yes, we offer a 14-day free trial for all our plans. No credit card required." },
@@ -331,6 +335,25 @@ const mockNotificationSettings: NotificationSettings = {
         }
     }
 };
+
+const mockAnnouncements: Announcement[] = [
+    { 
+        id: 'anno-1', 
+        title: 'Platform Maintenance Scheduled', 
+        content: 'We will be performing scheduled maintenance on Sunday at 2 AM UTC. The platform may be temporarily unavailable.',
+        targetAudience: 'ALL',
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+        readBy: []
+    },
+    { 
+        id: 'anno-2', 
+        title: 'New Reporting Features Live!', 
+        content: 'We have just rolled out advanced new reporting features for all tenants. Check out the Reports page to learn more.',
+        targetAudience: 'TENANTS',
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+        readBy: []
+    }
+];
 
 interface AppContextProviderProps {
     children: ReactNode;
@@ -388,6 +411,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(mockPurchaseOrders);
     const [accounts, setAccounts] = useState<Account[]>(mockAccounts);
     const [journalEntries, setJournalEntries] = useState<JournalEntry[]>(mockJournalEntries);
+    const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
     const [searchTerm, setSearchTerm] = useState('');
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
@@ -866,6 +890,25 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         };
         setTenants(prev => [newTenant, ...prev].sort((a,b) => b.joinDate.getTime() - a.joinDate.getTime()));
     }, []);
+    
+    const addAnnouncement = useCallback((announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => {
+        const newAnnouncement: Announcement = {
+            ...announcementData,
+            id: `anno-${Date.now()}`,
+            createdAt: new Date(),
+            readBy: []
+        };
+        setAnnouncements(prev => [newAnnouncement, ...prev]);
+    }, []);
+
+    const markAnnouncementAsRead = useCallback((announcementId: string, userId: string) => {
+        setAnnouncements(prev => prev.map(anno => {
+            if (anno.id === announcementId && !anno.readBy.includes(userId)) {
+                return { ...anno, readBy: [...anno.readBy, userId] };
+            }
+            return anno;
+        }));
+    }, []);
 
 
     const value: AppContextType = {
@@ -893,6 +936,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         purchaseOrders,
         accounts,
         journalEntries,
+        announcements,
         searchTerm,
         setSearchTerm,
         getMetric,
@@ -930,6 +974,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addAccount,
         addJournalEntry,
         addTenant,
+        addAnnouncement,
+        markAnnouncementAsRead,
         logout: onLogout,
     };
 

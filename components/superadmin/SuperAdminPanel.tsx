@@ -1,5 +1,4 @@
 
-
 import React, { useState, useCallback } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
@@ -15,6 +14,7 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { BrandConfig, PageContent, FaqItem } from '../../types';
 import Icon from '../icons';
 import { usePermissions } from '../../hooks/usePermissions';
+import Announcements from './Announcements';
 
 const Settings: React.FC = () => {
     type SettingsTab = 'branding' | 'content' | 'faqs';
@@ -52,6 +52,11 @@ const Settings: React.FC = () => {
         setFaqs(faqs.filter(faq => faq.id !== id));
     };
 
+    const pageContentKeys: (keyof Omit<PageContent, 'faqs'>)[] = [
+        'about', 'contact', 'terms', 'privacy', 'refund', 'helpCenter', 'apiDocs', 'blog'
+    ];
+
+
     const renderTabContent = () => {
         switch (activeTab) {
             case 'branding':
@@ -79,10 +84,10 @@ const Settings: React.FC = () => {
             case 'content':
                 return (
                      <div className="space-y-6">
-                        {Object.keys(contentForm).map(key => (
+                        {pageContentKeys.map(key => (
                            <div key={key}>
-                               <label htmlFor={key} className="block text-sm font-medium text-gray-400 capitalize">{key.replace(/([A-Z])/g, ' $1')}</label>
-                               <textarea id={key} name={key} rows={8} value={contentForm[key as keyof typeof contentForm]} onChange={e => setContentForm({ ...contentForm, [key]: e.target.value })} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 font-mono text-sm"/>
+                               <label htmlFor={key} className="block text-sm font-medium text-gray-400 capitalize">{key.replace(/([A-Z])/g, ' $1').replace('Api', 'API').trim()}</label>
+                               <textarea id={key} name={key} rows={8} value={contentForm[key]} onChange={e => setContentForm({ ...contentForm, [key]: e.target.value })} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 font-mono text-sm"/>
                                <p className="mt-2 text-xs text-gray-500">You can use simple markdown for headings (e.g., ## My Heading).</p>
                            </div>
                         ))}
@@ -168,6 +173,8 @@ const SuperAdminPanel: React.FC = () => {
                 return hasPermission('managePaymentGateways') ? <PaymentSettings /> : <AccessDenied />;
             case 'NOTIFICATIONS':
                 return hasPermission('manageNotificationSettings') ? <NotificationSettings /> : <AccessDenied />;
+            case 'ANNOUNCEMENTS':
+                return hasPermission('manageAnnouncements') ? <Announcements /> : <AccessDenied />;
             case 'SETTINGS':
                  return hasPermission('manageSystemSettings') ? <Settings /> : <AccessDenied />;
             default:
@@ -183,6 +190,7 @@ const SuperAdminPanel: React.FC = () => {
         ROLE_MANAGEMENT: 'Role Management',
         PAYMENTS: 'Payment Gateways',
         NOTIFICATIONS: 'Notification Settings',
+        ANNOUNCEMENTS: 'Global Announcements',
         SETTINGS: 'System Settings',
     };
 

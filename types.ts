@@ -182,7 +182,8 @@ export type Permission =
   | 'manageRoles'
   | 'manageSystemSettings'
   | 'managePaymentGateways'
-  | 'manageNotificationSettings';
+  | 'manageNotificationSettings'
+  | 'manageAnnouncements';
 
 export interface AdminRole {
     id: string;
@@ -218,6 +219,9 @@ export interface PageContent {
   privacy: string;
   refund: string;
   faqs: FaqItem[];
+  helpCenter: string;
+  apiDocs: string;
+  blog: string;
 }
 
 export interface StripeSettings {
@@ -340,6 +344,15 @@ export interface JournalEntry {
     transactions: Transaction[];
 }
 
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  targetAudience: 'TENANTS' | 'STAFF' | 'ALL';
+  createdAt: Date;
+  readBy: string[]; // Array of user IDs (admin or tenant)
+}
+
 
 export interface AppContextType {
   products: Product[];
@@ -366,6 +379,7 @@ export interface AppContextType {
   purchaseOrders: PurchaseOrder[];
   accounts: Account[];
   journalEntries: JournalEntry[];
+  announcements: Announcement[];
   searchTerm: string;
   setSearchTerm: (term: string) => void;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
@@ -403,5 +417,7 @@ export interface AppContextType {
   addAccount: (accountData: Omit<Account, 'id' | 'balance'>) => void;
   addJournalEntry: (entryData: Omit<JournalEntry, 'id' | 'date'>) => void;
   addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status'>) => void;
+  addAnnouncement: (announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => void;
+  markAnnouncementAsRead: (announcementId: string, userId: string) => void;
   logout?: () => void;
 }

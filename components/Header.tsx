@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import Icon from './icons';
 import { useAppContext } from '../hooks/useAppContext';
+import { Announcement } from '../types';
 
 interface HeaderProps {
   pageTitle: string;
@@ -8,8 +10,9 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
-  const { logout, setSearchTerm: setGlobalSearchTerm } = useAppContext();
+  const { logout, setSearchTerm: setGlobalSearchTerm, announcements, currentAdminUser, markAnnouncementAsRead } = useAppContext();
   const [isProfileOpen, setProfileOpen] = useState(false);
+  const [isNotificationsOpen, setNotificationsOpen] = useState(false);
   const [localSearchTerm, setLocalSearchTerm] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [time, setTime] = useState(new Date());
@@ -40,6 +43,34 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
     setLocalSearchTerm('');
   };
   
+  const userId = currentAdminUser?.id || 'tenant-user-mock'; // Use admin ID or a mock ID for tenants
+
+  const relevantAnnouncements = useMemo(() => {
+    const isSuperAdmin = !!currentAdminUser;
+    
+    return announcements.filter(anno => {
+        if (anno.targetAudience === 'ALL') return true;
+        if (isSuperAdmin && anno.targetAudience === 'STAFF') return true;
+        if (!isSuperAdmin && anno.targetAudience === 'TENANTS') return true;
+        return false;
+    }).sort((a,b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }, [announcements, currentAdminUser]);
+
+  const unreadCount = useMemo(() => {
+      return relevantAnnouncements.filter(anno => !anno.readBy.includes(userId)).length;
+  }, [relevantAnnouncements, userId]);
+
+  const handleNotificationsToggle = () => {
+      setNotificationsOpen(!isNotificationsOpen);
+      if (!isNotificationsOpen) { // When opening
+          relevantAnnouncements.forEach(anno => {
+              if (!anno.readBy.includes(userId)) {
+                  markAnnouncementAsRead(anno.id, userId);
+              }
+          });
+      }
+  };
+
   // Guard against undefined pageTitle and handle pre-formatted titles
   const title = pageTitle || '';
   const formattedTitle = title.includes(' ')
@@ -92,9 +123,33 @@ const Header: React.FC<HeaderProps> = ({ pageTitle, toggleSidebar }) => {
           )}
         </div>
 
-        <button className="p-2 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white focus:outline-none">
-          <Icon name="notification" className="w-6 h-6" />
-        </button>
+        <div className="relative">
+            <button onClick={handleNotificationsToggle} className="relative p-2 text-gray-400 rounded-full hover:bg-gray-700 hover:text-white focus:outline-none">
+                <Icon name="notification" className="w-6 h-6" />
+                 {unreadCount > 0 && (
+                    <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center animate-pulse">
+                        {unreadCount}
+                    </span>
+                )}
+            </button>
+             {isNotificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-gray-700 rounded-md shadow-lg z-50 border border-gray-600">
+                    <div className="p-3 font-semibold text-white border-b border-gray-600">Announcements</div>
+                    <ul className="py-1 max-h-80 overflow-y-auto">
+                        {relevantAnnouncements.length > 0 ? relevantAnnouncements.map(anno => (
+                            <li key={anno.id} className="px-4 py-3 hover:bg-gray-600 border-b border-gray-600/50 last:border-b-0">
+                                <p className="font-bold text-sm text-gray-200">{anno.title}</p>
+                                <p className="text-xs text-gray-300 mt-1">{anno.content}</p>
+                                <p className="text-right text-xs text-gray-400 mt-2">{anno.createdAt.toLocaleDateString()}</p>
+                            </li>
+                        )) : (
+                            <li className="px-4 py-3 text-sm text-gray-400">No new announcements.</li>
+                        )}
+                    </ul>
+                </div>
+            )}
+        </div>
+
 
         <div className="relative">
           <button onClick={() => setProfileOpen(!isProfileOpen)} className="flex items-center space-x-2 focus:outline-none">

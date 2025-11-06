@@ -1,8 +1,4 @@
 
-
-
-
-
 import React, { useState, useEffect } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -10,26 +6,42 @@ import SuperAdminPanel from './components/superadmin/SuperAdminPanel';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { useAppContext } from './hooks/useAppContext';
-import { FaqItem } from './types';
+import { FaqItem, PageContent } from './types';
 import Icon from './components/icons';
 
 
 export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'LOGISTICS' | 'PURCHASES' | 'ACCOUNTING' | 'REPORTS' | 'SETTINGS';
-export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENTS' | 'NOTIFICATIONS' | 'SETTINGS';
-export type View = 'landing' | 'login' | 'app' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq';
+export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENTS' | 'NOTIFICATIONS' | 'SETTINGS' | 'ANNOUNCEMENTS';
+export type View = 'landing' | 'login' | 'app' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq' | 'help' | 'api' | 'blog';
 
 // InfoPage component to display text-based content
-const InfoPage: React.FC<{ pageKey: keyof Omit<import('./types').PageContent, 'faqs'> | 'faq', setView: (view: View) => void }> = ({ pageKey, setView }) => {
+const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ pageKey, setView }) => {
     const { brandConfig, pageContent } = useAppContext();
 
-    const content = pageKey === 'faq' ? pageContent.faqs : pageContent[pageKey];
-    const titleMap = {
+    const keyMap: Record<string, keyof Omit<PageContent, 'faqs'>> = {
+        'about': 'about',
+        'contact': 'contact',
+        'terms': 'terms',
+        'privacy': 'privacy',
+        'refund': 'refund',
+        'help': 'helpCenter',
+        'api': 'apiDocs',
+        'blog': 'blog'
+    };
+
+    const contentKey = keyMap[pageKey];
+    const content = pageKey === 'faq' ? pageContent.faqs : pageContent[contentKey];
+
+    const titleMap: Record<string, string> = {
         about: 'About Us',
         contact: 'Contact Us',
         terms: 'Terms of Service',
         privacy: 'Privacy Policy',
         refund: 'Refund Policy',
-        faq: 'Frequently Asked Questions'
+        faq: 'Frequently Asked Questions',
+        help: 'Help Center',
+        api: 'API Documentation',
+        blog: 'Blog'
     };
     const title = titleMap[pageKey];
 
@@ -186,6 +198,9 @@ const App: React.FC = () => {
       case 'contact':
       case 'about':
       case 'faq':
+      case 'help':
+      case 'api':
+      case 'blog':
         return <InfoPage pageKey={view} setView={setView} />;
       case 'app':
         if (userRole) {
