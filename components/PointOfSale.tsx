@@ -10,7 +10,7 @@ const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, 
   return (
     <div className="bg-gray-800 rounded-lg overflow-hidden shadow-lg transform hover:scale-105 transition-transform duration-200 cursor-pointer flex flex-col">
       <div onClick={() => onAddToCart(product, selectedVariant)}>
-        <img className="w-full h-40 object-cover" src={`https://picsum.photos/seed/${product.id}/400/300`} alt={product.name} />
+        <img className="w-full h-48 object-cover" src={`https://picsum.photos/seed/${product.id}/400/300`} alt={product.name} />
         <div className="p-4 flex-grow">
           <h3 className="font-bold text-lg text-white mb-1 truncate">{product.name}</h3>
           <p className="text-gray-400 text-sm mb-2">{product.category}</p>
@@ -228,13 +228,15 @@ const PointOfSale: React.FC = () => {
             <ul className="space-y-3">
               {cart.map(item => (
                 <li key={item.variantId} className="flex items-center justify-between bg-gray-700 p-3 rounded-md">
-                    <div className="flex-1 mr-2">
+                    <div className="flex-1 mr-2 overflow-hidden">
                         <p className="font-semibold truncate">{item.name}</p>
-                        <p className="text-sm font-medium text-indigo-300">{item.variantName}</p>
-                        <p className="text-xs text-gray-400">{item.quantity} &times; ${item.sellingPrice.toFixed(2)}</p>
+                        <p className="text-sm font-bold text-indigo-400">{item.variantName}</p>
                     </div>
                     <div className="flex items-center space-x-3">
-                        <p className="font-bold text-lg w-20 text-right">${(item.sellingPrice * item.quantity).toFixed(2)}</p>
+                        <div className="w-24 text-right">
+                            <p className="font-bold text-lg">${(item.sellingPrice * item.quantity).toFixed(2)}</p>
+                            <p className="text-xs text-gray-400">{item.quantity} &times; ${item.sellingPrice.toFixed(2)}</p>
+                        </div>
                         <div className="flex items-center">
                             <button onClick={() => handleUpdateQuantity(item.variantId, -1)} className="p-1 rounded-full bg-gray-600 hover:bg-gray-500"><Icon name="minus" className="w-4 h-4" /></button>
                             <span className="w-8 text-center font-bold">{item.quantity}</span>
