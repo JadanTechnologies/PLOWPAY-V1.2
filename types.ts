@@ -50,6 +50,8 @@ export interface ProductVariant {
   sellingPrice: number;
   costPrice: number;
   stockByBranch: { [branchId: string]: number };
+  batchNumber?: string;
+  expiryDate?: string;
 }
 
 export interface Product {
@@ -407,6 +409,8 @@ export interface AppContextType {
   announcements: Announcement[];
   searchTerm: string;
   currentLanguage: string;
+  currentCurrency: string;
+  setCurrentCurrency: (currencyCode: string) => void;
   setCurrentLanguage: (langCode: string) => void;
   setSearchTerm: (term: string) => void;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;

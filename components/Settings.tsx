@@ -67,7 +67,7 @@ const Settings: React.FC = () => {
         branches, staff, staffRoles, allTenantPermissions, 
         addBranch, addStaff, addStaffRole, updateStaffRole, deleteStaffRole,
         systemSettings, currentTenant, updateCurrentTenantSettings,
-        currentLanguage, setCurrentLanguage
+        currentLanguage, setCurrentLanguage, currentCurrency, setCurrentCurrency
     } = useAppContext();
     const [activeTab, setActiveTab] = useState<SettingsTab>('general');
 
@@ -81,29 +81,37 @@ const Settings: React.FC = () => {
     const [staffForm, setStaffForm] = useState({ name: '', email: '', username: '', password: '', roleId: staffRoles[0]?.id || '', branchId: branches[0]?.id || '' });
     const [roleForm, setRoleForm] = useState<{ id: string | null; name: string; permissions: Set<TenantPermission> }>({ id: null, name: '', permissions: new Set() });
     
-    const [generalSettings, setGeneralSettings] = useState({
-        currency: currentTenant?.currency || systemSettings.defaultCurrency,
-        language: currentLanguage,
-    });
-    
-    useEffect(() => {
-        setGeneralSettings({
-            currency: currentTenant?.currency || systemSettings.defaultCurrency,
-            language: currentLanguage,
-        });
-    }, [currentTenant, systemSettings.defaultCurrency, currentLanguage]);
+    // State for the General Settings form
+    const [formCurrency, setFormCurrency] = useState(currentCurrency);
+    const [formLanguage, setFormLanguage] = useState(currentLanguage);
 
-    const handleGeneralSettingsSave = () => {
-        updateCurrentTenantSettings(generalSettings);
-        alert('Settings saved!');
+    // Sync form state if context changes (e.g., from header dropdown or initial load)
+    useEffect(() => {
+        setFormCurrency(currentCurrency);
+    }, [currentCurrency]);
+
+    useEffect(() => {
+        setFormLanguage(currentLanguage);
+    }, [currentLanguage]);
+
+    const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newCurrency = e.target.value;
+        setFormCurrency(newCurrency);
+        setCurrentCurrency(newCurrency); // Update context for live preview
     };
 
-    const handleSettingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const { name, value } = e.target;
-        setGeneralSettings(prev => ({...prev, [name]: value }));
-        if (name === 'language') {
-            setCurrentLanguage(value);
-        }
+    const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const newLanguage = e.target.value;
+        setFormLanguage(newLanguage);
+        setCurrentLanguage(newLanguage); // Update context for live preview
+    };
+
+    const handleGeneralSettingsSave = () => {
+        updateCurrentTenantSettings({
+            currency: formCurrency,
+            language: formLanguage
+        });
+        alert('Settings saved!');
     };
 
 
@@ -195,7 +203,7 @@ const Settings: React.FC = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-400">Currency</label>
-                                    <select name="currency" value={generalSettings.currency} onChange={handleSettingChange} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
+                                    <select name="currency" value={formCurrency} onChange={handleCurrencyChange} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
                                         {systemSettings.currencies.filter(c => c.enabled).map(c => (
                                             <option key={c.code} value={c.code}>{c.name} ({c.symbol})</option>
                                         ))}
@@ -203,7 +211,7 @@ const Settings: React.FC = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-400">Language</label>
-                                    <select name="language" value={generalSettings.language} onChange={handleSettingChange} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
+                                    <select name="language" value={formLanguage} onChange={handleLanguageChange} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
                                        {systemSettings.languages.filter(l => l.enabled).map(l => (
                                             <option key={l.code} value={l.code}>{l.name}</option>
                                         ))}

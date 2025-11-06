@@ -33,7 +33,7 @@ const Inventory: React.FC = () => {
     const [newProductName, setNewProductName] = useState('');
     const [newProductCategory, setNewProductCategory] = useState('');
     const [newProductVariants, setNewProductVariants] = useState<NewVariant[]>([
-        { name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }
+        { name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}), batchNumber: '', expiryDate: '' }
     ]);
 
     const filteredProducts = products.filter(p => 
@@ -111,7 +111,7 @@ const Inventory: React.FC = () => {
     const resetAddProductForm = () => {
         setNewProductName('');
         setNewProductCategory('');
-        setNewProductVariants([{ name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }]);
+        setNewProductVariants([{ name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}), batchNumber: '', expiryDate: '' }]);
     };
 
     const closeAddProductModal = () => {
@@ -145,7 +145,7 @@ const Inventory: React.FC = () => {
     }
 
     const addVariantRow = () => {
-        setNewProductVariants([...newProductVariants, { name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}) }]);
+        setNewProductVariants([...newProductVariants, { name: '', sku: '', sellingPrice: 0, costPrice: 0, stockByBranch: branches.reduce((acc, b) => ({ ...acc, [b.id]: 0 }), {}), batchNumber: '', expiryDate: '' }]);
     };
 
     const removeVariantRow = (index: number) => {
@@ -205,7 +205,8 @@ const Inventory: React.FC = () => {
                                     <th className="p-3 text-sm font-semibold tracking-wide">Category</th>
                                     <th className="p-3 text-sm font-semibold tracking-wide">Variant</th>
                                     <th className="p-3 text-sm font-semibold tracking-wide">SKU</th>
-                                    <th className="p-3 text-sm font-semibold tracking-wide text-right">Cost Price</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">Batch #</th>
+                                    <th className="p-3 text-sm font-semibold tracking-wide">Expiry Date</th>
                                     <th className="p-3 text-sm font-semibold tracking-wide text-right">Selling Price</th>
                                     {branches.map(branch => (
                                         <th key={branch.id} className="p-3 text-sm font-semibold tracking-wide text-right">{branch.name}</th>
@@ -225,7 +226,8 @@ const Inventory: React.FC = () => {
                                             )}
                                             <td className="p-3 whitespace-nowrap">{variant.name}</td>
                                             <td className="p-3 whitespace-nowrap text-gray-400">{variant.sku}</td>
-                                            <td className="p-3 whitespace-nowrap text-right font-mono text-gray-400">{formatCurrency(variant.costPrice)}</td>
+                                            <td className="p-3 whitespace-nowrap text-gray-400">{variant.batchNumber || 'N/A'}</td>
+                                            <td className="p-3 whitespace-nowrap text-gray-400">{variant.expiryDate || 'N/A'}</td>
                                             <td className="p-3 whitespace-nowrap text-right font-mono text-indigo-400">{formatCurrency(variant.sellingPrice)}</td>
                                             {branches.map(branch => {
                                                 const stock = variant.stockByBranch[branch.id] || 0;
@@ -313,7 +315,7 @@ const Inventory: React.FC = () => {
             {/* Add Product Modal */}
             {isAddProductModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
-                    <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-3xl max-h-[90vh] flex flex-col">
+                    <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[90vh] flex flex-col">
                         <h3 className="text-xl font-bold mb-4 text-white">Add New Product</h3>
                         <div className="overflow-y-auto pr-2 flex-grow">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -331,8 +333,8 @@ const Inventory: React.FC = () => {
                             <div className="space-y-4">
                                 {newProductVariants.map((variant, index) => (
                                     <div key={index} className="bg-gray-900 p-4 rounded-md border border-gray-700">
-                                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-3">
-                                            <div className="sm:col-span-2">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-3">
+                                            <div>
                                                 <label className="block text-sm font-medium text-gray-400">Variant Name</label>
                                                 <input type="text" value={variant.name} onChange={e => handleVariantChange(index, 'name', e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
                                             </div>
@@ -347,6 +349,14 @@ const Inventory: React.FC = () => {
                                             <div>
                                                 <label className="block text-sm font-medium text-gray-400">Selling Price</label>
                                                 <input type="number" value={variant.sellingPrice} onChange={e => handleVariantChange(index, 'sellingPrice', parseFloat(e.target.value))} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-400">Batch Number (Optional)</label>
+                                                <input type="text" value={variant.batchNumber} onChange={e => handleVariantChange(index, 'batchNumber', e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-400">Expiry Date (Optional)</label>
+                                                <input type="date" value={variant.expiryDate} onChange={e => handleVariantChange(index, 'expiryDate', e.target.value)} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
                                             </div>
                                         </div>
                                         <p className="text-sm font-medium text-gray-400 mb-2">Initial Stock</p>
@@ -383,9 +393,11 @@ const Inventory: React.FC = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center" aria-modal="true" role="dialog">
                     <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
                         <h3 className="text-xl font-bold mb-2 text-white">Adjust Stock</h3>
-                        <p className="text-gray-400 mb-4">
-                            {selectedProduct.name} - {selectedVariant.name}
-                        </p>
+                        <div className="text-gray-400 mb-4">
+                           <p> {selectedProduct.name} - {selectedVariant.name}</p>
+                           {selectedVariant.batchNumber && <p className="text-sm">Batch: {selectedVariant.batchNumber}</p>}
+                           {selectedVariant.expiryDate && <p className="text-sm">Expires: {selectedVariant.expiryDate}</p>}
+                        </div>
                         
                         <div className="space-y-4">
                              <div>
@@ -447,9 +459,10 @@ const Inventory: React.FC = () => {
                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center" aria-modal="true" role="dialog">
                     <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
                         <h3 className="text-xl font-bold mb-2 text-white">Transfer Stock</h3>
-                        <p className="text-gray-400 mb-4">
-                            {selectedProduct.name} - {selectedVariant.name}
-                        </p>
+                        <div className="text-gray-400 mb-4">
+                           <p>{selectedProduct.name} - {selectedVariant.name}</p>
+                           {selectedVariant.batchNumber && <p className="text-sm">Batch: {selectedVariant.batchNumber}</p>}
+                        </div>
                         <div className="space-y-4">
                             <div>
                                 <label htmlFor="fromBranch" className="block text-sm font-medium text-gray-400">From Branch</label>

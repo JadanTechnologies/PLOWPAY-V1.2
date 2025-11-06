@@ -110,6 +110,8 @@ const generateMockProducts = (): Product[] => {
 
     categories.forEach(category => {
         productNames[category as keyof typeof productNames].forEach(name => {
+            const hasBatch = category === 'Groceries' || (category === 'Electronics' && Math.random() > 0.5);
+            
             const product: Product = {
                 id: `prod-${productId++}`,
                 name: name,
@@ -120,6 +122,10 @@ const generateMockProducts = (): Product[] => {
                     mockBranches.forEach(branch => {
                         stockByBranch[branch.id] = Math.floor(Math.random() * 100);
                     });
+                    
+                    const expiryDate = new Date();
+                    expiryDate.setMonth(expiryDate.getMonth() + Math.floor(Math.random() * 12) + 6);
+                    
                     return {
                         id: `var-${productId}-${index}`,
                         name: variant.name,
@@ -127,6 +133,8 @@ const generateMockProducts = (): Product[] => {
                         costPrice: variant.price * (Math.random() * 0.3 + 0.5), // Cost is 50-80% of selling price
                         sku: `${name.substring(0,3).toUpperCase()}-${index}`,
                         stockByBranch: stockByBranch,
+                        batchNumber: hasBatch ? `B${Math.floor(Math.random() * 9000) + 1000}` : undefined,
+                        expiryDate: hasBatch ? expiryDate.toISOString().split('T')[0] : undefined,
                     }
                 })
             };
@@ -426,7 +434,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(mockPaymentSettings);
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(mockNotificationSettings);
     const [systemSettings, setSystemSettings] = useState<SystemSettings>(mockSystemSettings);
-    const [currentLanguage, setCurrentLanguage] = useState<string>(mockSystemSettings.defaultLanguage);
+    const [currentLanguage, setCurrentLanguage] = useState<string>(currentTenant?.language || mockSystemSettings.defaultLanguage);
+    const [currentCurrency, setCurrentCurrency] = useState<string>(currentTenant?.currency || mockSystemSettings.defaultCurrency);
     const [trucks, setTrucks] = useState<Truck[]>(mockTrucks);
     const [shipments, setShipments] = useState<Shipment[]>(mockShipments);
     const [trackerProviders, setTrackerProviders] = useState<TrackerProvider[]>(mockTrackerProviders);
@@ -683,6 +692,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         setCurrentTenant(prev => prev ? { ...prev, ...newSettings } : null);
         if (newSettings.language) {
             setCurrentLanguage(newSettings.language);
+        }
+        if (newSettings.currency) {
+            setCurrentCurrency(newSettings.currency);
         }
     }, []);
 
@@ -975,6 +987,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         announcements,
         searchTerm,
         currentLanguage,
+        currentCurrency,
+        setCurrentCurrency,
         setCurrentLanguage,
         setSearchTerm,
         getMetric,
