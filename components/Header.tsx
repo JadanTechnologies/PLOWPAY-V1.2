@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import Icon from './icons';
 import { useAppContext } from '../hooks/useAppContext';
