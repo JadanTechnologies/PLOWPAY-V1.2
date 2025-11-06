@@ -150,6 +150,9 @@ export interface SubscriptionPlan {
   id: string;
   name: string;
   price: number; // per month
+  features: string[];
+  description: string;
+  recommended: boolean;
 }
 
 export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'TRIAL';

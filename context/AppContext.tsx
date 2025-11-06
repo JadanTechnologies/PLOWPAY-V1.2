@@ -24,9 +24,9 @@ const mockStaff: Staff[] = [
 ];
 
 const mockSubscriptionPlans: SubscriptionPlan[] = [
-    { id: 'plan_basic', name: 'Basic', price: 29 },
-    { id: 'plan_pro', name: 'Pro', price: 79 },
-    { id: 'plan_premium', name: 'Premium', price: 149 },
+    { id: 'plan_basic', name: 'Basic', price: 29, description: 'For small businesses just getting started.', features: ['1 Branch', 'Up to 1,000 Products', 'Core POS Features', 'Basic Reporting'], recommended: false },
+    { id: 'plan_pro', name: 'Pro', price: 79, description: 'For growing businesses that need more power.', features: ['Up to 5 Branches', 'Unlimited Products', 'Advanced POS Features', 'Full Reporting Suite', 'Staff Management'], recommended: true },
+    { id: 'plan_premium', name: 'Premium', price: 149, description: 'For large businesses and enterprises.', features: ['Unlimited Branches', 'Everything in Pro', 'API Access', 'Dedicated Support', 'Advanced Automations'], recommended: false },
 ];
 
 export const allPermissions: Permission[] = [

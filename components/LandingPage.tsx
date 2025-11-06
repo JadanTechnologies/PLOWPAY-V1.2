@@ -11,7 +11,7 @@ interface LandingPageProps {
 }
 
 const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
-  const { brandConfig } = useAppContext();
+  const { brandConfig, subscriptionPlans } = useAppContext();
 
   const features = [
     {
@@ -33,25 +33,6 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       icon: 'briefcase',
       title: 'Multi-Branch Sync',
       description: 'Manage products, stock, and staff seamlessly across multiple locations from one central dashboard.',
-    },
-  ];
-
-  const plans = [
-    {
-      name: 'Basic',
-      price: '29',
-      features: ['1 Branch', 'Up to 1,000 Products', 'Core POS Features', 'Basic Reporting'],
-    },
-    {
-      name: 'Pro',
-      price: '79',
-      popular: true,
-      features: ['Up to 5 Branches', 'Unlimited Products', 'Advanced POS Features', 'Full Reporting Suite', 'Staff Management'],
-    },
-    {
-      name: 'Premium',
-      price: '149',
-      features: ['Unlimited Branches', 'Everything in Pro', 'API Access', 'Dedicated Support', 'Advanced Automations'],
     },
   ];
 
@@ -137,10 +118,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
               <p className="mt-4 text-lg text-gray-400">Choose the plan that's right for your business. No hidden fees.</p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
-              {plans.map((plan) => (
-                <div key={plan.name} className={`bg-gray-800 p-8 rounded-lg border-2 ${plan.popular ? 'border-indigo-500' : 'border-gray-700'} relative flex flex-col`}>
-                  {plan.popular && <span className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full">MOST POPULAR</span>}
+              {subscriptionPlans.map((plan) => (
+                <div key={plan.id} className={`bg-gray-800 p-8 rounded-lg border-2 ${plan.recommended ? 'border-indigo-500' : 'border-gray-700'} relative flex flex-col`}>
+                  {plan.recommended && <span className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Recommended</span>}
                   <h3 className="text-2xl font-semibold text-white">{plan.name}</h3>
+                  <p className="text-gray-400 mt-2 h-10">{plan.description}</p>
                   <div className="mt-4">
                     <span className="text-5xl font-extrabold text-white">${plan.price}</span>
                     <span className="text-lg text-gray-400">/mo</span>
@@ -148,12 +130,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   <ul className="mt-6 space-y-3 text-gray-400 flex-grow">
                     {plan.features.map((feature, i) => (
                       <li key={i} className="flex items-center">
-                        <svg className="w-5 h-5 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                        <svg className="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
                         {feature}
                       </li>
                     ))}
                   </ul>
-                  <button onClick={() => onNavigate('login')} className={`w-full mt-8 py-3 px-6 rounded-lg font-semibold transition-colors ${plan.popular ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-gray-700 text-white hover:bg-gray-600'}`}>
+                  <button onClick={() => onNavigate('login')} className={`w-full mt-8 py-3 px-6 rounded-lg font-semibold transition-colors ${plan.recommended ? 'bg-indigo-600 text-white hover:bg-indigo-500' : 'bg-gray-700 text-white hover:bg-gray-600'}`}>
                     Choose Plan
                   </button>
                 </div>
