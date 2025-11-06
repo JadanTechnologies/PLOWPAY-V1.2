@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
-import { PaymentSettings } from '../../types';
+import { PaymentSettingsType } from '../../types';
 import Icon from '../icons';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
@@ -23,7 +23,7 @@ const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void 
 
 const PaymentSettings: React.FC = () => {
     const { paymentSettings, updatePaymentSettings } = useAppContext();
-    const [formState, setFormState] = useState<PaymentSettings>(paymentSettings);
+    const [formState, setFormState] = useState<PaymentSettingsType>(paymentSettings);
 
     const handleToggle = (provider: keyof PaymentSettings) => {
         setFormState(prev => ({
