@@ -80,12 +80,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-400">
               From point of sale to inventory management, {brandConfig.name} provides the tools you need to streamline operations, delight customers, and grow your business.
             </p>
-            <div className="mt-8 flex justify-center space-x-4">
+            <div className="mt-8 flex justify-center">
               <button onClick={() => onNavigate('signup')} className="bg-indigo-600 text-white font-semibold px-6 py-3 rounded-md hover:bg-indigo-500 transition-transform transform hover:scale-105">
                 Get Started for Free
-              </button>
-              <button className="bg-gray-700 text-white font-semibold px-6 py-3 rounded-md hover:bg-gray-600 transition-transform transform hover:scale-105">
-                Book a Demo
               </button>
             </div>
           </div>
