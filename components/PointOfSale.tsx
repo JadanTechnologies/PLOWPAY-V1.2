@@ -229,6 +229,14 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
     );
 };
 
+interface HeldOrder {
+  id: number;
+  cart: CartItem[];
+  customer: { name: string; phone?: string; };
+  discount: number;
+  heldAt: Date;
+}
+
 
 const PointOfSale: React.FC = () => {
   const { products, searchTerm, addSale, branches } = useAppContext();
@@ -247,6 +255,28 @@ const PointOfSale: React.FC = () => {
   const [lastCompletedSale, setLastCompletedSale] = useState<Sale | null>(null);
 
   const [saleStatus, setSaleStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const HELD_ORDERS_STORAGE_KEY = 'flowpay-held-orders';
+  const [heldOrders, setHeldOrders] = useState<HeldOrder[]>(() => {
+    try {
+      const storedOrders = window.localStorage.getItem(HELD_ORDERS_STORAGE_KEY);
+      if (storedOrders) {
+        const parsed = JSON.parse(storedOrders);
+        return parsed.map((order: any) => ({ ...order, heldAt: new Date(order.heldAt) }));
+      }
+    } catch (error) {
+      console.error("Error loading held orders from local storage", error);
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(HELD_ORDERS_STORAGE_KEY, JSON.stringify(heldOrders));
+    } catch (error) {
+      console.error("Error saving held orders to local storage", error);
+    }
+  }, [heldOrders]);
 
   useEffect(() => {
     if (saleStatus) {
@@ -311,6 +341,47 @@ const PointOfSale: React.FC = () => {
     setDiscount(value);
   };
 
+  const clearOrder = useCallback(() => {
+    setCart([]);
+    setDiscount(0);
+    setCustomer(defaultCustomer);
+    setIsEditingCustomer(false);
+  }, []);
+
+  const handleHoldOrder = () => {
+    if (cart.length === 0) return;
+    const newHeldOrder: HeldOrder = {
+      id: Date.now(),
+      cart,
+      customer,
+      discount,
+      heldAt: new Date(),
+    };
+    setHeldOrders(prev => [newHeldOrder, ...prev]);
+    clearOrder();
+    setSaleStatus({ message: 'Order held successfully.', type: 'success' });
+  };
+
+  const handleRetrieveOrder = (id: number) => {
+    if (cart.length > 0) {
+      if (!window.confirm('This will replace the current order. Continue?')) {
+        return;
+      }
+    }
+    const orderToRetrieve = heldOrders.find(o => o.id === id);
+    if (orderToRetrieve) {
+      setCart(orderToRetrieve.cart);
+      setCustomer(orderToRetrieve.customer);
+      setDiscount(orderToRetrieve.discount);
+      setHeldOrders(prev => prev.filter(o => o.id !== id));
+      setSaleStatus({ message: 'Held order retrieved.', type: 'success' });
+    }
+  };
+
+  const handleDeleteHeldOrder = (id: number) => {
+    setHeldOrders(prev => prev.filter(o => o.id !== id));
+  };
+
 
   const handleConfirmPayment = async (payments: Payment[], change: number) => {
       if (cart.length === 0) return;
@@ -340,12 +411,7 @@ const PointOfSale: React.FC = () => {
           setLastCompletedSale(result.newSale);
           setInvoiceModalOpen(true);
           setPaymentModalOpen(false);
-
-          // Reset POS
-          setCart([]);
-          setDiscount(0);
-          setCustomer(defaultCustomer);
-          setIsEditingCustomer(false);
+          clearOrder();
       } else {
           setSaleStatus({ message: result.message || 'An unknown error occurred.', type: 'error' });
       }
@@ -387,6 +453,43 @@ const PointOfSale: React.FC = () => {
             <div className={`p-3 rounded-md mb-4 text-sm ${saleStatus.type === 'success' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
                 {saleStatus.message}
             </div>
+        )}
+
+        {heldOrders.length > 0 && (
+          <div className="mb-4 border-b border-gray-700 pb-3">
+            <h3 className="text-lg font-semibold text-yellow-400 mb-2 flex items-center gap-2">
+              <Icon name="pause" className="w-5 h-5" />
+              <span>Held Orders</span>
+            </h3>
+            <div className="space-y-2 max-h-32 overflow-y-auto pr-2 -mr-2">
+              {heldOrders.map(order => (
+                <div key={order.id} className="bg-gray-900/50 p-2 rounded-md flex items-center text-sm">
+                  <div className="flex-grow">
+                    <p className="font-semibold">{order.customer.name}</p>
+                    <p className="text-xs text-gray-400">
+                      {order.cart.length} items - {order.heldAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={() => handleRetrieveOrder(order.id)} 
+                      className="bg-green-600 hover:bg-green-500 text-white font-semibold px-2 py-1 rounded-md text-xs flex items-center gap-1"
+                    >
+                      <Icon name="arrow-up-tray" className="w-4 h-4" />
+                      <span>Retrieve</span>
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteHeldOrder(order.id)} 
+                      className="text-gray-400 hover:text-red-400 p-1"
+                      aria-label="Delete held order"
+                    >
+                      <Icon name="trash" className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
         
         <div className="p-3 bg-gray-900/50 rounded-md mb-4">
@@ -466,7 +569,12 @@ const PointOfSale: React.FC = () => {
                 <button className="bg-red-600 hover:bg-red-500 text-white font-bold py-2 px-4 rounded-md flex items-center justify-center" onClick={() => {setCart([]); setDiscount(0);}}>
                     <Icon name="trash" className="w-5 h-5 mr-2"/> Clear
                 </button>
-                 <button className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-2 px-4 rounded-md">Hold</button>
+                 <button 
+                    onClick={handleHoldOrder}
+                    disabled={cart.length === 0}
+                    className="bg-yellow-500 hover:bg-yellow-400 text-gray-900 font-bold py-2 px-4 rounded-md flex items-center justify-center disabled:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <Icon name="pause" className="w-5 h-5 mr-2"/> Hold
+                </button>
                  <button className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md flex items-center justify-center" onClick={() => setIsCalculatorOpen(true)}>
                     <Icon name="calculator" className="w-5 h-5"/>
                 </button>
