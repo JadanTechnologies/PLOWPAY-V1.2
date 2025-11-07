@@ -6,13 +6,9 @@ import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const mockBranches: Branch[] = [
-    // FIX: Add missing 'location' property
     { id: 'branch-1', name: 'Downtown', location: { lat: 34.0522, lng: -118.2437 } },
-    // FIX: Add missing 'location' property
     { id: 'branch-2', name: 'Uptown', location: { lat: 40.7831, lng: -73.9712 } },
-    // FIX: Add missing 'location' property
     { id: 'branch-3', name: 'Westside', location: { lat: 34.0522, lng: -118.2437 } },
-    // FIX: Add missing 'location' property
     { id: 'branch-4', name: 'Eastside', location: { lat: 40.7831, lng: -73.9712 } },
 ];
 

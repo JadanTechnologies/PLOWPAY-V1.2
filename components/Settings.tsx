@@ -9,7 +9,6 @@ import GoogleMap from './GoogleMap';
 
 type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations' | 'security';
 
-// FIX: Add 'accessSupport' permission label.
 const permissionLabels: Record<TenantPermission, string> = {
     accessPOS: 'Access Point of Sale',
     manageInventory: 'Manage Inventory',
@@ -26,7 +25,6 @@ const permissionLabels: Record<TenantPermission, string> = {
     accessSupport: 'Access Support',
 };
 
-// FIX: Add 'accessSupport' to the 'Administration' permission group.
 const permissionGroups: Record<string, TenantPermission[]> = {
     'Sales & Operations': ['accessPOS', 'managePurchases', 'makeDeposits', 'accessReturns'],
     'Inventory & Logistics': ['manageInventory', 'manageLogistics'],

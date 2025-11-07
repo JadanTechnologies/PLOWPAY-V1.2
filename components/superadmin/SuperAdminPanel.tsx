@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
@@ -308,7 +307,7 @@ const Settings: React.FC = () => {
                                 </div>
                             );
                         })}
-                         <div className="text-right">
+                        <div className="text-right">
                              <button onClick={handleMetricsSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Metrics</button>
                         </div>
                     </div>
@@ -316,155 +315,129 @@ const Settings: React.FC = () => {
             case 'featured_update':
                 return (
                     <div className="space-y-6">
-                        <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg border border-slate-700">
+                         <div className="flex items-center justify-between bg-slate-900/50 p-4 rounded-lg border border-slate-700">
                             <div>
-                                <h4 className="font-semibold text-white">Activate Featured Update Banner</h4>
-                                <p className="text-sm text-slate-400">Display a banner at the top of tenant dashboards.</p>
+                                <h4 className="font-semibold text-white">Show Featured Update Banner</h4>
+                                <p className="text-sm text-slate-400">Display a banner on the tenant dashboard for important announcements or new features.</p>
                             </div>
-                            <Toggle enabled={featuredUpdate.isActive} onChange={(val) => setFeaturedUpdate(p => ({...p, isActive: val}))} />
+                            <Toggle enabled={featuredUpdate.isActive} onChange={isActive => setFeaturedUpdate(prev => ({ ...prev, isActive }))} />
                         </div>
-                         <div className={`space-y-4 ${!featuredUpdate.isActive && 'opacity-50'}`}>
-                            <input type="text" name="title" placeholder="Banner Title" value={featuredUpdate.title} onChange={handleFeaturedUpdateChange} className="w-full bg-slate-700 p-2 rounded-md" disabled={!featuredUpdate.isActive} />
-                            <textarea name="content" placeholder="Banner Content" value={featuredUpdate.content} onChange={handleFeaturedUpdateChange} rows={3} className="w-full bg-slate-700 p-2 rounded-md" disabled={!featuredUpdate.isActive} />
-                            <input type="text" name="link" placeholder="Optional Link (e.g., /blog/new-feature)" value={featuredUpdate.link || ''} onChange={handleFeaturedUpdateChange} className="w-full bg-slate-700 p-2 rounded-md" disabled={!featuredUpdate.isActive} />
-                            <input type="text" name="linkText" placeholder="Link Text (e.g., Learn More)" value={featuredUpdate.linkText || ''} onChange={handleFeaturedUpdateChange} className="w-full bg-slate-700 p-2 rounded-md" disabled={!featuredUpdate.isActive} />
-                         </div>
+                        <div className={`space-y-4 ${!featuredUpdate.isActive ? 'opacity-50 pointer-events-none' : ''}`}>
+                            <input name="title" value={featuredUpdate.title} onChange={handleFeaturedUpdateChange} placeholder="Banner Title" className="w-full bg-slate-700 p-2 rounded-md"/>
+                            <textarea name="content" value={featuredUpdate.content} onChange={handleFeaturedUpdateChange} placeholder="Banner Content" rows={3} className="w-full bg-slate-700 p-2 rounded-md"/>
+                            <div className="grid grid-cols-2 gap-4">
+                                <input name="link" value={featuredUpdate.link || ''} onChange={handleFeaturedUpdateChange} placeholder="Link URL (optional)" className="w-full bg-slate-700 p-2 rounded-md"/>
+                                <input name="linkText" value={featuredUpdate.linkText || ''} onChange={handleFeaturedUpdateChange} placeholder="Link Text (e.g., Learn More)" className="w-full bg-slate-700 p-2 rounded-md"/>
+                            </div>
+                        </div>
                          <div className="text-right">
                              <button onClick={handleFeaturedUpdateSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Featured Update</button>
                         </div>
                     </div>
                 );
         }
-    };
-    
-    const TabButton: React.FC<{tab: SettingsTab, label: string}> = ({ tab, label }) => (
-        <button onClick={() => setActiveTab(tab)} className={`px-4 py-2 font-medium text-sm rounded-md ${activeTab === tab ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>
-            {label}
-        </button>
-    );
+    }
 
     return (
         <div className="p-6 bg-slate-800 rounded-lg shadow-lg border border-slate-700">
             <h2 className="text-2xl font-bold text-white mb-6">System Settings</h2>
-            <div className="flex flex-wrap gap-2 border-b border-slate-700 mb-6 pb-2">
-                <TabButton tab="branding" label="Branding" />
-                <TabButton tab="featured_update" label="Featured Update" />
-                <TabButton tab="landing" label="Landing Page" />
-                <TabButton tab="content" label="Page Content" />
-                <TabButton tab="faqs" label="FAQs" />
-                <TabButton tab="currencies" label="Currencies" />
-                <TabButton tab="languages" label="Languages" />
-            </div>
-            <div>
-                {renderTabContent()}
-            </div>
-        </div>
-    );
-}
-
-const AccessDenied: React.FC = () => (
-    <div className="p-6 bg-slate-800 rounded-lg shadow-lg text-center border border-slate-700">
-        <Icon name="lock-closed" className="w-16 h-16 text-rose-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-white mb-2">Access Denied</h2>
-        <p className="text-slate-400">You do not have the required permissions to view this page.</p>
-    </div>
-);
-
-interface SuperAdminPanelProps {
-  onImpersonate: (tenant: Tenant) => void;
-}
-
-const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onImpersonate }) => {
-    const [currentPage, setCurrentPage] = useState<SuperAdminPage>('PLATFORM_DASHBOARD');
-    const [isSidebarOpen, setSidebarOpen] = useState(true);
-    const { hasPermission } = usePermissions();
-
-    const handleSetPage = useCallback((page: SuperAdminPage) => {
-        setCurrentPage(page);
-    }, []);
-
-    const renderPage = () => {
-        switch (currentPage) {
-            case 'PLATFORM_DASHBOARD':
-                return hasPermission('viewPlatformDashboard') ? <PlatformDashboard /> : <AccessDenied />;
-            case 'TENANTS':
-                return hasPermission('manageTenants') ? <TenantManagement onImpersonate={onImpersonate} /> : <AccessDenied />;
-            case 'SUBSCRIPTIONS':
-                return hasPermission('manageSubscriptions') ? <SubscriptionManagement /> : <AccessDenied />;
-            case 'TEAM_MANAGEMENT':
-                return hasPermission('manageTeam') ? <TeamManagement /> : <AccessDenied />;
-            case 'ROLE_MANAGEMENT':
-                return hasPermission('manageRoles') ? <RoleManagement /> : <AccessDenied />;
-            case 'PAYMENT_GATEWAYS':
-                return hasPermission('managePaymentGateways') ? <PaymentGateways /> : <AccessDenied />;
-            case 'PAYMENT_TRANSACTIONS':
-                return hasPermission('managePaymentGateways') ? <PaymentTransactions /> : <AccessDenied />;
-            case 'NOTIFICATIONS':
-                return hasPermission('manageNotificationSettings') ? <NotificationSettings /> : <AccessDenied />;
-            case 'TEMPLATE_MANAGEMENT':
-                return hasPermission('manageNotificationSettings') ? <TemplateManagement /> : <AccessDenied />;
-            case 'ANNOUNCEMENTS':
-                return hasPermission('manageAnnouncements') ? <Announcements /> : <AccessDenied />;
-            case 'BLOG_MANAGEMENT':
-                return hasPermission('manageBlog') ? <BlogManagement /> : <AccessDenied />;
-            case 'MAINTENANCE':
-                return hasPermission('manageSystemSettings') ? <Maintenance /> : <AccessDenied />;
-            case 'ACCESS_MANAGEMENT':
-                return hasPermission('manageSystemSettings') ? <AccessManagement /> : <AccessDenied />;
-            case 'SETTINGS':
-                 return hasPermission('manageSystemSettings') ? <Settings /> : <AccessDenied />;
-            case 'AUDIT_LOGS':
-                return hasPermission('viewAuditLogs') ? <SuperAdminAuditLogs /> : <AccessDenied />;
-            case 'PROFILE':
-                return <SuperAdminProfile />; // All admins should be able to see their profile
-            case 'SUPPORT_TICKETS':
-                return hasPermission('manageSupport') ? <SupportManagement /> : <AccessDenied />;
-            default:
-                return hasPermission('viewPlatformDashboard') ? <PlatformDashboard /> : <AccessDenied />;
-        }
-    };
-    
-    const pageTitleMap: Record<SuperAdminPage, string> = {
-        PLATFORM_DASHBOARD: 'Platform Dashboard',
-        TENANTS: 'Tenant Management',
-        SUBSCRIPTIONS: 'Subscription Plans',
-        TEAM_MANAGEMENT: 'Team Management',
-        ROLE_MANAGEMENT: 'Role Management',
-        PAYMENT_GATEWAYS: 'Payment Gateways',
-        PAYMENT_TRANSACTIONS: 'Payment Transactions',
-        NOTIFICATIONS: 'Notification Settings',
-        TEMPLATE_MANAGEMENT: 'Template Management',
-        ANNOUNCEMENTS: 'Global Announcements',
-        BLOG_MANAGEMENT: 'Blog Management',
-        MAINTENANCE: 'Platform Maintenance',
-        ACCESS_MANAGEMENT: 'Access Management',
-        SETTINGS: 'System Settings',
-        AUDIT_LOGS: 'Audit Logs',
-        PROFILE: 'My Profile',
-        SUPPORT_TICKETS: 'Support Tickets',
-    };
-
-    return (
-        <div className="flex h-screen bg-slate-950 text-slate-200">
-            <SuperAdminSidebar
-                currentPage={currentPage}
-                setPage={handleSetPage}
-                isOpen={isSidebarOpen}
-                setIsOpen={setSidebarOpen}
-            />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <Header
-                    pageTitle={pageTitleMap[currentPage]}
-                    toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
-                    onNavigateToProfile={() => setCurrentPage('PROFILE')}
-                />
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-950 p-4 sm:p-6 lg:p-8">
-                     <div className="absolute inset-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
-                    {renderPage()}
-                </main>
+            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                <div className="lg:col-span-1">
+                    <nav className="flex flex-col space-y-2">
+                        {(['branding', 'content', 'faqs', 'currencies', 'languages', 'landing', 'featured_update'] as SettingsTab[]).map(tab => (
+                            <button key={tab} onClick={() => setActiveTab(tab)} className={`w-full text-left p-3 rounded-md font-medium text-sm ${activeTab === tab ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>
+                                {tab.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            </button>
+                        ))}
+                    </nav>
+                </div>
+                <div className="lg:col-span-3">
+                    {renderTabContent()}
+                </div>
             </div>
         </div>
     );
 };
 
+// FIX: Moved SuperAdminPanelProps interface definition before its use.
+interface SuperAdminPanelProps {
+  onImpersonate: (tenant: Tenant) => void;
+}
+
+const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onImpersonate }) => {
+  const [currentPage, setCurrentPage] = useState<SuperAdminPage>('PLATFORM_DASHBOARD');
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const { hasPermission } = usePermissions();
+
+  const handleSetPage = useCallback((page: SuperAdminPage) => {
+    setCurrentPage(page);
+  }, []);
+
+  const pageTitleMap: Record<SuperAdminPage, string> = {
+    PLATFORM_DASHBOARD: 'Platform Dashboard',
+    TENANTS: 'Tenant Management',
+    SUBSCRIPTIONS: 'Subscription Management',
+    TEAM_MANAGEMENT: 'Team Management',
+    ROLE_MANAGEMENT: 'Role Management',
+    PAYMENT_GATEWAYS: 'Payment Gateways',
+    PAYMENT_TRANSACTIONS: 'Payment Transactions',
+    NOTIFICATIONS: 'Notification Settings',
+    TEMPLATE_MANAGEMENT: 'Template Management',
+    SETTINGS: 'System Settings',
+    ANNOUNCEMENTS: 'Announcements',
+    MAINTENANCE: 'Platform Maintenance',
+    ACCESS_MANAGEMENT: 'Access Management',
+    PROFILE: 'My Profile',
+    AUDIT_LOGS: 'Audit Logs',
+    SUPPORT_TICKETS: 'Support Tickets',
+    BLOG_MANAGEMENT: 'Blog Management',
+  };
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'PLATFORM_DASHBOARD': return hasPermission('viewPlatformDashboard') && <PlatformDashboard />;
+      case 'TENANTS': return hasPermission('manageTenants') && <TenantManagement onImpersonate={onImpersonate}/>;
+      case 'SUBSCRIPTIONS': return hasPermission('manageSubscriptions') && <SubscriptionManagement />;
+      case 'PAYMENT_TRANSACTIONS': return hasPermission('managePaymentGateways') && <PaymentTransactions />;
+      case 'TEAM_MANAGEMENT': return hasPermission('manageTeam') && <TeamManagement />;
+      case 'ROLE_MANAGEMENT': return hasPermission('manageRoles') && <RoleManagement />;
+      case 'PAYMENT_GATEWAYS': return hasPermission('managePaymentGateways') && <PaymentGateways />;
+      case 'NOTIFICATIONS': return hasPermission('manageNotificationSettings') && <NotificationSettings />;
+      case 'TEMPLATE_MANAGEMENT': return hasPermission('manageNotificationSettings') && <TemplateManagement />;
+      case 'SETTINGS': return hasPermission('manageSystemSettings') && <Settings />;
+      case 'ANNOUNCEMENTS': return hasPermission('manageAnnouncements') && <Announcements />;
+      case 'MAINTENANCE': return hasPermission('manageSystemSettings') && <Maintenance />;
+      case 'ACCESS_MANAGEMENT': return hasPermission('manageSystemSettings') && <AccessManagement />;
+      case 'PROFILE': return <SuperAdminProfile />;
+      case 'AUDIT_LOGS': return hasPermission('viewAuditLogs') && <SuperAdminAuditLogs />;
+      case 'SUPPORT_TICKETS': return hasPermission('manageSupport') && <SupportManagement />;
+      case 'BLOG_MANAGEMENT': return hasPermission('manageBlog') && <BlogManagement />;
+      default: return <PlatformDashboard />;
+    }
+  };
+
+  return (
+    <div className="flex h-screen bg-slate-900 text-white">
+      <SuperAdminSidebar 
+        currentPage={currentPage} 
+        setPage={handleSetPage} 
+        isOpen={isSidebarOpen}
+        setIsOpen={setSidebarOpen}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <Header 
+          pageTitle={pageTitleMap[currentPage]} 
+          toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
+          onNavigateToProfile={() => setCurrentPage('PROFILE')}
+        />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-950 p-4 sm:p-6 lg:p-8">
+           <div className="absolute inset-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+          {renderPage() || <div>Access Denied or Page Not Found</div>}
+        </main>
+      </div>
+    </div>
+  );
+};
+
+// FIX: Added default export for the SuperAdminPanel component.
 export default SuperAdminPanel;
