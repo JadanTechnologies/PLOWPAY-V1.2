@@ -774,6 +774,11 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         
         setStockLogs(prev => [...newStockLogs, ...prev]);
         setSales(prev => [newSale, ...prev]);
+
+        if (currentStaffUser) {
+            const currencySymbol = systemSettings.currencies.find(c => c.code === currentCurrency)?.symbol || '$';
+            logAction('SALE_PROCESSED', `Processed sale ${newSale.id} for ${currencySymbol}${newSale.total.toFixed(2)}`, { id: currentStaffUser.id, name: currentStaffUser.name, type: 'STAFF' });
+        }
     
         let notificationMessage = '';
         const customer = customers.find(c => c.id === newSale.customerId);
@@ -787,7 +792,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         }
         
         return { success: true, message: `Sale completed!${notificationMessage}`, newSale: newSale };
-    }, [products, consignments, customers, notificationSettings, deposits]);
+    }, [products, consignments, customers, notificationSettings, deposits, currentStaffUser, logAction, systemSettings.currencies, currentCurrency]);
     
     const adjustStock = useCallback((productId: string, variantId: string, branchId: string, newStock: number, reason: string) => {
         let logEntry: StockLog | null = null;
@@ -827,8 +832,12 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         
         if (logEntry) {
             setStockLogs(prev => [logEntry!, ...prev]);
+            if (currentStaffUser) {
+                const branchName = branches.find(b => b.id === branchId)?.name || 'Unknown Branch';
+                logAction('STOCK_ADJUSTMENT', `Adjusted stock for ${logEntry.productName} (${logEntry.variantName}) at ${branchName}. New count: ${newStock}. Reason: ${reason}`, { id: currentStaffUser.id, name: currentStaffUser.name, type: 'STAFF' });
+            }
         }
-    }, []);
+    }, [currentStaffUser, logAction, branches]);
 
     const transferStock = useCallback((productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => {
         let logEntry: StockLog | null = null;
@@ -871,8 +880,13 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         
         if (logEntry) {
             setStockLogs(prev => [logEntry!, ...prev]);
+             if (currentStaffUser) {
+                const fromBranchName = branches.find(b => b.id === fromBranchId)?.name || 'Unknown';
+                const toBranchName = branches.find(b => b.id === toBranchId)?.name || 'Unknown';
+                logAction('STOCK_TRANSFER', `Transferred ${quantity} units of ${logEntry.productName} from ${fromBranchName} to ${toBranchName}`, { id: currentStaffUser.id, name: currentStaffUser.name, type: 'STAFF' });
+            }
         }
-    }, []);
+    }, [currentStaffUser, logAction, branches]);
     
     const addProduct = useCallback((productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => {
         setProducts(prevProducts => {
@@ -1137,7 +1151,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             customerId,
             payments: [{ method: 'Cargo Sale', amount: total }],
             change: 0,
-            staffId: 'staff-1', // Default staff for direct cargo sales
+            staffId: currentStaffUser?.id || 'staff-unknown',
             discount: 0,
         };
         await addSale(newSale);
@@ -1145,7 +1159,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updateShipmentStatus(shipmentId, 'SOLD_IN_TRANSIT');
         
         return { success: true, message: `Shipment ${shipment.shipmentCode} sold to ${customerData.name}.` };
-    }, [shipments, products, updateShipmentStatus, addSale]);
+    }, [shipments, products, updateShipmentStatus, addSale, currentStaffUser]);
 
     const receiveShipment = useCallback((shipmentId: string) => {
         const shipment = shipments.find(s => s.id === shipmentId);
@@ -1324,7 +1338,12 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             }
             return c;
         }));
-    }, []);
+        if (currentStaffUser) {
+            const customerName = customers.find(c => c.id === customerId)?.name || 'Unknown Customer';
+            const currencySymbol = systemSettings.currencies.find(c => c.code === currentCurrency)?.symbol || '$';
+            logAction('CREDIT_PAYMENT_RECORDED', `Recorded payment of ${currencySymbol}${amount.toFixed(2)} for ${customerName}`, { id: currentStaffUser.id, name: currentStaffUser.name, type: 'STAFF' });
+        }
+    }, [currentStaffUser, logAction, customers, currentCurrency, systemSettings.currencies]);
 
     const addDeposit = useCallback(async (depositData: Omit<Deposit, 'id' | 'date' | 'status'>): Promise<{success: boolean, message: string}> => {
         const newDeposit: Deposit = {
@@ -1334,8 +1353,13 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             status: 'ACTIVE',
         };
         setDeposits(prev => [newDeposit, ...prev]);
+        if (currentStaffUser) {
+            const customerName = customers.find(c => c.id === depositData.customerId)?.name || 'Unknown Customer';
+            const currencySymbol = systemSettings.currencies.find(c => c.code === currentCurrency)?.symbol || '$';
+            logAction('DEPOSIT_RECORDED', `Recorded deposit of ${currencySymbol}${depositData.amount.toFixed(2)} for ${customerName}`, { id: currentStaffUser.id, name: currentStaffUser.name, type: 'STAFF' });
+        }
         return { success: true, message: 'Deposit recorded successfully.' };
-    }, []);
+    }, [currentStaffUser, logAction, customers, currentCurrency, systemSettings.currencies]);
 
     const updateDeposit = useCallback((depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes' | 'appliedSaleId'>>) => {
         setDeposits(prev => prev.map(dep => {

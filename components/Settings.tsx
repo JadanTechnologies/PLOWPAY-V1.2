@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
@@ -222,6 +223,15 @@ const Settings: React.FC = () => {
         }
     };
 
+    const staffByBranch = staff.reduce((acc, currentStaff) => {
+        const branchId = currentStaff.branchId;
+        if (!acc[branchId]) {
+            acc[branchId] = [];
+        }
+        acc[branchId].push(currentStaff);
+        return acc;
+    }, {} as Record<string, typeof staff>);
+
     const renderTabContent = () => {
         switch (activeTab) {
             case 'general':
@@ -328,13 +338,35 @@ const Settings: React.FC = () => {
                             <h3 className="text-xl font-semibold text-white">Manage Staff</h3>
                             <button onClick={() => setStaffModalOpen(true)} className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="plus" className="w-5 h-5 mr-2" />Add Staff</button>
                         </div>
-                        <div className="overflow-x-auto bg-slate-900/50 rounded-lg">
-                           <table className="w-full text-left">
-                               <thead className="border-b border-slate-700"><tr><th className="p-3 text-sm font-semibold tracking-wide">Name</th><th className="p-3 text-sm font-semibold tracking-wide">Email</th><th className="p-3 text-sm font-semibold tracking-wide">Branch</th><th className="p-3 text-sm font-semibold tracking-wide">Role</th></tr></thead>
-                               <tbody>
-                                {staff.map(s => <tr key={s.id} className="border-b border-slate-700 hover:bg-slate-700/50"><td className="p-3 font-medium">{s.name}</td><td className="p-3 text-slate-400">{s.email}</td><td className="p-3">{branchMap.get(s.branchId)}</td><td className="p-3">{roleMap.get(s.roleId)}</td></tr>)}
-                               </tbody>
-                           </table>
+                        <div className="space-y-6">
+                            {branches.map(branch => (
+                                <div key={branch.id} className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
+                                    <h4 className="font-bold text-lg text-white mb-3">{branch.name}</h4>
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left">
+                                            <thead className="border-b border-slate-700 text-xs text-slate-400 uppercase">
+                                                <tr>
+                                                    <th className="p-2">Name</th>
+                                                    <th className="p-2">Email</th>
+                                                    <th className="p-2">Role</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {(staffByBranch[branch.id] || []).map(s => (
+                                                    <tr key={s.id} className="border-b border-slate-800 last:border-b-0 hover:bg-slate-700/50 text-sm">
+                                                        <td className="p-2 font-medium">{s.name}</td>
+                                                        <td className="p-2 text-slate-400">{s.email}</td>
+                                                        <td className="p-2">{roleMap.get(s.roleId)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                        {(!staffByBranch[branch.id] || staffByBranch[branch.id].length === 0) && (
+                                            <p className="text-center text-sm text-slate-500 py-4">No staff assigned to this branch.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 );

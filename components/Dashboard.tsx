@@ -1,6 +1,6 @@
 
 
-import React from 'react';
+import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
@@ -21,9 +21,22 @@ const MetricCard: React.FC<{ title: string; value: string; iconName: string; ico
 );
 
 const Dashboard: React.FC = () => {
-  const { sales, getMetric, branches, customers } = useAppContext();
+  const { sales, getMetric, branches, customers, staff } = useAppContext();
   const { formatCurrency } = useCurrency();
   const { t } = useTranslation();
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  const toggleRow = (id: string) => {
+    setExpandedRows(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(id)) {
+            newSet.delete(id);
+        } else {
+            newSet.add(id);
+        }
+        return newSet;
+    });
+  };
 
   const totalRevenue = getMetric('totalRevenue');
   const salesVolume = getMetric('salesVolume');
@@ -88,22 +101,57 @@ const Dashboard: React.FC = () => {
           <table className="w-full text-left">
             <thead className="border-b border-slate-700">
               <tr>
+                <th className="p-3 w-12"></th>
                 <th className="p-3 text-sm font-semibold tracking-wide">Sale ID</th>
                 <th className="p-3 text-sm font-semibold tracking-wide">Customer</th>
+                <th className="p-3 text-sm font-semibold tracking-wide">Cashier</th>
                 <th className="p-3 text-sm font-semibold tracking-wide">Branch</th>
                 <th className="p-3 text-sm font-semibold tracking-wide">Date</th>
                 <th className="p-3 text-sm font-semibold tracking-wide text-right">Total</th>
               </tr>
             </thead>
             <tbody>
-              {sales.slice(0, 5).map((sale: Sale, index: number) => (
-                <tr key={sale.id} className="border-b border-slate-700 hover:bg-slate-700/50">
-                  <td className="p-3 whitespace-nowrap font-mono text-slate-400 text-sm">{sale.id.split('-')[0]}...</td>
-                  <td className="p-3 whitespace-nowrap">{customers.find(c => c.id === sale.customerId)?.name || 'N/A'}</td>
-                  <td className="p-3 whitespace-nowrap">{branches.find(b => b.id === sale.branchId)?.name}</td>
-                  <td className="p-3 whitespace-nowrap">{sale.date.toLocaleDateString()}</td>
-                  <td className="p-3 whitespace-nowrap text-right font-medium text-cyan-400">{formatCurrency(sale.total)}</td>
-                </tr>
+              {sales.slice(0, 5).map((sale: Sale) => (
+                <React.Fragment key={sale.id}>
+                  <tr className="border-b border-slate-700 hover:bg-slate-700/50 cursor-pointer" onClick={() => toggleRow(sale.id)}>
+                    <td className="p-3"><button><Icon name={expandedRows.has(sale.id) ? 'chevronDown' : 'chevronRight'} className="w-5 h-5"/></button></td>
+                    <td className="p-3 whitespace-nowrap font-mono text-slate-400 text-sm">{sale.id.split('-')[0]}...</td>
+                    <td className="p-3 whitespace-nowrap">{customers.find(c => c.id === sale.customerId)?.name || 'N/A'}</td>
+                    <td className="p-3 whitespace-nowrap">{staff.find(s => s.id === sale.staffId)?.name || 'N/A'}</td>
+                    <td className="p-3 whitespace-nowrap">{branches.find(b => b.id === sale.branchId)?.name}</td>
+                    <td className="p-3 whitespace-nowrap">{sale.date.toLocaleDateString()}</td>
+                    <td className="p-3 whitespace-nowrap text-right font-medium text-cyan-400">{formatCurrency(sale.total)}</td>
+                  </tr>
+                  {expandedRows.has(sale.id) && (
+                     <tr className="bg-slate-900/50">
+                        <td colSpan={7} className="p-4">
+                            <div className="p-3 bg-slate-700/50 rounded-md">
+                                <h4 className="font-semibold text-sm mb-2 text-white">Items in this Sale</h4>
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="border-b border-slate-600">
+                                            <th className="p-1 text-left">Item Name</th>
+                                            <th className="p-1 text-right">Quantity</th>
+                                            <th className="p-1 text-right">Unit Price</th>
+                                            <th className="p-1 text-right">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {sale.items.map(item => (
+                                            <tr key={item.variantId}>
+                                                <td className="p-1">{item.name} ({item.variantName})</td>
+                                                <td className="p-1 text-right">{item.quantity}</td>
+                                                <td className="p-1 text-right font-mono">{formatCurrency(item.sellingPrice)}</td>
+                                                <td className="p-1 text-right font-mono">{formatCurrency(item.sellingPrice * item.quantity)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </td>
+                    </tr>
+                  )}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

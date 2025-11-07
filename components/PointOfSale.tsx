@@ -1,3 +1,5 @@
+
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant, Payment, Sale, Deposit, TenantPermission, Customer } from '../types';
@@ -659,12 +661,11 @@ const PointOfSale: React.FC = () => {
     const saleData = {
         items: cart,
         total,
-        branchId: branches[0].id, // Hardcoded for simplicity
-        // FIX: Use selectedCustomerId instead of undefined customerId
+        branchId: branches[0].id,
         customerId: selectedCustomerId,
         payments,
         change,
-        staffId: 'staff-2', // Hardcoded for simplicity
+        staffId: currentStaffUser?.id || 'staff-unknown',
         discount,
     };
 
@@ -681,17 +682,15 @@ const PointOfSale: React.FC = () => {
   };
   
   const handleRecordDeposit = async (amount: number, notes: string) => {
-      // FIX: Use selectedCustomerId instead of undefined customerId
       if (!selectedCustomerId || selectedCustomerId === 'cust-walkin') {
           setSaleStatus({ message: 'Cannot record deposit for a walk-in customer.', type: 'error' });
           return;
       }
       
       const depositData = {
-          // FIX: Use selectedCustomerId instead of undefined customerId
           customerId: selectedCustomerId,
           amount,
-          staffId: 'staff-2',
+          staffId: currentStaffUser?.id || 'staff-unknown',
           branchId: branches[0].id,
           notes,
       };
