@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Tenant, TenantStatus } from '../../types';
@@ -13,6 +12,9 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
     const { tenants, subscriptionPlans, addTenant, extendTrial, activateSubscription } = useAppContext();
     const [modal, setModal] = useState<'NONE' | 'ADD_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE'>('NONE');
     const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
+
 
     const initialFormState: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'> = {
         businessName: '', ownerName: '', email: '', username: '', password: '', 
@@ -25,6 +27,19 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
 
     const planMap = new Map(subscriptionPlans.map(p => [p.id, p.name]));
     
+    const totalPages = Math.ceil(tenants.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const currentTenants = tenants.slice(startIndex, endIndex);
+
+    const handlePrevPage = () => {
+        setCurrentPage(prev => Math.max(prev - 1, 1));
+    };
+
+    const handleNextPage = () => {
+        setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    };
+
     const openModal = (modalType: 'ADD_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE', tenant: Tenant | null = null) => {
         setModal(modalType);
         if (tenant) {
@@ -109,7 +124,7 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
                         </tr>
                     </thead>
                     <tbody>
-                        {tenants.map(tenant => (
+                        {currentTenants.map(tenant => (
                             <tr key={tenant.id} className="border-b border-slate-700 hover:bg-slate-700/50 text-sm">
                                 <td className="p-3 whitespace-nowrap font-medium">{tenant.businessName}</td>
                                 <td className="p-3 whitespace-nowrap text-slate-300">{tenant.ownerName}</td>
@@ -141,6 +156,31 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
                         ))}
                     </tbody>
                 </table>
+            </div>
+            
+             <div className="flex justify-between items-center mt-4">
+                <span className="text-sm text-slate-400">
+                    Showing {startIndex + 1}-{Math.min(endIndex, tenants.length)} of {tenants.length} tenants
+                </span>
+                <div className="flex items-center gap-2">
+                    <button 
+                        onClick={handlePrevPage} 
+                        disabled={currentPage === 1}
+                        className="px-3 py-1 bg-slate-700 rounded-md text-sm font-semibold hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Previous
+                    </button>
+                    <span className="text-sm text-slate-400">
+                        Page {currentPage} of {totalPages}
+                    </span>
+                    <button 
+                        onClick={handleNextPage} 
+                        disabled={currentPage === totalPages}
+                        className="px-3 py-1 bg-slate-700 rounded-md text-sm font-semibold hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Next
+                    </button>
+                </div>
             </div>
 
             {modal === 'VIEW_TENANT' && selectedTenant && (

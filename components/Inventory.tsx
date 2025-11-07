@@ -28,7 +28,7 @@ const Inventory: React.FC = () => {
     
     // Transfer Modal State
     const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
-    const [isTransferConfirmOpen, setIsTransferConfirmOpen] = useState(false);
+    const [isTransferConfirmModalOpen, setTransferConfirmModalOpen] = useState(false);
     const [transferFromBranchId, setTransferFromBranchId] = useState<string>('');
     const [transferToBranchId, setTransferToBranchId] = useState<string>('');
     const [transferQuantity, setTransferQuantity] = useState('');
@@ -125,7 +125,7 @@ const Inventory: React.FC = () => {
             const quantity = parseInt(transferQuantity, 10);
             const availableStock = selectedVariant.stockByBranch[transferFromBranchId] || 0;
             if(quantity > 0 && quantity <= availableStock) {
-                setIsTransferConfirmOpen(true);
+                setTransferConfirmModalOpen(true);
             } else {
                 alert(`Invalid quantity. Please ensure it's a positive number and not more than the available stock of ${availableStock}.`);
             }
@@ -138,7 +138,6 @@ const Inventory: React.FC = () => {
         if(selectedProduct && selectedVariant && transferFromBranchId && transferToBranchId && transferQuantity) {
             const quantity = parseInt(transferQuantity, 10);
             transferStock(selectedProduct.id, selectedVariant.id, transferFromBranchId, transferToBranchId, quantity);
-            setIsTransferConfirmOpen(false);
             closeTransferModal();
         }
     };
@@ -430,9 +429,19 @@ const Inventory: React.FC = () => {
             >
                 Are you sure you want to delete this category? This action cannot be undone.
             </ConfirmationModal>
+            
+            <ConfirmationModal
+                isOpen={isTransferConfirmModalOpen}
+                onClose={() => setTransferConfirmModalOpen(false)}
+                onConfirm={confirmAndExecuteTransfer}
+                title="Confirm Stock Transfer"
+                confirmText="Transfer"
+            >
+                Are you sure you want to transfer <strong>{transferQuantity}</strong> unit(s) of <strong>{selectedProduct?.name} ({selectedVariant?.name})</strong> from <strong>{branchMap.get(transferFromBranchId)}</strong> to <strong>{branchMap.get(transferToBranchId)}</strong>?
+            </ConfirmationModal>
 
             {/* Modals */}
-             {(isAdjustModalOpen || isEditModalOpen || isTransferModalOpen || isAddProductModalOpen || isCategoryModalOpen || isTransferConfirmOpen) && (
+             {(isAdjustModalOpen || isEditModalOpen || isTransferModalOpen || isAddProductModalOpen || isCategoryModalOpen) && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
                     {/* All modals will be rendered here. Their content is controlled by the respective `is...Open` state */}
                     {isAdjustModalOpen && selectedProduct && selectedVariant && (
