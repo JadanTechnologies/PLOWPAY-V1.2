@@ -9,13 +9,13 @@ import { useCurrency } from '../hooks/useCurrency';
 import { useTranslation } from '../hooks/useTranslation';
 
 const MetricCard: React.FC<{ title: string; value: string; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
-  <div className="p-4 bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-700">
+  <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-200 dark:border-slate-700">
     <div className={`p-3 rounded-full ${iconBgColor} mr-4`}>
       <Icon name={iconName} className="w-6 h-6 text-white" />
     </div>
     <div>
-      <p className="text-sm text-slate-400">{title}</p>
-      <p className="text-2xl font-bold text-white">{value}</p>
+      <p className="text-sm text-slate-500 dark:text-slate-400">{title}</p>
+      <p className="text-2xl font-bold text-slate-900 dark:text-white">{value}</p>
     </div>
   </div>
 );
@@ -61,8 +61,8 @@ const Dashboard: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="p-4 bg-slate-800 rounded-lg shadow-lg border border-slate-700">
-          <h3 className="mb-4 text-lg font-semibold text-white">Sales Overview</h3>
+        <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
+          <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Sales Overview</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={salesData}>
               <defs>
@@ -71,23 +71,23 @@ const Dashboard: React.FC = () => {
                   <stop offset="95%" stopColor="#22d3ee" stopOpacity={0}/>
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="name" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" tickFormatter={(value) => formatCurrency(Number(value))} />
-              <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155' }} formatter={(value: number) => formatCurrency(value)} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
+              <XAxis dataKey="name" stroke="#64748b" className="dark:stroke-slate-400" />
+              <YAxis stroke="#64748b" className="dark:stroke-slate-400" tickFormatter={(value) => formatCurrency(Number(value))} />
+              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e2e8f0' }} wrapperClassName="dark:!bg-slate-900 dark:!border-slate-700" formatter={(value: number) => formatCurrency(value)} />
               <Legend />
               <Line type="monotone" dataKey="sales" stroke="#22d3ee" strokeWidth={2} activeDot={{ r: 8 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <div className="p-4 bg-slate-800 rounded-lg shadow-lg border border-slate-700">
-          <h3 className="mb-4 text-lg font-semibold text-white">Branch Performance</h3>
+        <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
+          <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Branch Performance</h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={branchData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="name" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" tickFormatter={(value) => formatCurrency(Number(value))} />
-              <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155' }} formatter={(value: number) => formatCurrency(value)} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" className="dark:stroke-slate-700" />
+              <XAxis dataKey="name" stroke="#64748b" className="dark:stroke-slate-400" />
+              <YAxis stroke="#64748b" className="dark:stroke-slate-400" tickFormatter={(value) => formatCurrency(Number(value))} />
+              <Tooltip contentStyle={{ backgroundColor: 'white', border: '1px solid #e2e8f0' }} wrapperClassName="dark:!bg-slate-900 dark:!border-slate-700" formatter={(value: number) => formatCurrency(value)} />
               <Legend />
               <Bar dataKey="performance" fill="#14b8a6" />
             </BarChart>
@@ -95,11 +95,11 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
-      <div className="p-4 bg-slate-800 rounded-lg shadow-lg border border-slate-700">
-        <h3 className="mb-4 text-lg font-semibold text-white">Recent Sales</h3>
+      <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
+        <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Recent Sales</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead className="border-b border-slate-700">
+            <thead className="border-b border-slate-200 dark:border-slate-700">
               <tr>
                 <th className="p-3 w-12"></th>
                 <th className="p-3 text-sm font-semibold tracking-wide">Sale ID</th>
@@ -113,23 +113,23 @@ const Dashboard: React.FC = () => {
             <tbody>
               {sales.slice(0, 5).map((sale: Sale) => (
                 <React.Fragment key={sale.id}>
-                  <tr className="border-b border-slate-700 hover:bg-slate-700/50 cursor-pointer" onClick={() => toggleRow(sale.id)}>
+                  <tr className="border-b border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer" onClick={() => toggleRow(sale.id)}>
                     <td className="p-3"><button><Icon name={expandedRows.has(sale.id) ? 'chevronDown' : 'chevronRight'} className="w-5 h-5"/></button></td>
-                    <td className="p-3 whitespace-nowrap font-mono text-slate-400 text-sm">{sale.id.split('-')[0]}...</td>
+                    <td className="p-3 whitespace-nowrap font-mono text-slate-500 dark:text-slate-400 text-sm">{sale.id.split('-')[0]}...</td>
                     <td className="p-3 whitespace-nowrap">{customers.find(c => c.id === sale.customerId)?.name || 'N/A'}</td>
                     <td className="p-3 whitespace-nowrap">{staff.find(s => s.id === sale.staffId)?.name || 'N/A'}</td>
                     <td className="p-3 whitespace-nowrap">{branches.find(b => b.id === sale.branchId)?.name}</td>
                     <td className="p-3 whitespace-nowrap">{sale.date.toLocaleDateString()}</td>
-                    <td className="p-3 whitespace-nowrap text-right font-medium text-cyan-400">{formatCurrency(sale.total)}</td>
+                    <td className="p-3 whitespace-nowrap text-right font-medium text-cyan-600 dark:text-cyan-400">{formatCurrency(sale.total)}</td>
                   </tr>
                   {expandedRows.has(sale.id) && (
-                     <tr className="bg-slate-900/50">
+                     <tr className="bg-slate-100 dark:bg-slate-900/50">
                         <td colSpan={7} className="p-4">
-                            <div className="p-3 bg-slate-700/50 rounded-md">
-                                <h4 className="font-semibold text-sm mb-2 text-white">Items in this Sale</h4>
+                            <div className="p-3 bg-slate-200/50 dark:bg-slate-700/50 rounded-md">
+                                <h4 className="font-semibold text-sm mb-2 text-slate-900 dark:text-white">Items in this Sale</h4>
                                 <table className="w-full text-xs">
                                     <thead>
-                                        <tr className="border-b border-slate-600">
+                                        <tr className="border-b border-slate-300 dark:border-slate-600">
                                             <th className="p-1 text-left">Item Name</th>
                                             <th className="p-1 text-right">Quantity</th>
                                             <th className="p-1 text-right">Unit Price</th>

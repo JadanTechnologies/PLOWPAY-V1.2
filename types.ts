@@ -595,11 +595,13 @@ export interface AppContextType {
   setNotification: (notification: NotificationType | null) => void;
   logAction: (action: string, details: string, user?: { id: string; name: string; type: 'STAFF' | 'TENANT' | 'SUPER_ADMIN' }) => void;
   searchTerm: string;
+  theme: 'light' | 'dark';
   currentLanguage: string;
   currentCurrency: string;
   setCurrentCurrency: (currencyCode: string) => void;
   setCurrentLanguage: (langCode: string) => void;
   setSearchTerm: (term: string) => void;
+  setTheme: (theme: 'light' | 'dark') => void;
   getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
   addSale: (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'>) => Promise<{success: boolean, message: string, newSale?: Sale}>;
   adjustStock: (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => void;

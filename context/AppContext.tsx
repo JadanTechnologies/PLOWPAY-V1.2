@@ -523,6 +523,22 @@ const SALES_STORAGE_KEY = 'flowpay-sales';
 // The simple login logic implies we are always tenant-1 for the demo
 const CURRENT_TENANT_ID = 'tenant-1';
 
+const getInitialTheme = (): 'light' | 'dark' => {
+    if (typeof window !== 'undefined' && window.localStorage) {
+        const storedPrefs = window.localStorage.getItem('theme');
+        if (typeof storedPrefs === 'string') {
+            return storedPrefs as 'light' | 'dark';
+        }
+
+        const userMedia = window.matchMedia('(prefers-color-scheme: light)');
+        if (userMedia.matches) {
+            return 'light';
+        }
+    }
+    return 'dark';
+};
+
+
 export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children, onLogout = () => {} }) => {
     const [products, setProducts] = useState<Product[]>(mockProducts);
     
@@ -602,6 +618,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [consignments, setConsignments] = useState<Consignment[]>(mockConsignments);
     const [deposits, setDeposits] = useState<Deposit[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
     const [paymentTransactions, setPaymentTransactions] = useState<PaymentTransaction[]>(mockPaymentTransactions);
     const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>(mockEmailTemplates);
     const [smsTemplates, setSmsTemplates] = useState<SmsTemplate[]>(mockSmsTemplates);
@@ -612,6 +629,16 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
 
     // To test permissions, change the index: 0=Manager (all perms), 1=Cashier (limited), 2=Logistics (limited)
     const [currentStaffUser, setCurrentStaffUser] = useState<Staff | null>(mockStaff[0]);
+
+    useEffect(() => {
+        const root = window.document.documentElement;
+        const isDark = theme === 'dark';
+
+        root.classList.remove(isDark ? 'light' : 'dark');
+        root.classList.add(theme);
+
+        localStorage.setItem('theme', theme);
+    }, [theme]);
 
     const logAction = useCallback((action: string, details: string, user?: { id: string; name: string; type: 'STAFF' | 'TENANT' | 'SUPER_ADMIN' }) => {
         const userToLog = user || (currentAdminUser ? { id: currentAdminUser.id, name: currentAdminUser.name, type: 'SUPER_ADMIN' } : (currentTenant ? { id: currentTenant.id, name: currentTenant.ownerName, type: 'TENANT' } : null));
@@ -1611,7 +1638,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         paymentSettings, notificationSettings, systemSettings, trucks, shipments, trackerProviders, suppliers,
         purchaseOrders, accounts, journalEntries, announcements, customers, consignments, deposits, categories,
         paymentTransactions, emailTemplates, smsTemplates, inAppNotifications, auditLogs, supportTickets, notification,
-        setNotification, searchTerm, setSearchTerm, currentLanguage, setCurrentLanguage, currentCurrency, setCurrentCurrency,
+        setNotification, searchTerm, setSearchTerm, theme, setTheme, currentLanguage, setCurrentLanguage, currentCurrency, setCurrentCurrency,
         getMetric, addSale, adjustStock, transferStock, addProduct, updateProductVariant, addAdminUser,
         updateAdminUser, updateAdminRole, addAdminRole, deleteAdminRole, updateBrandConfig, updatePageContent,
         updateFaqs, updatePaymentSettings, updateNotificationSettings, updateSystemSettings, updateMaintenanceSettings,

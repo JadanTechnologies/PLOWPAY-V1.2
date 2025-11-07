@@ -105,7 +105,7 @@ const TenantApp: React.FC = () => {
   };
 
   return (
-      <div className="flex h-screen bg-slate-900 text-slate-200">
+      <div className="flex h-screen bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
         <Sidebar 
           currentPage={currentPage} 
           setPage={handleSetPage} 
@@ -130,8 +130,8 @@ const TenantApp: React.FC = () => {
                 </div>
             </div>
           )}
-          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-950 p-4 sm:p-6 lg:p-8">
-            <div className="absolute inset-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+          <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-100 dark:bg-slate-950 p-4 sm:p-6 lg:p-8">
+            <div className="absolute inset-0 -z-10 h-full w-full bg-slate-100 dark:bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
             {renderPage()}
           </main>
         </div>
