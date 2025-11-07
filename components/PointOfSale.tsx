@@ -1,7 +1,6 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import { Product, CartItem, ProductVariant, Payment, Sale, Deposit, TenantPermission } from '../types';
+import { Product, CartItem, ProductVariant, Payment, Sale, Deposit, TenantPermission, Customer } from '../types';
 import Icon from './icons/index.tsx';
 import Calculator from './Calculator';
 import { useCurrency } from '../hooks/useCurrency';
@@ -320,6 +319,145 @@ const DepositModal: React.FC<{
     );
 };
 
+const HeldOrdersModal: React.FC<{
+    heldOrders: HeldOrder[];
+    onClose: () => void;
+    onRetrieve: (id: number) => void;
+    onDelete: (id: number) => void;
+}> = ({ heldOrders, onClose, onRetrieve, onDelete }) => {
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+            <div className="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-2xl border border-slate-700 max-h-[90vh] flex flex-col">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-xl font-bold text-white">Held Orders</h3>
+                    <button onClick={onClose} className="text-slate-400 hover:text-white"><Icon name="x-mark" className="w-6 h-6"/></button>
+                </div>
+                <div className="flex-grow overflow-y-auto pr-2 -mr-2 space-y-3">
+                    {heldOrders.length === 0 ? (
+                        <p className="text-center text-slate-500 py-16">No orders are currently on hold.</p>
+                    ) : (
+                        heldOrders.map(order => (
+                            <div key={order.id} className="bg-slate-800/50 p-3 rounded-lg flex items-center justify-between">
+                                <div>
+                                    <p className="font-semibold">{order.customer.name}</p>
+                                    <p className="text-sm text-slate-400">{order.cart.length} items &bull; Held at {order.heldAt.toLocaleTimeString()}</p>
+                                </div>
+                                <div className="space-x-2">
+                                    <button onClick={() => onRetrieve(order.id)} className="bg-cyan-600 hover:bg-cyan-500 text-white font-semibold py-1 px-3 rounded-md text-sm">Retrieve</button>
+                                    <button onClick={() => onDelete(order.id)} className="bg-rose-600 hover:bg-rose-500 text-white font-semibold py-1 px-3 rounded-md text-sm">Delete</button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const AddCustomerModal: React.FC<{
+    onClose: () => void;
+    onCustomerAdded: (customer: Customer) => void;
+}> = ({ onClose, onCustomerAdded }) => {
+    const { addCustomer } = useAppContext();
+    const [form, setForm] = useState({ name: '', phone: '', email: ''});
+
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setForm({ ...form, [e.target.name]: e.target.value });
+    };
+
+    const handleSubmit = () => {
+        if (!form.name) {
+            alert('Customer name is required.');
+            return;
+        }
+        const newCustomerData = { ...form, creditBalance: 0 };
+        addCustomer(newCustomerData);
+        onCustomerAdded({ ...newCustomerData, id: `cust-${Date.now()}` });
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+            <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-slate-700">
+                 <h3 className="text-xl font-bold mb-4 text-white">Add New Customer</h3>
+                 <div className="space-y-4">
+                    <input name="name" placeholder="Full Name (Required)" value={form.name} onChange={handleChange} className="w-full bg-slate-700 p-2 rounded-md text-white border border-slate-600" />
+                    <input name="phone" placeholder="Phone Number" value={form.phone} onChange={handleChange} className="w-full bg-slate-700 p-2 rounded-md text-white border border-slate-600" />
+                    <input name="email" placeholder="Email Address" value={form.email} onChange={handleChange} className="w-full bg-slate-700 p-2 rounded-md text-white border border-slate-600" />
+                 </div>
+                 <div className="mt-6 flex justify-end gap-3">
+                    <button onClick={onClose} className="px-4 py-2 rounded-md bg-slate-600 font-semibold">Cancel</button>
+                    <button onClick={handleSubmit} className="px-4 py-2 rounded-md bg-cyan-600 font-semibold">Save Customer</button>
+                 </div>
+            </div>
+        </div>
+    );
+};
+
+
+const CustomerSearchModal: React.FC<{
+    onClose: () => void;
+    onSelectCustomer: (customer: {id: string, name: string, phone?: string}) => void;
+}> = ({ onClose, onSelectCustomer }) => {
+    const { customers } = useAppContext();
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isAddCustomerModalOpen, setAddCustomerModalOpen] = useState(false);
+
+    const filteredCustomers = useMemo(() => {
+        const lowerSearch = searchTerm.toLowerCase();
+        if (!lowerSearch) return customers.filter(c => c.id !== 'cust-walkin');
+        return customers.filter(c =>
+            c.id !== 'cust-walkin' &&
+            (c.name.toLowerCase().includes(lowerSearch) || (c.phone && c.phone.includes(lowerSearch)))
+        );
+    }, [customers, searchTerm]);
+
+    const handleCustomerAdded = (newCustomer: Customer) => {
+        onSelectCustomer(newCustomer);
+        setAddCustomerModalOpen(false);
+    };
+
+    return (
+        <>
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+                <div className="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-lg border border-slate-700 max-h-[70vh] flex flex-col">
+                    <div className="flex justify-between items-center mb-4">
+                         <h3 className="text-xl font-bold text-white">Select Customer</h3>
+                         <button onClick={onClose} className="text-slate-400 hover:text-white"><Icon name="x-mark" className="w-6 h-6"/></button>
+                    </div>
+                    <div className="relative mb-4">
+                         <Icon name="search" className="w-5 h-5 text-slate-500 absolute top-1/2 left-3 -translate-y-1/2" />
+                         <input type="text" placeholder="Search by name or phone..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="w-full bg-slate-800 border border-slate-600 rounded-lg p-2 pl-10"/>
+                    </div>
+                    <div className="flex-grow overflow-y-auto space-y-2 -mr-2 pr-2">
+                        <button onClick={() => onSelectCustomer({ id: 'cust-walkin', name: 'Walk-in Customer' })} className="w-full text-left p-3 bg-slate-800/50 rounded-lg hover:bg-slate-700/50 flex items-center">
+                            <Icon name="user" className="w-6 h-6 mr-3 text-slate-400"/>
+                            <div>
+                                <p className="font-semibold">Walk-in Customer</p>
+                            </div>
+                        </button>
+                        {filteredCustomers.map(c => (
+                            <button key={c.id} onClick={() => onSelectCustomer(c)} className="w-full text-left p-3 bg-slate-800/50 rounded-lg hover:bg-slate-700/50 flex items-center">
+                               <Icon name="user" className="w-6 h-6 mr-3 text-cyan-400"/>
+                               <div>
+                                 <p className="font-semibold">{c.name}</p>
+                                 <p className="text-sm text-slate-400">{c.phone}</p>
+                               </div>
+                            </button>
+                        ))}
+                    </div>
+                     <div className="mt-4 pt-4 border-t border-slate-700">
+                        <button onClick={() => setAddCustomerModalOpen(true)} className="w-full bg-teal-600 hover:bg-teal-500 font-semibold p-3 rounded-lg flex items-center justify-center">
+                            <Icon name="plus" className="w-5 h-5 mr-2" /> Add New Customer
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {isAddCustomerModalOpen && <AddCustomerModal onClose={() => setAddCustomerModalOpen(false)} onCustomerAdded={handleCustomerAdded} />}
+        </>
+    );
+};
+
 
 const PointOfSale: React.FC = () => {
   const { products, searchTerm, addSale, branches, categories, addDeposit, customers, deposits, currentStaffUser, staffRoles } = useAppContext();
@@ -339,18 +477,21 @@ const PointOfSale: React.FC = () => {
   const canProcessReturns = userPermissions.has('accessReturns');
 
 
-  const defaultCustomer = { name: 'Walk-in Customer', phone: '' };
+  const defaultCustomer = { id: 'cust-walkin', name: 'Walk-in Customer', phone: '' };
   const [customer, setCustomer] = useState(defaultCustomer);
-  const [isEditingCustomer, setIsEditingCustomer] = useState(false);
   
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [isInvoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [lastCompletedSale, setLastCompletedSale] = useState<Sale | null>(null);
   const [isDepositModalOpen, setDepositModalOpen] = useState(false);
+  const [isHeldOrdersModalOpen, setHeldOrdersModalOpen] = useState(false);
+  const [isCustomerSearchOpen, setIsCustomerSearchOpen] = useState(false);
 
   const [saleStatus, setSaleStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
-  const selectedCustomerId = useMemo(() => customers.find(c => c.name === customer.name)?.id, [customer.name, customers]);
+  const selectedCustomerId = customer.id;
+
+  const currentBranchId = useMemo(() => branches.length > 0 ? branches[0].id : '', [branches]);
 
   const customerDepositBalance = useMemo(() => {
     if (!selectedCustomerId || selectedCustomerId === 'cust-walkin') return 0;
@@ -471,7 +612,6 @@ const PointOfSale: React.FC = () => {
     setCart([]);
     setDiscount(0);
     setCustomer(defaultCustomer);
-    setIsEditingCustomer(false);
     setIsReturnMode(false);
   }, []);
 
@@ -507,6 +647,7 @@ const PointOfSale: React.FC = () => {
       }
       setHeldOrders(prev => prev.filter(o => o.id !== id));
       setSaleStatus({ message: 'Held order retrieved.', type: 'success' });
+      setHeldOrdersModalOpen(false);
     }
   };
 
@@ -515,12 +656,12 @@ const PointOfSale: React.FC = () => {
   };
   
   const handleConfirmPayment = async (payments: Payment[], change: number) => {
-    const customerId = customers.find(c => c.name === customer.name)?.id || 'cust-walkin';
     const saleData = {
         items: cart,
         total,
         branchId: branches[0].id, // Hardcoded for simplicity
-        customerId,
+        // FIX: Use selectedCustomerId instead of undefined customerId
+        customerId: selectedCustomerId,
         payments,
         change,
         staffId: 'staff-2', // Hardcoded for simplicity
@@ -540,14 +681,15 @@ const PointOfSale: React.FC = () => {
   };
   
   const handleRecordDeposit = async (amount: number, notes: string) => {
-      const customerId = customers.find(c => c.name === customer.name)?.id;
-      if (!customerId || customerId === 'cust-walkin') {
+      // FIX: Use selectedCustomerId instead of undefined customerId
+      if (!selectedCustomerId || selectedCustomerId === 'cust-walkin') {
           setSaleStatus({ message: 'Cannot record deposit for a walk-in customer.', type: 'error' });
           return;
       }
       
       const depositData = {
-          customerId,
+          // FIX: Use selectedCustomerId instead of undefined customerId
+          customerId: selectedCustomerId,
           amount,
           staffId: 'staff-2',
           branchId: branches[0].id,
@@ -559,6 +701,11 @@ const PointOfSale: React.FC = () => {
       if (success) {
           setDepositModalOpen(false);
       }
+  };
+
+  const handleSelectCustomer = (selected: {id: string; name: string, phone?: string}) => {
+    setCustomer(selected);
+    setIsCustomerSearchOpen(false);
   };
 
   return (
@@ -589,20 +736,15 @@ const PointOfSale: React.FC = () => {
             {/* ... Cart section ... */}
             <aside className="lg:col-span-1 bg-slate-900/70 backdrop-blur-xl border-l border-slate-800 flex flex-col h-full rounded-r-lg">
                 <div className="p-4 border-b border-slate-800">
-                    {isEditingCustomer ? (
-                         <div className="flex gap-2">
-                             <input type="text" placeholder="Customer Name" value={customer.name} onChange={e => setCustomer({...customer, name: e.target.value})} className="flex-grow bg-slate-700 p-2 rounded-md border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"/>
-                             <button onClick={() => setIsEditingCustomer(false)} className="bg-cyan-600 text-white rounded-md p-2"><Icon name="check" className="w-5 h-5"/></button>
-                         </div>
-                    ) : (
-                        <div className="flex justify-between items-center">
-                            <div className="flex items-center">
-                                <Icon name="user" className="w-6 h-6 mr-3 text-slate-400" />
-                                <span className="font-semibold text-lg">{customer.name}</span>
-                            </div>
-                            <button onClick={() => setIsEditingCustomer(true)} className="text-sm text-cyan-400 hover:text-cyan-300">Change</button>
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center">
+                            <Icon name="user" className="w-6 h-6 mr-3 text-slate-400" />
+                            <span className="font-semibold text-lg truncate">{customer.name}</span>
                         </div>
-                    )}
+                        <button onClick={() => setIsCustomerSearchOpen(true)} className="text-sm text-cyan-400 hover:text-cyan-300 flex-shrink-0 ml-2">
+                            {customer.id === 'cust-walkin' ? 'Select Customer' : 'Change'}
+                        </button>
+                    </div>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
@@ -612,20 +754,28 @@ const PointOfSale: React.FC = () => {
                            <p>{isReturnMode ? 'Select items to return.' : 'Your cart is empty.'}</p>
                         </div>
                     ) : (
-                        cart.map(item => (
+                        cart.map(item => {
+                            const product = products.find(p => p.id === item.productId);
+                            const variant = product?.variants.find(v => v.id === item.variantId);
+                            const availableStock = variant ? (variant.stockByBranch[currentBranchId] || 0) + (variant.consignmentStockByBranch?.[currentBranchId] || 0) : 0;
+
+                            return (
                              <div key={item.variantId} className="flex items-center bg-slate-800/50 p-2 rounded-lg">
                                 <img src={`https://picsum.photos/seed/${item.productId}/100`} alt={item.name} className="w-12 h-12 rounded-md mr-3 object-cover"/>
                                 <div className="flex-grow">
                                     <p className="font-semibold text-sm">{item.name} <span className="text-xs text-slate-400">({item.variantName})</span></p>
-                                    <p className="text-cyan-400 text-xs">{formatCurrency(item.sellingPrice)}</p>
+                                    <div className="flex items-baseline gap-2">
+                                        <p className="text-cyan-400 text-xs">{formatCurrency(item.sellingPrice)}</p>
+                                        <p className="text-slate-500 text-xs">(Stock: {availableStock})</p>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button onClick={() => handleUpdateQuantity(item.variantId, -1)} className="bg-slate-700 rounded-full p-1 w-6 h-6 flex items-center justify-center"><Icon name="minus" className="w-4 h-4"/></button>
-                                    <span className="font-bold w-4 text-center">{item.quantity}</span>
+                                    <span className="font-bold w-4 text-center">{Math.abs(item.quantity)}</span>
                                     <button onClick={() => handleUpdateQuantity(item.variantId, 1)} className="bg-slate-700 rounded-full p-1 w-6 h-6 flex items-center justify-center"><Icon name="plus" className="w-4 h-4"/></button>
                                 </div>
                             </div>
-                        ))
+                        )})
                     )}
                 </div>
 
@@ -635,19 +785,25 @@ const PointOfSale: React.FC = () => {
                      <div className="flex justify-between items-center text-sm"><span className="text-slate-400">Discount</span><input type="number" value={discount} onChange={handleDiscountChange} className="w-24 bg-slate-700 p-1 rounded-md text-right border border-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500"/></div>
                      <div className="flex justify-between font-bold text-2xl border-t border-slate-700 pt-3"><span className="text-white">Total</span><span className={isRefund ? 'text-red-400' : 'text-cyan-400'}>{formatCurrency(total)}</span></div>
 
-                     <div className="grid grid-cols-3 gap-2">
+                     <div className="grid grid-cols-2 gap-2">
                         <button onClick={clearOrder} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Clear</button>
-                        <button onClick={handleHoldOrder} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Hold</button>
                         {canProcessReturns ? (
                             <button onClick={() => setIsReturnMode(!isReturnMode)} className={`${isReturnMode ? 'bg-red-600 hover:bg-red-500 ring-2 ring-white/70' : 'bg-slate-700 hover:bg-slate-600'} font-semibold py-2 px-4 rounded-md transition-colors`}>
                                 Return Mode
                             </button>
                         ) : <div />}
+                        <button onClick={handleHoldOrder} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Hold</button>
+                        <button onClick={() => setHeldOrdersModalOpen(true)} className="relative bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">
+                            Held Orders
+                            {heldOrders.length > 0 && (
+                                <span className="absolute -top-1 -right-1 h-5 w-5 bg-cyan-500 text-white text-xs font-bold rounded-full flex items-center justify-center">{heldOrders.length}</span>
+                            )}
+                        </button>
                         
-                        <button onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0} className={`w-full font-bold py-3 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed col-span-3 ${isRefund ? 'bg-red-600 hover:bg-red-500' : 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'}`}>
+                        <button onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0} className={`w-full font-bold py-3 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed col-span-2 ${isRefund ? 'bg-red-600 hover:bg-red-500' : 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'}`}>
                             {isRefund ? `Process Refund ${formatCurrency(Math.abs(total))}` : 'Pay'}
                         </button>
-                        <button onClick={() => setDepositModalOpen(true)} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md col-span-3">Record Deposit</button>
+                        <button onClick={() => setDepositModalOpen(true)} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md col-span-2">Record Deposit</button>
                      </div>
                 </div>
 
@@ -661,9 +817,10 @@ const PointOfSale: React.FC = () => {
         />}
         {isInvoiceModalOpen && lastCompletedSale && <InvoiceModal sale={lastCompletedSale} onClose={() => setInvoiceModalOpen(false)} />}
         {isDepositModalOpen && <DepositModal customerName={customer.name} onClose={() => setDepositModalOpen(false)} onConfirm={handleRecordDeposit} />}
+        {isHeldOrdersModalOpen && <HeldOrdersModal heldOrders={heldOrders} onClose={() => setHeldOrdersModalOpen(false)} onRetrieve={handleRetrieveOrder} onDelete={handleDeleteHeldOrder} />}
+        {isCustomerSearchOpen && <CustomerSearchModal onClose={() => setIsCustomerSearchOpen(false)} onSelectCustomer={handleSelectCustomer} />}
     </div>
   );
 };
 
-// FIX: Add default export to the component
 export default PointOfSale;

@@ -5,7 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import { Sale, Customer, PurchaseOrder, Consignment, Supplier } from '../types';
 import { useCurrency } from '../../hooks/useCurrency';
 
-type ReportTab = 'profit_loss' | 'sales' | 'credit' | 'purchases' | 'consignment';
+type ReportTab = 'profit_loss' | 'sales' | 'credit' | 'purchases' | 'consignment' | 'deposit_sales';
 
 const MetricCard: React.FC<{ title: string; value: string | number; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-gray-800 rounded-lg shadow-md flex items-center">
@@ -111,6 +111,29 @@ const CreditSalesReport: React.FC<{ data: (Sale & { customerName: string })[], f
     );
 };
 
+const DepositSalesReport: React.FC<{ data: any[], formatCurrency: (val: number) => string }> = ({ data, formatCurrency }) => {
+    const totalFromDeposits = data.reduce((acc, sale) => acc + sale.depositAmount, 0);
+    return (
+        <div>
+            <table className="w-full text-left">
+                <thead className="border-b border-gray-700"><tr><th className="p-3">Sale ID</th><th className="p-3">Customer</th><th className="p-3">Date</th><th className="p-3 text-right">Total Sale</th><th className="p-3 text-right">Paid by Deposit</th></tr></thead>
+                <tbody>
+                    {data.map(sale => (
+                        <tr key={sale.id} className="border-b border-gray-700">
+                            <td className="p-3 font-mono">{sale.id}</td><td className="p-3">{sale.customerName}</td>
+                            <td className="p-3">{new Date(sale.date).toLocaleDateString()}</td><td className="p-3 text-right font-mono">{formatCurrency(sale.total)}</td>
+                            <td className="p-3 text-right font-mono font-bold text-cyan-400">{formatCurrency(sale.depositAmount)}</td>
+                        </tr>
+                    ))}
+                </tbody>
+                <tfoot className="font-bold border-t-2 border-gray-600">
+                    <tr><td colSpan={4} className="p-3 text-right">Total Paid from Deposits</td><td className="p-3 text-right font-mono text-cyan-400">{formatCurrency(totalFromDeposits)}</td></tr>
+                </tfoot>
+            </table>
+        </div>
+    );
+};
+
 const PurchaseOrdersReport: React.FC<{ data: PurchaseOrder[], suppliers: Map<string, string>, branches: Map<string, string>, formatCurrency: (val: number) => string }> = ({ data, suppliers, branches, formatCurrency }) => (
     <table className="w-full text-left">
         <thead className="border-b border-gray-700"><tr><th className="p-3">PO Number</th><th className="p-3">Date</th><th className="p-3">Supplier</th><th className="p-3">Destination</th><th className="p-3 text-right">Total</th><th className="p-3 text-center">Status</th></tr></thead>
@@ -205,6 +228,20 @@ const Reports: React.FC = () => {
   
   const creditSalesData = useMemo(() => filteredSales.filter(sale => sale.status !== 'PAID').map(sale => ({...sale, customerName: customers.find(c => c.id === sale.customerId)?.name || 'N/A'})), [filteredSales, customers]);
   
+  const depositSalesData = useMemo(() => {
+    return filteredSales
+        .map(sale => {
+            const depositPayment = sale.payments.find(p => p.method === 'Deposit');
+            if (!depositPayment) return null;
+            return {
+                ...sale,
+                customerName: customers.find(c => c.id === sale.customerId)?.name || 'N/A',
+                depositAmount: depositPayment.amount,
+            };
+        })
+        .filter((sale): sale is (Sale & { customerName: string; depositAmount: number }) => sale !== null);
+  }, [filteredSales, customers]);
+
   const branchMap = useMemo(() => new Map(branches.map(b => [b.id, b.name])), [branches]);
 
   const consignmentReportData = useMemo(() => {
@@ -240,7 +277,7 @@ const Reports: React.FC = () => {
 
   const handlePrint = () => window.print();
 
-  const reportTitles: Record<ReportTab, string> = { sales: 'Detailed Sales Report', credit: 'Credit Sales Report', purchases: 'Purchase Order Report', consignment: 'Consignment Report', profit_loss: 'Profit & Loss Summary' };
+  const reportTitles: Record<ReportTab, string> = { sales: 'Detailed Sales Report', credit: 'Credit Sales Report', purchases: 'Purchase Order Report', consignment: 'Consignment Report', profit_loss: 'Profit & Loss Summary', deposit_sales: 'Deposit Sales Report' };
   const dateFilters = ['Today', 'This Week', 'This Month', 'Last Month', 'This Year'];
   const TabButton: React.FC<{tab: ReportTab, label: string}> = ({ tab, label }) => (<button onClick={() => setActiveReport(tab)} className={`px-4 py-2 font-medium text-sm rounded-md ${activeReport === tab ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>{label}</button>);
 
@@ -290,11 +327,12 @@ const Reports: React.FC = () => {
             </div>
             <div className="p-6 bg-gray-800 rounded-lg shadow-md">
                 <div className="flex flex-wrap gap-2 border-b border-gray-700 mb-6 pb-2 no-print">
-                    <TabButton tab="profit_loss" label="Profit & Loss" /><TabButton tab="sales" label="Detailed Sales" /><TabButton tab="credit" label="Credit Sales" /><TabButton tab="purchases" label="Purchase Orders" /><TabButton tab="consignment" label="Consignment" />
+                    <TabButton tab="profit_loss" label="Profit & Loss" /><TabButton tab="sales" label="Detailed Sales" /><TabButton tab="credit" label="Credit Sales" /><TabButton tab="deposit_sales" label="Deposit Sales" /><TabButton tab="purchases" label="Purchase Orders" /><TabButton tab="consignment" label="Consignment" />
                 </div>
                 {activeReport === 'profit_loss' && <ProfitLossSummary data={grandTotals} formatCurrency={formatCurrency} />}
                 {activeReport === 'sales' && <DetailedSalesReport data={detailedReportData} totals={grandTotals} formatCurrency={formatCurrency} />}
                 {activeReport === 'credit' && <CreditSalesReport data={creditSalesData} formatCurrency={formatCurrency} />}
+                {activeReport === 'deposit_sales' && <DepositSalesReport data={depositSalesData} formatCurrency={formatCurrency} />}
                 {activeReport === 'purchases' && <PurchaseOrdersReport data={purchaseData} suppliers={supplierMap} branches={branchMap} formatCurrency={formatCurrency} />}
                 {activeReport === 'consignment' && <ConsignmentReport data={consignmentReportData} formatCurrency={formatCurrency} />}
             </div>
