@@ -1,6 +1,6 @@
 
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import Dashboard from './Dashboard';
@@ -20,11 +20,15 @@ import Checkout from './Checkout';
 import TenantProfile from './tenant/Profile';
 import TenantAuditLogs from './tenant/AuditLogs';
 import DepositManagement from './DepositManagement';
+import { useAppContext } from '../hooks/useAppContext';
+import Icon from './icons';
 
 
 const TenantApp: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('DASHBOARD');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const { currentTenant } = useAppContext();
+  const [isExpiryBannerVisible, setExpiryBannerVisible] = useState(true);
   
   const [checkoutState, setCheckoutState] = useState<{plan: SubscriptionPlan, billingCycle: 'monthly' | 'yearly'} | null>(null);
 
@@ -41,6 +45,24 @@ const TenantApp: React.FC = () => {
     setCheckoutState(null);
     setCurrentPage('BILLING');
   };
+
+  const expiryWarning = useMemo(() => {
+    if (!currentTenant || currentTenant.status !== 'TRIAL' || !currentTenant.trialEndDate) {
+      return null;
+    }
+    const today = new Date();
+    const endDate = new Date(currentTenant.trialEndDate);
+    const timeDiff = endDate.getTime() - today.getTime();
+    const daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
+
+    if (daysRemaining <= 7 && daysRemaining >= 0) {
+      return {
+        days: daysRemaining,
+        message: `Your free trial is ending in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}. Upgrade now to keep your access.`
+      };
+    }
+    return null;
+  }, [currentTenant]);
   
   const renderPage = () => {
     switch (currentPage) {
@@ -93,6 +115,18 @@ const TenantApp: React.FC = () => {
             toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}
             onNavigateToProfile={() => setCurrentPage('PROFILE')}
           />
+           {isExpiryBannerVisible && expiryWarning && (
+            <div className="bg-yellow-500/20 text-yellow-200 p-3 flex items-center justify-between text-sm">
+                <div className="flex items-center">
+                    <Icon name="notification" className="w-5 h-5 mr-3" />
+                    <span>{expiryWarning.message}</span>
+                </div>
+                <div className="flex items-center gap-4">
+                    <button onClick={() => setCurrentPage('BILLING')} className="font-bold bg-yellow-400 text-yellow-900 px-3 py-1 rounded-md hover:bg-yellow-300">Upgrade Now</button>
+                    <button onClick={() => setExpiryBannerVisible(false)} className="hover:text-white"><Icon name="x-mark" className="w-5 h-5" /></button>
+                </div>
+            </div>
+          )}
           <main className="flex-1 overflow-x-hidden overflow-y-auto bg-slate-950 p-4 sm:p-6 lg:p-8">
             <div className="absolute inset-0 -z-10 h-full w-full bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
             {renderPage()}

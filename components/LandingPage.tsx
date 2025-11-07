@@ -1,6 +1,6 @@
 
 
-import React from 'react';
+import React, { useState } from 'react';
 import Icon from './icons/index.tsx';
 import { View } from '../App';
 import { useAppContext } from '../hooks/useAppContext';
@@ -14,6 +14,7 @@ interface LandingPageProps {
 const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
   const { brandConfig, subscriptionPlans } = useAppContext();
   const { formatCurrency } = useCurrency();
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   const features = [
     {
@@ -115,6 +116,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-white">Simple, Transparent Pricing</h2>
               <p className="mt-4 text-lg text-gray-400">Choose the plan that's right for your business. No hidden fees.</p>
+              <div className="mt-6 inline-flex items-center bg-gray-700 p-1 rounded-full text-sm font-semibold">
+                <button onClick={() => setBillingCycle('monthly')} className={`px-4 py-1 rounded-full transition-colors ${billingCycle === 'monthly' ? 'bg-indigo-600 text-white' : 'text-gray-300'}`}>Monthly</button>
+                <button onClick={() => setBillingCycle('yearly')} className={`px-4 py-1 rounded-full transition-colors relative ${billingCycle === 'yearly' ? 'bg-indigo-600 text-white' : 'text-gray-300'}`}>
+                    Yearly
+                    <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">Save 20%</span>
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
               {subscriptionPlans.map((plan) => (
@@ -123,8 +131,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                   <h3 className="text-2xl font-semibold text-white">{plan.name}</h3>
                   <p className="text-gray-400 mt-2 h-10">{plan.description}</p>
                   <div className="mt-4">
-                    <span className="text-5xl font-extrabold text-white">{formatCurrency(plan.price).replace(/\.00$/, '')}</span>
+                    <span className="text-5xl font-extrabold text-white">{formatCurrency(billingCycle === 'monthly' ? plan.price : plan.priceYearly / 12).replace(/\.00$/, '')}</span>
                     <span className="text-lg text-gray-400">/mo</span>
+                    {billingCycle === 'yearly' && <p className="text-sm text-gray-500">Billed as {formatCurrency(plan.priceYearly)} per year</p>}
                   </div>
                   <ul className="mt-6 space-y-3 text-gray-400 flex-grow">
                     {plan.features.map((feature, i) => (

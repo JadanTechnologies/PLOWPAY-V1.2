@@ -1,4 +1,5 @@
 
+
 export interface Branch {
   id: string;
   name: string;
@@ -635,6 +636,7 @@ export interface AppContextType {
   activateSubscription: (tenantId: string, planId: string, billingCycle: 'monthly' | 'yearly') => void;
   changeSubscriptionPlan: (tenantId: string, newPlanId: string, billingCycle: 'monthly' | 'yearly') => void;
   processExpiredTrials: () => { processed: number; suspended: number };
+  sendExpiryReminders: () => { sent: number };
   processSubscriptionPayment: (tenantId: string, planId: string, method: string, amount: number, billingCycle: 'monthly' | 'yearly', success: boolean, proofOfPaymentUrl?: string) => Promise<{success: boolean, message: string}>;
   updatePaymentTransactionStatus: (transactionId: string, newStatus: 'COMPLETED' | 'REJECTED') => void;
   updateEmailTemplate: (templateId: string, newSubject: string, newBody: string) => void;

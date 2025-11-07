@@ -30,8 +30,9 @@ const MetricCard: React.FC<{ title: string; value: string; iconName: string; ico
 );
 
 const PlatformDashboard: React.FC = () => {
-    const { tenants, subscriptionPlans, processExpiredTrials } = useAppContext();
-    const [jobStatus, setJobStatus] = useState('');
+    const { tenants, subscriptionPlans, processExpiredTrials, sendExpiryReminders } = useAppContext();
+    const [trialJobStatus, setTrialJobStatus] = useState('');
+    const [reminderJobStatus, setReminderJobStatus] = useState('');
 
 
     const platformMetrics = useMemo(() => {
@@ -102,12 +103,20 @@ const PlatformDashboard: React.FC = () => {
         return Object.entries(revenueData).map(([name, value]) => ({ name, value }));
     }, [tenants, subscriptionPlans]);
     
-    const handleRunJob = () => {
-        setJobStatus('Processing...');
+    const handleRunTrialJob = () => {
+        setTrialJobStatus('Processing...');
         // Simulate async job
         setTimeout(() => {
             const { processed, suspended } = processExpiredTrials();
-            setJobStatus(`Job completed. ${processed} trials checked, ${suspended} accounts suspended. Last run: ${new Date().toLocaleTimeString()}`);
+            setTrialJobStatus(`Job completed. ${processed} trials checked, ${suspended} accounts suspended. Last run: ${new Date().toLocaleTimeString()}`);
+        }, 1000);
+    };
+
+    const handleRunReminderJob = () => {
+        setReminderJobStatus('Processing...');
+        setTimeout(() => {
+            const { sent } = sendExpiryReminders();
+            setReminderJobStatus(`Job completed. ${sent} reminders sent. Last run: ${new Date().toLocaleTimeString()}`);
         }, 1000);
     };
 
@@ -170,22 +179,40 @@ const PlatformDashboard: React.FC = () => {
 
             <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
                 <h3 className="mb-4 text-lg font-semibold text-white">System Cron Jobs</h3>
-                <div className="bg-slate-900/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-slate-700">
-                    <div>
-                        <h4 className="font-semibold text-white">Process Expired Trials</h4>
-                        <p className="text-sm text-slate-400 mt-1">
-                            Checks for tenants whose trial period has ended and updates their status to 'Suspended'. 
-                            This is a simulation of a daily automated job.
-                        </p>
-                        {jobStatus && <p className="text-xs text-cyan-400 mt-2 font-mono">{jobStatus}</p>}
+                <div className="space-y-4">
+                    <div className="bg-slate-900/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-slate-700">
+                        <div>
+                            <h4 className="font-semibold text-white">Process Expired Trials</h4>
+                            <p className="text-sm text-slate-400 mt-1">
+                                Checks for tenants whose trial period has ended and updates their status to 'Suspended'. 
+                                This is a simulation of a daily automated job.
+                            </p>
+                            {trialJobStatus && <p className="text-xs text-cyan-400 mt-2 font-mono">{trialJobStatus}</p>}
+                        </div>
+                        <button
+                            onClick={handleRunTrialJob}
+                            className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-2 px-4 rounded-md flex items-center flex-shrink-0"
+                        >
+                            <Icon name="play" className="w-5 h-5 mr-2" />
+                            Run Job Manually
+                        </button>
                     </div>
-                    <button
-                        onClick={handleRunJob}
-                        className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-2 px-4 rounded-md flex items-center flex-shrink-0"
-                    >
-                        <Icon name="play" className="w-5 h-5 mr-2" />
-                        Run Job Manually
-                    </button>
+                     <div className="bg-slate-900/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border border-slate-700">
+                        <div>
+                            <h4 className="font-semibold text-white">Send Expiry Reminders</h4>
+                            <p className="text-sm text-slate-400 mt-1">
+                                Sends in-app and email notifications to tenants whose trials are expiring within 3 days.
+                            </p>
+                            {reminderJobStatus && <p className="text-xs text-cyan-400 mt-2 font-mono">{reminderJobStatus}</p>}
+                        </div>
+                        <button
+                            onClick={handleRunReminderJob}
+                            className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-2 px-4 rounded-md flex items-center flex-shrink-0"
+                        >
+                            <Icon name="play" className="w-5 h-5 mr-2" />
+                            Run Job Manually
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

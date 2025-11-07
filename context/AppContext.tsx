@@ -1459,6 +1459,31 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         return { processed, suspended };
     }, []);
 
+    // FIX: Implement `sendExpiryReminders` function.
+    const sendExpiryReminders = useCallback(() => {
+        let sent = 0;
+        const today = new Date();
+        const threeDaysFromNow = new Date();
+        threeDaysFromNow.setDate(today.getDate() + 3);
+
+        const tenantsToRemind = tenants.filter(tenant => {
+            if (tenant.status === 'TRIAL' && tenant.trialEndDate) {
+                const endDate = new Date(tenant.trialEndDate);
+                return endDate <= threeDaysFromNow && endDate >= today;
+            }
+            return false;
+        });
+
+        sent = tenantsToRemind.length;
+
+        // Simulate sending notifications
+        tenantsToRemind.forEach(tenant => {
+            console.log(`Simulating sending expiry reminder to ${tenant.businessName}`);
+        });
+
+        return { sent };
+    }, [tenants]);
+
     const processSubscriptionPayment = useCallback(async (tenantId: string, planId: string, method: string, amount: number, billingCycle: 'monthly' | 'yearly', success: boolean, proofOfPaymentUrl?: string): Promise<{success: boolean, message: string}> => {
         const newTransaction: PaymentTransaction = {
             id: `txn-${Date.now()}`,
@@ -1522,6 +1547,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addJournalEntry, addTenant, verifyTenant, updateTenantProfile, updateAdminProfile, addAnnouncement,
         markAnnouncementAsRead, addCustomer, recordCreditPayment, addDeposit, updateDeposit, addConsignment, addCategory, updateCategory,
         deleteCategory, extendTrial, activateSubscription, changeSubscriptionPlan, processExpiredTrials,
+        // FIX: Add `sendExpiryReminders` to the context value.
+        sendExpiryReminders,
         processSubscriptionPayment, updatePaymentTransactionStatus, updateEmailTemplate, updateSmsTemplate,
         markInAppNotificationAsRead,
         logout: onLogout,

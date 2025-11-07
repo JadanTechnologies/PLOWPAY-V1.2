@@ -1,3 +1,5 @@
+
+
 import React, { useState, useMemo } from 'react';
 import { View } from '../App';
 import Icon from './icons/index.tsx';
@@ -48,10 +50,24 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
         email: '',
         password: '',
     });
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [error, setError] = useState('');
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormState(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setLogoFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
     };
 
     const handleSignUp = async (e: React.FormEvent) => {
@@ -65,6 +81,10 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
             setError('Password must be at least 8 characters long.');
             return;
         }
+        if (!logoFile) {
+            setError('Company logo is required.');
+            return;
+        }
 
         const result = await addTenant({
             businessName: formState.businessName,
@@ -72,7 +92,8 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
             email: formState.email,
             username: formState.email, // Simple default
             password: formState.password,
-            planId: subscriptionPlans[0]?.id || '' // Default to first plan
+            planId: subscriptionPlans[0]?.id || '', // Default to first plan
+            companyLogoUrl: logoPreview || '',
         });
         
         if (result.success) {
@@ -103,6 +124,22 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
                 <form className="mt-8 space-y-4" onSubmit={handleSignUp}>
                     <input name="businessName" type="text" required placeholder="Business Name" value={formState.businessName} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
                     <input name="fullName" type="text" required placeholder="Your Full Name" value={formState.fullName} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
+                    <div>
+                        <label className="text-sm font-medium text-slate-400">Company Logo</label>
+                        <div className="mt-1 flex items-center space-x-4 p-3 bg-slate-800 border border-slate-600 rounded-md">
+                            {logoPreview ? (
+                                <img src={logoPreview} alt="Logo Preview" className="h-16 w-16 rounded-md object-contain bg-white/10" />
+                            ) : (
+                                <div className="h-16 w-16 rounded-md bg-slate-700 flex items-center justify-center">
+                                    <Icon name="briefcase" className="w-8 h-8 text-slate-500" />
+                                </div>
+                            )}
+                            <label htmlFor="logo-upload" className="cursor-pointer bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-md text-sm">
+                                <span>{logoFile ? 'Change Logo' : 'Upload Logo'}</span>
+                                <input id="logo-upload" name="logo" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} required/>
+                            </label>
+                        </div>
+                    </div>
                     <input name="email" type="email" required placeholder="Email Address" value={formState.email} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
                     <div>
                         <input name="password" type="password" required placeholder="Password" value={formState.password} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
