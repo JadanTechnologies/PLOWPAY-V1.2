@@ -64,7 +64,7 @@ const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void 
     return (
         <button
             type="button"
-            className={`${enabled ? 'bg-indigo-600' : 'bg-gray-600'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-800`}
+            className={`${enabled ? 'bg-cyan-600' : 'bg-slate-600'} relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 focus:ring-offset-slate-800`}
             role="switch"
             aria-checked={enabled}
             onClick={() => onChange(!enabled)}
@@ -112,10 +112,11 @@ const Settings: React.FC = () => {
     useEffect(() => {
         setFormLanguage(currentLanguage);
     }, [currentLanguage]);
-
+    
     useEffect(() => {
         setAutomationsForm(currentTenant?.automations || { generateEODReport: false, sendLowStockAlerts: false });
     }, [currentTenant]);
+
 
     const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newCurrency = e.target.value;
@@ -213,37 +214,37 @@ const Settings: React.FC = () => {
             case 'general':
                  return (
                     <div className="max-w-2xl space-y-6">
-                        <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-700">
+                        <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-700">
                             <h3 className="text-xl font-semibold mb-4 text-white">Business Profile</h3>
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-400">Business Name</label>
-                                    <input type="text" defaultValue={currentTenant?.businessName} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                    <label className="block text-sm font-medium text-slate-400">Business Name</label>
+                                    <input type="text" defaultValue={currentTenant?.businessName} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-400">Address</label>
-                                    <input type="text" defaultValue={currentTenant?.companyAddress} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                    <label className="block text-sm font-medium text-slate-400">Address</label>
+                                    <input type="text" defaultValue={currentTenant?.companyAddress} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-400">Phone</label>
-                                    <input type="text" defaultValue={currentTenant?.companyPhone} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md"/>
+                                    <label className="block text-sm font-medium text-slate-400">Phone</label>
+                                    <input type="text" defaultValue={currentTenant?.companyPhone} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
                                 </div>
                             </div>
                         </div>
-                        <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-700">
+                        <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-700">
                             <h3 className="text-xl font-semibold mb-4 text-white">Localization</h3>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-400">Currency</label>
-                                    <select name="currency" value={formCurrency} onChange={handleCurrencyChange} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
+                                    <label className="block text-sm font-medium text-slate-400">Currency</label>
+                                    <select name="currency" value={formCurrency} onChange={handleCurrencyChange} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md">
                                         {systemSettings.currencies.filter(c => c.enabled).map(c => (
                                             <option key={c.code} value={c.code}>{c.name} ({c.symbol})</option>
                                         ))}
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-400">Language</label>
-                                    <select name="language" value={formLanguage} onChange={handleLanguageChange} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md">
+                                    <label className="block text-sm font-medium text-slate-400">Language</label>
+                                    <select name="language" value={formLanguage} onChange={handleLanguageChange} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md">
                                        {systemSettings.languages.filter(l => l.enabled).map(l => (
                                             <option key={l.code} value={l.code}>{l.name}</option>
                                         ))}
@@ -252,35 +253,35 @@ const Settings: React.FC = () => {
                             </div>
                         </div>
                         <div className="text-right">
-                            <button onClick={handleGeneralSettingsSave} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md">Save Changes</button>
+                            <button onClick={handleGeneralSettingsSave} className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-2 px-4 rounded-md">Save Changes</button>
                         </div>
                     </div>
                 );
             case 'automations':
                  return (
                     <div className="max-w-2xl space-y-6">
-                        <div className="bg-gray-900/50 p-6 rounded-lg border border-gray-700">
+                        <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-700">
                             <h3 className="text-xl font-semibold mb-1 text-white">Cron Jobs & Automations</h3>
-                            <p className="text-gray-400 mb-4 text-sm">Enable automated tasks to streamline your operations.</p>
+                            <p className="text-slate-400 mb-4 text-sm">Enable automated tasks to streamline your operations.</p>
                              <div className="space-y-4">
-                                <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md">
+                                <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-md">
                                     <div>
-                                        <label className="font-medium text-white">Daily End-of-Day Report</label>
-                                        <p className="text-xs text-gray-400">Automatically generate a sales summary every night.</p>
+                                        <label className="font-medium text-white">Generate EOD Report</label>
+                                        <p className="text-xs text-slate-400">Automatically generate a sales summary every night.</p>
                                     </div>
                                     <Toggle enabled={automationsForm.generateEODReport} onChange={() => handleAutomationToggle('generateEODReport')} />
                                 </div>
-                                 <div className="flex items-center justify-between p-3 bg-gray-700/50 rounded-md">
+                                 <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-md">
                                     <div>
-                                        <label className="font-medium text-white">Daily Low-Stock Alerts</label>
-                                        <p className="text-xs text-gray-400">Receive an email notification for items running low on stock.</p>
+                                        <label className="font-medium text-white">Send Low Stock Alerts</label>
+                                        <p className="text-xs text-slate-400">Receive an email notification for items running low on stock.</p>
                                     </div>
                                     <Toggle enabled={automationsForm.sendLowStockAlerts} onChange={() => handleAutomationToggle('sendLowStockAlerts')} />
                                 </div>
                             </div>
                         </div>
                         <div className="text-right">
-                            <button onClick={handleAutomationsSave} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md">Save Automations</button>
+                            <button onClick={handleAutomationsSave} className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-2 px-4 rounded-md">Save Automations</button>
                         </div>
                     </div>
                  );
@@ -289,15 +290,15 @@ const Settings: React.FC = () => {
                     <div>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-white">Manage Branches</h3>
-                            <button onClick={() => setBranchModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="plus" className="w-5 h-5 mr-2" />Add Branch</button>
+                            <button onClick={() => setBranchModalOpen(true)} className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="plus" className="w-5 h-5 mr-2" />Add Branch</button>
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                            {branches.map(branch => {
                                 const staffCount = staff.filter(s => s.branchId === branch.id).length;
                                 return (
-                                    <div key={branch.id} className="p-4 bg-gray-700 rounded-md flex justify-between items-center shadow-md">
+                                    <div key={branch.id} className="p-4 bg-slate-700 rounded-md flex justify-between items-center shadow-md">
                                         <span className="font-semibold text-white">{branch.name}</span>
-                                        <span className="text-sm text-gray-300 bg-gray-800 px-2 py-1 rounded-full flex items-center gap-2">
+                                        <span className="text-sm text-slate-300 bg-slate-800 px-2 py-1 rounded-full flex items-center gap-2">
                                             <Icon name="users" className="w-4 h-4" />
                                             {staffCount} Staff
                                         </span>
@@ -312,13 +313,13 @@ const Settings: React.FC = () => {
                      <div>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-white">Manage Staff</h3>
-                            <button onClick={() => setStaffModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="plus" className="w-5 h-5 mr-2" />Add Staff</button>
+                            <button onClick={() => setStaffModalOpen(true)} className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="plus" className="w-5 h-5 mr-2" />Add Staff</button>
                         </div>
-                        <div className="overflow-x-auto bg-gray-900/50 rounded-lg">
+                        <div className="overflow-x-auto bg-slate-900/50 rounded-lg">
                            <table className="w-full text-left">
-                               <thead className="border-b border-gray-700"><tr><th className="p-3 text-sm font-semibold tracking-wide">Name</th><th className="p-3 text-sm font-semibold tracking-wide">Email</th><th className="p-3 text-sm font-semibold tracking-wide">Branch</th><th className="p-3 text-sm font-semibold tracking-wide">Role</th></tr></thead>
+                               <thead className="border-b border-slate-700"><tr><th className="p-3 text-sm font-semibold tracking-wide">Name</th><th className="p-3 text-sm font-semibold tracking-wide">Email</th><th className="p-3 text-sm font-semibold tracking-wide">Branch</th><th className="p-3 text-sm font-semibold tracking-wide">Role</th></tr></thead>
                                <tbody>
-                                {staff.map(s => <tr key={s.id} className="border-b border-gray-700 hover:bg-gray-700/50"><td className="p-3 font-medium">{s.name}</td><td className="p-3 text-gray-400">{s.email}</td><td className="p-3">{branchMap.get(s.branchId)}</td><td className="p-3">{roleMap.get(s.roleId)}</td></tr>)}
+                                {staff.map(s => <tr key={s.id} className="border-b border-slate-700 hover:bg-slate-700/50"><td className="p-3 font-medium">{s.name}</td><td className="p-3 text-slate-400">{s.email}</td><td className="p-3">{branchMap.get(s.branchId)}</td><td className="p-3">{roleMap.get(s.roleId)}</td></tr>)}
                                </tbody>
                            </table>
                         </div>
@@ -329,11 +330,11 @@ const Settings: React.FC = () => {
                      <div>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xl font-semibold text-white">Roles & Permissions</h3>
-                            <button onClick={() => openRoleModal()} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="plus" className="w-5 h-5 mr-2" />Add Role</button>
+                            <button onClick={() => openRoleModal()} className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="plus" className="w-5 h-5 mr-2" />Add Role</button>
                         </div>
                          <div className="space-y-4">
                             {staffRoles.map(role => (
-                                <div key={role.id} className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                                <div key={role.id} className="bg-slate-900/50 p-4 rounded-lg border border-slate-700">
                                     <div className="flex justify-between items-center mb-3">
                                         <h4 className="font-bold text-lg text-white">{role.name}</h4>
                                         <div className="space-x-3">
@@ -341,7 +342,7 @@ const Settings: React.FC = () => {
                                             <button onClick={() => handleDeleteRole(role.id)} className="text-red-500 text-sm font-semibold hover:text-red-400">Delete</button>
                                         </div>
                                     </div>
-                                    <ul className="text-sm text-gray-300 grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    <ul className="text-sm text-slate-300 grid grid-cols-2 md:grid-cols-4 gap-2">
                                         {role.permissions.map(p => <li key={p} className="flex items-center"><Icon name="check" className="w-4 h-4 mr-2 text-green-500"/>{permissionLabels[p]}</li>)}
                                     </ul>
                                 </div>
@@ -353,15 +354,15 @@ const Settings: React.FC = () => {
     };
 
     const TabButton: React.FC<{tab: SettingsTab, label: string}> = ({ tab, label }) => (
-        <button onClick={() => setActiveTab(tab)} className={`px-4 py-2 font-medium text-sm rounded-md ${activeTab === tab ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>
+        <button onClick={() => setActiveTab(tab)} className={`px-4 py-2 font-medium text-sm rounded-md ${activeTab === tab ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>
             {label}
         </button>
     );
 
     return (
-        <div className="p-6 bg-gray-800 rounded-lg shadow-md">
+        <div className="p-6 bg-slate-800 rounded-lg shadow-lg border border-slate-700">
             <h2 className="text-2xl font-bold text-white mb-6">Settings</h2>
-            <div className="flex flex-wrap gap-2 border-b border-gray-700 mb-6 pb-2">
+            <div className="flex flex-wrap gap-2 border-b border-slate-700 mb-6 pb-2">
                 <TabButton tab="general" label="General" />
                 <TabButton tab="automations" label="Automations" />
                 <TabButton tab="branches" label="Branches" />
@@ -375,36 +376,36 @@ const Settings: React.FC = () => {
             {/* Modals */}
             {isBranchModalOpen && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-                    <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+                    <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
                         <h3 className="text-xl font-bold mb-4 text-white">Add New Branch</h3>
-                        <div><label className="text-sm text-gray-400">Branch Name</label><input type="text" value={branchForm.name} onChange={e => setBranchForm({name: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1 text-white border border-gray-600 focus:ring-indigo-500"/></div>
-                        <div className="flex justify-end gap-3 mt-6"><button onClick={() => setBranchModalOpen(false)} className="px-4 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-500 font-semibold">Cancel</button><button onClick={handleAddBranch} className="px-4 py-2 rounded-md bg-indigo-600 text-white hover:bg-indigo-500 font-semibold">Save</button></div>
+                        <div><label className="text-sm text-slate-400">Branch Name</label><input type="text" value={branchForm.name} onChange={e => setBranchForm({name: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1 text-white border border-slate-600 focus:ring-cyan-500"/></div>
+                        <div className="flex justify-end gap-3 mt-6"><button onClick={() => setBranchModalOpen(false)} className="px-4 py-2 rounded-md bg-slate-600 text-white hover:bg-slate-500 font-semibold">Cancel</button><button onClick={handleAddBranch} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold">Save</button></div>
                     </div>
                 </div>
             )}
             {isStaffModalOpen && (
                  <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-                    <div className="bg-gray-800 rounded-lg p-6 w-full max-w-md">
+                    <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
                         <h3 className="text-xl font-bold mb-4 text-white">Add New Staff Member</h3>
                         <div className="space-y-4">
-                            <div><label className="text-sm text-gray-400">Full Name</label><input type="text" value={staffForm.name} onChange={e => setStaffForm({...staffForm, name: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1 text-white border border-gray-600 focus:ring-indigo-500"/></div>
-                            <div><label className="text-sm text-gray-400">Email</label><input type="email" value={staffForm.email} onChange={e => setStaffForm({...staffForm, email: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1 text-white border border-gray-600 focus:ring-indigo-500"/></div>
-                            <div><label className="text-sm text-gray-400">Username</label><input type="text" value={staffForm.username} onChange={e => setStaffForm({...staffForm, username: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1 text-white border border-gray-600 focus:ring-indigo-500"/></div>
-                            <div><label className="text-sm text-gray-400">Password</label><input type="password" value={staffForm.password} onChange={e => setStaffForm({...staffForm, password: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1 text-white border border-gray-600 focus:ring-indigo-500"/></div>
-                            <div><label className="text-sm text-gray-400">Branch</label><select value={staffForm.branchId} onChange={e => setStaffForm({...staffForm, branchId: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1 text-white border border-gray-600 focus:ring-indigo-500">{branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
-                            <div><label className="text-sm text-gray-400">Role</label><select value={staffForm.roleId} onChange={e => setStaffForm({...staffForm, roleId: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1 text-white border border-gray-600 focus:ring-indigo-500">{staffRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</select></div>
+                            <div><label className="text-sm text-slate-400">Full Name</label><input type="text" value={staffForm.name} onChange={e => setStaffForm({...staffForm, name: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1 text-white border border-slate-600 focus:ring-cyan-500"/></div>
+                            <div><label className="text-sm text-slate-400">Email</label><input type="email" value={staffForm.email} onChange={e => setStaffForm({...staffForm, email: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1 text-white border border-slate-600 focus:ring-cyan-500"/></div>
+                            <div><label className="text-sm text-slate-400">Username</label><input type="text" value={staffForm.username} onChange={e => setStaffForm({...staffForm, username: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1 text-white border border-slate-600 focus:ring-cyan-500"/></div>
+                            <div><label className="text-sm text-slate-400">Password</label><input type="password" value={staffForm.password} onChange={e => setStaffForm({...staffForm, password: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1 text-white border border-slate-600 focus:ring-cyan-500"/></div>
+                            <div><label className="text-sm text-slate-400">Branch</label><select value={staffForm.branchId} onChange={e => setStaffForm({...staffForm, branchId: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1 text-white border border-slate-600 focus:ring-cyan-500">{branches.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+                            <div><label className="text-sm text-slate-400">Role</label><select value={staffForm.roleId} onChange={e => setStaffForm({...staffForm, roleId: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1 text-white border border-slate-600 focus:ring-cyan-500">{staffRoles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}</select></div>
                         </div>
-                        <div className="flex justify-end gap-3 mt-6"><button onClick={() => setStaffModalOpen(false)} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500 font-semibold">Cancel</button><button onClick={handleAddStaff} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 font-semibold">Save</button></div>
+                        <div className="flex justify-end gap-3 mt-6"><button onClick={() => setStaffModalOpen(false)} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500 font-semibold">Cancel</button><button onClick={handleAddStaff} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 font-semibold">Save</button></div>
                     </div>
                 </div>
             )}
             {isRoleModalOpen && (
                  <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-                    <div className="bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
+                    <div className="bg-slate-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
                         <h3 className="text-xl font-bold mb-4 text-white">{roleForm.id ? 'Edit' : 'Add'} Role</h3>
                         <div className="mb-4">
-                            <label className="text-sm font-medium text-gray-400">Role Name</label>
-                            <input type="text" value={roleForm.name} onChange={e => setRoleForm({...roleForm, name: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1 text-white border border-gray-600 focus:ring-indigo-500"/>
+                            <label className="text-sm font-medium text-slate-400">Role Name</label>
+                            <input type="text" value={roleForm.name} onChange={e => setRoleForm({...roleForm, name: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1 text-white border border-slate-600 focus:ring-cyan-500"/>
                         </div>
                         <h4 className="mb-2 font-semibold text-white">Permissions</h4>
                         <div className="space-y-3 flex-grow overflow-y-auto pr-2 -mr-2">
@@ -418,9 +419,9 @@ const Settings: React.FC = () => {
                                 />
                             ))}
                         </div>
-                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-700">
-                            <button onClick={() => setRoleModalOpen(false)} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500 font-semibold">Cancel</button>
-                            <button onClick={handleSaveRole} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500 font-semibold">Save Role</button>
+                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
+                            <button onClick={() => setRoleModalOpen(false)} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500 font-semibold">Cancel</button>
+                            <button onClick={handleSaveRole} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 font-semibold">Save Role</button>
                         </div>
                     </div>
                 </div>
