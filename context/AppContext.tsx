@@ -518,7 +518,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         const initialTenants = (() => {
             try {
                 const stored = window.localStorage.getItem(TENANTS_STORAGE_KEY);
-                return stored ? JSON.parse(stored).map((t: any) => ({ ...t, joinDate: new Date(t.joinDate) })) : mockTenants;
+                return stored ? JSON.parse(stored).map((t: any) => ({ ...t, joinDate: new Date(t.joinDate), trialEndDate: t.trialEndDate ? new Date(t.trialEndDate) : undefined })) : mockTenants;
             } catch { return mockTenants; }
         })();
         return initialTenants.find((t: Tenant) => t.id === CURRENT_TENANT_ID) || null;
