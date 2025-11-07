@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { SubscriptionPlan } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
-import Icon from './icons';
+import Icon from '/components/icons/index.tsx';
 import { useCurrency } from '../hooks/useCurrency';
 
 interface CheckoutProps {

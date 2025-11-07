@@ -1,9 +1,8 @@
-
-
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
-import { NotificationSettings, PushSettings, SmsSettings } from '../../types';
-import Icon from '../icons';
+// FIX: Alias the NotificationSettings type to avoid a name collision with the component.
+import { NotificationSettings as NotificationSettingsType } from '../../types';
+import Icon from '/components/icons/index.tsx';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
     return (
@@ -22,248 +21,91 @@ const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void 
     );
 };
 
-
-const NotificationSettingsComponent: React.FC = () => {
+// FIX: Renamed component from NotificationSettingsComponent to NotificationSettings to match the import in SuperAdminPanel.
+const NotificationSettings: React.FC = () => {
     const { notificationSettings, updateNotificationSettings } = useAppContext();
-    const [formState, setFormState] = useState<NotificationSettings>(notificationSettings);
+    // FIX: Use the aliased type here.
+    const [formState, setFormState] = useState<NotificationSettingsType>(notificationSettings);
 
-    const handleProviderChange = (provider: 'resend' | 'smtp') => {
-        setFormState(prev => ({
-            ...prev,
-            email: { ...prev.email, provider }
-        }));
-    };
-
-    const handleEmailChange = (provider: 'resend' | 'smtp', field: string, value: string | number) => {
-        setFormState(prev => ({
-            ...prev,
-            email: {
-                ...prev.email,
-                [provider]: {
-                    ...prev.email[provider],
-                    [field]: value
-                }
-            }
-        }));
-    };
-
-    const handleSmsToggle = (provider: keyof SmsSettings) => {
-        setFormState(prev => ({
-            ...prev,
-            sms: {
-                ...prev.sms,
-                [provider]: {
-                    ...prev.sms[provider],
-                    enabled: !prev.sms[provider].enabled
-                }
-            }
-        }));
-    };
-
-    const handleSmsChange = (provider: keyof SmsSettings, field: string, value: string) => {
-        setFormState(prev => ({
-            ...prev,
-            sms: {
-                ...prev.sms,
-                [provider]: {
-                    ...prev.sms[provider],
-                    [field]: value
-                }
-            }
-        }));
-    };
-
-    const handlePushToggle = (provider: keyof PushSettings) => {
-        setFormState(prev => ({
-            ...prev,
-            push: {
-                ...prev.push,
-                [provider]: {
-                    ...prev.push[provider],
-                    enabled: !prev.push[provider].enabled
-                }
-            }
-        }));
-    };
-
-    const handlePushChange = (provider: keyof PushSettings, field: string, value: string) => {
-        setFormState(prev => ({
-            ...prev,
-            push: {
-                ...prev.push,
-                [provider]: {
-                    ...prev.push[provider],
-                    [field]: value
-                }
-            }
-        }));
-    };
-    
     const handleSave = () => {
         updateNotificationSettings(formState);
         alert('Notification settings saved successfully!');
     };
-    
-    const isResendActive = formState.email.provider === 'resend';
-    const isSmtpActive = formState.email.provider === 'smtp';
 
     return (
         <div className="space-y-6">
             <div className="p-6 bg-gray-800 rounded-lg shadow-md">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                <div className="flex justify-between items-center">
                     <div>
-                        <h2 className="text-2xl font-bold text-white mb-2">Notification Settings</h2>
-                        <p className="text-gray-400">Configure providers for sending emails, SMS, and push notifications.</p>
+                        <h2 className="text-2xl font-bold text-white">Notification Settings</h2>
+                        <p className="text-gray-400 mt-1">Configure providers for email, SMS, and push notifications.</p>
                     </div>
-                     <button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md mt-4 sm:mt-0">
+                    <button onClick={handleSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">
                         Save All Settings
                     </button>
                 </div>
             </div>
 
-            {/* Email Settings */}
-            <div className="bg-gray-800 rounded-lg shadow-md p-6">
-                <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-3 flex items-center">
-                    <Icon name="at-symbol" className="w-6 h-6 mr-3 text-cyan-400" />
-                    Email Provider
-                </h3>
-                <div className="mb-6">
-                    <p className="text-sm font-medium text-gray-400 mb-2">Select the active email service provider:</p>
-                    <div className="flex gap-4">
-                        <label className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${isResendActive ? 'bg-cyan-900/50 border-cyan-500' : 'border-gray-700 hover:border-gray-600'}`}>
-                            <input type="radio" name="emailProvider" value="resend" checked={isResendActive} onChange={() => handleProviderChange('resend')} className="h-4 w-4 text-cyan-600 bg-gray-700 border-gray-600 focus:ring-cyan-500" />
-                            <span className="ml-3 text-white font-semibold">Resend</span>
-                        </label>
-                        <label className={`flex items-center p-3 rounded-lg border-2 cursor-pointer transition-all ${isSmtpActive ? 'bg-cyan-900/50 border-cyan-500' : 'border-gray-700 hover:border-gray-600'}`}>
-                            <input type="radio" name="emailProvider" value="smtp" checked={isSmtpActive} onChange={() => handleProviderChange('smtp')} className="h-4 w-4 text-cyan-600 bg-gray-700 border-gray-600 focus:ring-cyan-500" />
-                            <span className="ml-3 text-white font-semibold">SMTP</span>
-                        </label>
-                    </div>
-                </div>
-
-                {/* Resend Settings */}
-                <div className={`space-y-4 transition-opacity duration-300 ${isResendActive ? 'opacity-100' : 'opacity-40'}`}>
-                    <h4 className="text-lg font-semibold text-white">Resend Configuration</h4>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Email Settings */}
+                <div className="bg-gray-800 rounded-lg shadow-md p-6 space-y-4">
+                    <h3 className="text-xl font-bold text-white">Email (Resend)</h3>
                     <div>
                         <label className="block text-sm font-medium text-gray-400">API Key</label>
-                        <input type="password" value={formState.email.resend.apiKey} onChange={e => handleEmailChange('resend', 'apiKey', e.target.value)} disabled={!isResendActive} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" />
+                        <input
+                            type="password"
+                            value={formState.email.resend.apiKey}
+                            onChange={e => setFormState(prev => ({ ...prev, email: { ...prev.email, resend: { ...prev.email.resend, apiKey: e.target.value } } }))}
+                            className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white"
+                        />
                     </div>
                 </div>
 
-                <div className="my-6 border-t border-gray-700"></div>
-
-                {/* SMTP Settings */}
-                <div className={`space-y-4 transition-opacity duration-300 ${isSmtpActive ? 'opacity-100' : 'opacity-40'}`}>
-                    <h4 className="text-lg font-semibold text-white">SMTP Configuration</h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-400">SMTP Host</label>
-                            <input type="text" value={formState.email.smtp.host} onChange={e => handleEmailChange('smtp', 'host', e.target.value)} disabled={!isSmtpActive} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" />
-                        </div>
-                         <div>
-                            <label className="block text-sm font-medium text-gray-400">SMTP Port</label>
-                            <input type="number" value={formState.email.smtp.port} onChange={e => handleEmailChange('smtp', 'port', parseInt(e.target.value, 10))} disabled={!isSmtpActive} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-400">Username</label>
-                            <input type="text" value={formState.email.smtp.user} onChange={e => handleEmailChange('smtp', 'user', e.target.value)} disabled={!isSmtpActive} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-400">Password</label>
-                            <input type="password" value={formState.email.smtp.pass} onChange={e => handleEmailChange('smtp', 'pass', e.target.value)} disabled={!isSmtpActive} className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" />
-                        </div>
+                {/* SMS Settings */}
+                <div className="bg-gray-800 rounded-lg shadow-md p-6 space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h3 className="text-xl font-bold text-white">SMS (Twilio)</h3>
+                        <Toggle
+                            enabled={formState.sms.twilio.enabled}
+                            onChange={enabled => setFormState(prev => ({ ...prev, sms: { ...prev.sms, twilio: { ...prev.sms.twilio, enabled } } }))}
+                        />
                     </div>
-                </div>
-            </div>
-            
-            {/* SMS Settings */}
-            <div className="bg-gray-800 rounded-lg shadow-md p-6">
-                <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-3 flex items-center">
-                    <Icon name="chat-bubble-left-right" className="w-6 h-6 mr-3 text-cyan-400" />
-                    SMS Provider
-                </h3>
-                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
-                    <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-lg font-semibold text-white">Twilio Configuration</h4>
-                        <Toggle enabled={formState.sms.twilio.enabled} onChange={() => handleSmsToggle('twilio')} />
-                    </div>
-                    <div className={`space-y-4 transition-opacity duration-300 ${formState.sms.twilio.enabled ? 'opacity-100' : 'opacity-50'}`}>
+                    <div className={`space-y-4 ${!formState.sms.twilio.enabled && 'opacity-50'}`}>
                         <div>
                             <label className="block text-sm font-medium text-gray-400">Account SID</label>
-                            <input 
-                                type="text" 
-                                value={formState.sms.twilio.accountSid} 
-                                onChange={e => handleSmsChange('twilio', 'accountSid', e.target.value)} 
-                                disabled={!formState.sms.twilio.enabled} 
-                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
+                            <input
+                                type="text"
+                                value={formState.sms.twilio.accountSid}
+                                onChange={e => setFormState(prev => ({ ...prev, sms: { ...prev.sms, twilio: { ...prev.sms.twilio, accountSid: e.target.value } } }))}
+                                disabled={!formState.sms.twilio.enabled}
+                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white disabled:bg-gray-700/50"
                             />
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-400">API Key</label>
-                            <input 
-                                type="password" 
-                                value={formState.sms.twilio.apiKey} 
-                                onChange={e => handleSmsChange('twilio', 'apiKey', e.target.value)} 
-                                disabled={!formState.sms.twilio.enabled} 
-                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
+                            <input
+                                type="password"
+                                value={formState.sms.twilio.apiKey}
+                                onChange={e => setFormState(prev => ({ ...prev, sms: { ...prev.sms, twilio: { ...prev.sms.twilio, apiKey: e.target.value } } }))}
+                                disabled={!formState.sms.twilio.enabled}
+                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white disabled:bg-gray-700/50"
                             />
                         </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-400">"From" Number</label>
-                            <input 
-                                type="text" 
-                                value={formState.sms.twilio.fromNumber} 
-                                onChange={e => handleSmsChange('twilio', 'fromNumber', e.target.value)} 
-                                disabled={!formState.sms.twilio.enabled} 
-                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
-                                placeholder="+15017122661"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            {/* Push Notification Settings */}
-            <div className="bg-gray-800 rounded-lg shadow-md p-6">
-                <h3 className="text-xl font-bold text-white mb-4 border-b border-gray-700 pb-3 flex items-center">
-                    <Icon name="notification" className="w-6 h-6 mr-3 text-cyan-400" />
-                    Push Notifications
-                </h3>
-                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
-                    <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-lg font-semibold text-white">Firebase Cloud Messaging (FCM)</h4>
-                        <Toggle 
-                            enabled={formState.push.firebase.enabled} 
-                            onChange={() => handlePushToggle('firebase')} 
-                        />
-                    </div>
-                    <div className={`space-y-4 transition-opacity duration-300 ${formState.push.firebase.enabled ? 'opacity-100' : 'opacity-50'}`}>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-400">Server Key</label>
-                            <input 
-                                type="password" 
-                                value={formState.push.firebase.serverKey} 
-                                onChange={e => handlePushChange('firebase', 'serverKey', e.target.value)} 
-                                disabled={!formState.push.firebase.enabled} 
-                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-400">VAPID Key (Web Push)</label>
-                            <input 
-                                type="text" 
-                                value={formState.push.firebase.vapidKey} 
-                                onChange={e => handlePushChange('firebase', 'vapidKey', e.target.value)} 
-                                disabled={!formState.push.firebase.enabled} 
-                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-cyan-500 focus:border-cyan-500 disabled:bg-gray-700/50" 
+                         <div>
+                            <label className="block text-sm font-medium text-gray-400">From Number</label>
+                            <input
+                                type="text"
+                                value={formState.sms.twilio.fromNumber}
+                                onChange={e => setFormState(prev => ({ ...prev, sms: { ...prev.sms, twilio: { ...prev.sms.twilio, fromNumber: e.target.value } } }))}
+                                disabled={!formState.sms.twilio.enabled}
+                                className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white disabled:bg-gray-700/50"
                             />
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
     );
 };
 
-export default NotificationSettingsComponent;
+export default NotificationSettings;

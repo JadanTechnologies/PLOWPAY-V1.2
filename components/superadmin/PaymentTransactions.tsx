@@ -1,8 +1,7 @@
-
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { PaymentTransaction, PaymentTransactionStatus } from '../../types';
-import Icon from '../icons';
+import Icon from '/components/icons/index.tsx';
 import { useCurrency } from '../../hooks/useCurrency';
 
 const PaymentTransactions: React.FC = () => {

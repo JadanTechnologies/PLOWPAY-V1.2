@@ -1,9 +1,10 @@
 
 
+
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminUser, AdminUserStatus, Permission } from '../../types';
-import Icon from '../icons';
+import Icon from '/components/icons/index.tsx';
 import { usePermissions } from '../../hooks/usePermissions';
 
 const permissionLabels: Record<Permission, string> = {

@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Announcement } from '../../types';
-import Icon from '../icons';
+import Icon from '/components/icons/index.tsx';
 
 const Announcements: React.FC = () => {
     const { announcements, addAnnouncement } = useAppContext();

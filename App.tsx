@@ -7,7 +7,7 @@ import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { useAppContext } from './hooks/useAppContext';
 import { FaqItem, PageContent, NotificationType } from './types';
-import Icon from './components/icons';
+import Icon from '/components/icons/index.tsx';
 import SignUp from './components/SignUp';
 import ForgotPassword from './components/ForgotPassword';
 import MaintenancePage from './components/MaintenancePage';

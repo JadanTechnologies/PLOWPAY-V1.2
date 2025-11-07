@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { SubscriptionPlan } from '../../types';
-import Icon from '../icons';
+import Icon from '/components/icons/index.tsx';
 import { useCurrency } from '../../hooks/useCurrency';
 
 const SubscriptionManagement: React.FC = () => {

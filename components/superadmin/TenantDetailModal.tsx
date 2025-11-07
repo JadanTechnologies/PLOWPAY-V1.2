@@ -1,6 +1,6 @@
 import React from 'react';
 import { Tenant } from '../../types';
-import Icon from '../icons';
+import Icon from '/components/icons/index.tsx';
 
 interface TenantDetailModalProps {
     tenant: Tenant;

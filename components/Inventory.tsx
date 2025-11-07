@@ -4,10 +4,11 @@
 
 
 
+
 import React, {useState, useMemo} from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, ProductVariant, StockLog, Category } from '../types';
-import Icon from './icons';
+import Icon from '/components/icons/index.tsx';
 import { useCurrency } from '../hooks/useCurrency';
 
 type NewVariant = Omit<ProductVariant, 'id'>;

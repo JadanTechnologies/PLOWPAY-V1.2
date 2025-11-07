@@ -1,9 +1,7 @@
-
-
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
+import { useAppContext } from '../hooks/useAppContext';
 import { Truck, Shipment, TrackerProvider, Branch, Customer, Sale, ProductVariant } from '../../types';
-import Icon from '../icons';
+import Icon from '/components/icons/index.tsx';
 
 type ModalState = 'NONE' | 'TRUCK' | 'SHIPMENT' | 'SELL_SHIPMENT';
 

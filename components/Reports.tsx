@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import Icon from './icons';
+import Icon from '/components/icons/index.tsx';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Sale, Customer, PurchaseOrder, Consignment, Supplier } from '../types';
 import { useCurrency } from '../hooks/useCurrency';

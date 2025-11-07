@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import Icon from './icons';
+import Icon from '/components/icons/index.tsx';
 import { StaffRole, TenantPermission, TenantAutomations } from '../types';
 
 type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations';

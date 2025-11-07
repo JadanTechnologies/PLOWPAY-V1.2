@@ -1,7 +1,8 @@
 
+
 import React from 'react';
 import { SuperAdminPage } from '../../App';
-import Icon from '../icons';
+import Icon from '/components/icons/index.tsx';
 import { usePermissions } from '../../hooks/usePermissions';
 
 interface SidebarProps {

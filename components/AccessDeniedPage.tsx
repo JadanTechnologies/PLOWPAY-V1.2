@@ -1,6 +1,5 @@
-
 import React from 'react';
-import Icon from './icons';
+import Icon from '/components/icons/index.tsx';
 import { useAppContext } from '../hooks/useAppContext';
 
 const AccessDeniedPage: React.FC = () => {

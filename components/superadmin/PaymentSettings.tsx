@@ -1,8 +1,9 @@
 
+
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { PaymentSettings } from '../../types';
-import Icon from '../icons';
+import Icon from '/components/icons/index.tsx';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
     return (

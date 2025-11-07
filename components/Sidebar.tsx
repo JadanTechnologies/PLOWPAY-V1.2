@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Page } from '../App';
-import Icon from './icons';
+import Icon from '/components/icons/index.tsx';
 import { useTranslation } from '../hooks/useTranslation';
 
 interface SidebarProps {
