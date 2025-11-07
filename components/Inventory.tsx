@@ -1,10 +1,9 @@
-
-
 import React, {useState, useMemo} from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, ProductVariant, StockLog, Category } from '../types';
 import Icon from './icons/index.tsx';
 import { useCurrency } from '../hooks/useCurrency';
+import ConfirmationModal from './ConfirmationModal';
 
 type NewVariant = Omit<ProductVariant, 'id'>;
 
@@ -46,6 +45,7 @@ const Inventory: React.FC = () => {
     const [isCategoryModalOpen, setCategoryModalOpen] = useState(false);
     const [editingCategory, setEditingCategory] = useState<Category | null>(null);
     const [categoryFormName, setCategoryFormName] = useState('');
+    const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
 
     const categoryMap = useMemo(() => new Map(categories.map(c => [c.id, c.name])), [categories]);
 
@@ -219,9 +219,7 @@ const Inventory: React.FC = () => {
     };
 
     const handleDeleteCategory = (categoryId: string) => {
-        if (window.confirm("Are you sure you want to delete this category? This cannot be undone.")) {
-            deleteCategory(categoryId);
-        }
+        deleteCategory(categoryId);
     };
 
     const getExpiryDateStyles = (dateString?: string) => {
@@ -372,7 +370,7 @@ const Inventory: React.FC = () => {
                                         <span className="font-medium text-white">{cat.name}</span>
                                         <div className="space-x-3">
                                             <button onClick={() => openCategoryModal(cat)} className="text-yellow-400 hover:text-yellow-300 font-semibold text-sm">Edit</button>
-                                            <button onClick={() => handleDeleteCategory(cat.id)} className="text-red-500 hover:text-red-400 font-semibold text-sm">Delete</button>
+                                            <button onClick={() => setDeletingCategoryId(cat.id)} className="text-red-500 hover:text-red-400 font-semibold text-sm">Delete</button>
                                         </div>
                                     </li>
                                 ))}
@@ -418,6 +416,20 @@ const Inventory: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            <ConfirmationModal
+                isOpen={deletingCategoryId !== null}
+                onClose={() => setDeletingCategoryId(null)}
+                onConfirm={() => {
+                    if (deletingCategoryId) {
+                        handleDeleteCategory(deletingCategoryId);
+                    }
+                }}
+                title="Delete Category"
+                confirmText="Delete"
+            >
+                Are you sure you want to delete this category? This action cannot be undone.
+            </ConfirmationModal>
 
             {/* Modals */}
              {(isAdjustModalOpen || isEditModalOpen || isTransferModalOpen || isAddProductModalOpen || isCategoryModalOpen || isTransferConfirmOpen) && (

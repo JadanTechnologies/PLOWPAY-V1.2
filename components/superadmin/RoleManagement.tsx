@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminRole, Permission } from '../../types';
 import Icon from '../icons/index.tsx';
+import ConfirmationModal from '../ConfirmationModal';
 
 const permissionLabels: Record<Permission, string> = {
     viewPlatformDashboard: 'View Platform Dashboard',
@@ -64,6 +65,7 @@ const CollapsibleSection: React.FC<{
 const RoleCard: React.FC<{ role: AdminRole }> = ({ role }) => {
     const { updateAdminRole, deleteAdminRole } = useAppContext();
     const [permissions, setPermissions] = useState<Set<Permission>>(new Set(role.permissions));
+    const [isConfirmOpen, setConfirmOpen] = useState(false);
     
     useEffect(() => {
         setPermissions(new Set(role.permissions));
@@ -84,10 +86,8 @@ const RoleCard: React.FC<{ role: AdminRole }> = ({ role }) => {
         alert(`Role '${role.name}' updated successfully.`);
     };
     
-    const handleDelete = () => {
-        if (window.confirm(`Are you sure you want to delete the "${role.name}" role? This action cannot be undone.`)) {
-            deleteAdminRole(role.id);
-        }
+    const handleConfirmDelete = () => {
+        deleteAdminRole(role.id);
     };
 
     const isDeletable = !['Admin', 'Support', 'Developer'].includes(role.name);
@@ -105,7 +105,7 @@ const RoleCard: React.FC<{ role: AdminRole }> = ({ role }) => {
                     </button>
                     {isDeletable && (
                          <button 
-                          onClick={handleDelete}
+                          onClick={() => setConfirmOpen(true)}
                           className="bg-rose-600 hover:bg-rose-500 text-white font-bold py-2 px-4 rounded-md text-sm"
                         >
                             Delete
@@ -124,6 +124,15 @@ const RoleCard: React.FC<{ role: AdminRole }> = ({ role }) => {
                     />
                 ))}
             </div>
+             <ConfirmationModal
+                isOpen={isConfirmOpen}
+                onClose={() => setConfirmOpen(false)}
+                onConfirm={handleConfirmDelete}
+                title={`Delete Role: ${role.name}`}
+                confirmText="Delete Role"
+            >
+                Are you sure you want to delete the "{role.name}" role? This action cannot be undone.
+            </ConfirmationModal>
         </div>
     );
 };

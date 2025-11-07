@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { StaffRole, TenantPermission, TenantAutomations } from '../types';
 import { allCurrencies, allLanguages } from '../utils/data';
+import ConfirmationModal from './ConfirmationModal';
 
 type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations' | 'security';
 
@@ -267,11 +268,13 @@ const Staff: React.FC = () => {
 };
 
 const Roles: React.FC = () => {
-    const { staffRoles, addStaffRole, updateStaffRole, deleteStaffRole, allTenantPermissions } = useAppContext();
+    const { staffRoles, addStaffRole, updateStaffRole, deleteStaffRole } = useAppContext();
     const [isModalOpen, setModalOpen] = useState(false);
     const [editingRole, setEditingRole] = useState<StaffRole | null>(null);
     const [formName, setFormName] = useState('');
     const [formPermissions, setFormPermissions] = useState<Set<TenantPermission>>(new Set());
+    const [deletingRoleId, setDeletingRoleId] = useState<string | null>(null);
+    const roleToDelete = useMemo(() => staffRoles.find(r => r.id === deletingRoleId), [deletingRoleId, staffRoles]);
 
     const openModal = (role: StaffRole | null = null) => {
         if (role) {
@@ -314,7 +317,7 @@ const Roles: React.FC = () => {
                         <span className="font-semibold">{role.name}</span>
                         <div className="space-x-2">
                            <button onClick={() => openModal(role)} className="text-yellow-400 font-semibold text-sm">Edit</button>
-                           <button onClick={() => deleteStaffRole(role.id)} className="text-rose-400 font-semibold text-sm">Delete</button>
+                           <button onClick={() => setDeletingRoleId(role.id)} className="text-rose-400 font-semibold text-sm">Delete</button>
                         </div>
                     </div>
                 ))}
@@ -345,6 +348,19 @@ const Roles: React.FC = () => {
                     </div>
                 </div>
             )}
+             <ConfirmationModal
+                isOpen={!!roleToDelete}
+                onClose={() => setDeletingRoleId(null)}
+                onConfirm={() => {
+                    if (deletingRoleId) {
+                        deleteStaffRole(deletingRoleId);
+                    }
+                }}
+                title={`Delete Role: ${roleToDelete?.name}`}
+                confirmText="Delete"
+            >
+                Are you sure you want to delete this role? This cannot be undone.
+            </ConfirmationModal>
          </SettingCard>
     );
 };

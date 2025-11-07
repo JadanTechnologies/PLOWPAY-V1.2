@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { BlogPost } from '../../types';
 import Icon from '../icons';
+import ConfirmationModal from '../ConfirmationModal';
 
 const BlogManagement: React.FC = () => {
     const { blogPosts, addBlogPost, updateBlogPost, deleteBlogPost, currentAdminUser } = useAppContext();
     const [isModalOpen, setModalOpen] = useState(false);
     const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+    const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+    const postToDelete = useMemo(() => blogPosts.find(p => p.id === deletingPostId), [deletingPostId, blogPosts]);
 
     const initialFormState = {
         title: '',
@@ -56,9 +59,7 @@ const BlogManagement: React.FC = () => {
     };
 
     const handleDelete = (postId: string) => {
-        if (window.confirm("Are you sure you want to delete this blog post?")) {
-            deleteBlogPost(postId);
-        }
+        deleteBlogPost(postId);
     };
 
     const getStatusBadge = (status: 'DRAFT' | 'PUBLISHED') => {
@@ -98,7 +99,7 @@ const BlogManagement: React.FC = () => {
                                 <td className="p-3 text-center">{getStatusBadge(post.status)}</td>
                                 <td className="p-3 text-center space-x-2">
                                     <button onClick={() => openModal(post)} className="text-yellow-400 font-semibold text-xs">Edit</button>
-                                    <button onClick={() => handleDelete(post.id)} className="text-rose-400 font-semibold text-xs">Delete</button>
+                                    <button onClick={() => setDeletingPostId(post.id)} className="text-rose-400 font-semibold text-xs">Delete</button>
                                 </td>
                             </tr>
                         ))}
@@ -126,6 +127,19 @@ const BlogManagement: React.FC = () => {
                     </form>
                 </div>
             )}
+            <ConfirmationModal
+                isOpen={!!postToDelete}
+                onClose={() => setDeletingPostId(null)}
+                onConfirm={() => {
+                    if (deletingPostId) {
+                        handleDelete(deletingPostId);
+                    }
+                }}
+                title={`Delete Post: ${postToDelete?.title}`}
+                confirmText="Delete Post"
+            >
+                Are you sure you want to delete this blog post? This action cannot be undone.
+            </ConfirmationModal>
         </div>
     );
 };

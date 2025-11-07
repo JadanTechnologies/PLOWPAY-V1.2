@@ -1,10 +1,10 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant, Payment, Sale, Deposit, TenantPermission, Customer } from '../types';
 import Icon from './icons/index.tsx';
 import Calculator from './Calculator';
 import { useCurrency } from '../hooks/useCurrency';
+import ConfirmationModal from './ConfirmationModal';
 
 const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, variant: ProductVariant) => void }> = ({ product, onAddToCart }) => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
@@ -469,6 +469,8 @@ const PointOfSale: React.FC = () => {
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [isReturnMode, setIsReturnMode] = useState(false);
+  const [isClearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const [deletingHeldOrderId, setDeletingHeldOrderId] = useState<number | null>(null);
 
   const userPermissions = useMemo(() => {
     if (!currentStaffUser) return new Set<TenantPermission>();
@@ -816,7 +818,7 @@ const PointOfSale: React.FC = () => {
                      <div className="flex justify-between font-bold text-2xl border-t border-slate-700 pt-3"><span className="text-white">Total</span><span className={isRefund ? 'text-red-400' : 'text-cyan-400'}>{formatCurrency(total)}</span></div>
 
                      <div className="grid grid-cols-2 gap-2">
-                        <button onClick={clearOrder} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Clear</button>
+                        <button onClick={() => setClearConfirmOpen(true)} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Clear</button>
                         {canProcessReturns ? (
                             <button onClick={() => setIsReturnMode(!isReturnMode)} className={`${isReturnMode ? 'bg-red-600 hover:bg-red-500 ring-2 ring-white/70' : 'bg-slate-700 hover:bg-slate-600'} font-semibold py-2 px-4 rounded-md transition-colors`}>
                                 Return Mode
@@ -847,8 +849,32 @@ const PointOfSale: React.FC = () => {
         />}
         {isInvoiceModalOpen && lastCompletedSale && <InvoiceModal sale={lastCompletedSale} onClose={() => setInvoiceModalOpen(false)} />}
         {isDepositModalOpen && <DepositModal customerName={customer.name} onClose={() => setDepositModalOpen(false)} onConfirm={handleRecordDeposit} />}
-        {isHeldOrdersModalOpen && <HeldOrdersModal heldOrders={heldOrders} onClose={() => setHeldOrdersModalOpen(false)} onRetrieve={handleRetrieveOrder} onDelete={handleDeleteHeldOrder} />}
+        {isHeldOrdersModalOpen && <HeldOrdersModal heldOrders={heldOrders} onClose={() => setHeldOrdersModalOpen(false)} onRetrieve={handleRetrieveOrder} onDelete={(id) => setDeletingHeldOrderId(id)} />}
         {isCustomerSearchOpen && <CustomerSearchModal onClose={() => setIsCustomerSearchOpen(false)} onSelectCustomer={handleSelectCustomer} />}
+        
+        <ConfirmationModal
+            isOpen={isClearConfirmOpen}
+            onClose={() => setClearConfirmOpen(false)}
+            onConfirm={clearOrder}
+            title="Clear Current Order"
+            confirmText="Clear Order"
+        >
+            Are you sure you want to clear the current order? All items in the cart will be removed.
+        </ConfirmationModal>
+
+        <ConfirmationModal
+            isOpen={deletingHeldOrderId !== null}
+            onClose={() => setDeletingHeldOrderId(null)}
+            onConfirm={() => {
+                if (deletingHeldOrderId) {
+                    handleDeleteHeldOrder(deletingHeldOrderId);
+                }
+            }}
+            title="Delete Held Order"
+            confirmText="Delete"
+        >
+            Are you sure you want to delete this held order? This action cannot be undone.
+        </ConfirmationModal>
     </div>
   );
 };

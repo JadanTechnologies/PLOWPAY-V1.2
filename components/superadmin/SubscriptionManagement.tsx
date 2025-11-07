@@ -1,14 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { SubscriptionPlan } from '../../types';
 import Icon from '../icons/index.tsx';
 import { useCurrency } from '../../hooks/useCurrency';
+import ConfirmationModal from '../ConfirmationModal';
 
 const SubscriptionManagement: React.FC = () => {
     const { subscriptionPlans, addSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
+    const [deletingPlanId, setDeletingPlanId] = useState<string | null>(null);
+    const planToDelete = useMemo(() => subscriptionPlans.find(p => p.id === deletingPlanId), [deletingPlanId, subscriptionPlans]);
 
     const initialFormState: Omit<SubscriptionPlan, 'id'> = {
         name: '',
@@ -71,9 +74,7 @@ const SubscriptionManagement: React.FC = () => {
     };
 
     const handleDelete = (planId: string) => {
-        if (window.confirm('Are you sure you want to delete this subscription plan?')) {
-            deleteSubscriptionPlan(planId);
-        }
+        deleteSubscriptionPlan(planId);
     };
     
     return (
@@ -111,7 +112,7 @@ const SubscriptionManagement: React.FC = () => {
                         </ul>
                         <div className="mt-auto flex items-center space-x-2">
                             <button onClick={() => openModal(plan)} className="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded-md text-sm">Edit</button>
-                            <button onClick={() => handleDelete(plan.id)} className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-2 px-4 rounded-md text-sm">Delete</button>
+                            <button onClick={() => setDeletingPlanId(plan.id)} className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-2 px-4 rounded-md text-sm">Delete</button>
                         </div>
                     </div>
                 ))}
@@ -147,6 +148,20 @@ const SubscriptionManagement: React.FC = () => {
                     </form>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={!!planToDelete}
+                onClose={() => setDeletingPlanId(null)}
+                onConfirm={() => {
+                    if (deletingPlanId) {
+                        handleDelete(deletingPlanId);
+                    }
+                }}
+                title={`Delete Plan: ${planToDelete?.name}`}
+                confirmText="Delete Plan"
+            >
+                Are you sure you want to delete the "{planToDelete?.name}" subscription plan? This cannot be undone.
+            </ConfirmationModal>
         </div>
     );
 };
