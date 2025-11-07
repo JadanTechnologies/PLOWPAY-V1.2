@@ -618,10 +618,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     };
 
     const addSale = useCallback(async (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'>): Promise<{success: boolean, message: string, newSale?: Sale}> => {
-        // Create a mutable deep copy of items to update cost prices.
         const processedItems: CartItem[] = JSON.parse(JSON.stringify(saleData.items));
-    
-        // This array will hold functions to update state, to be run after calculations.
         const stateUpdateQueue: (() => void)[] = [];
     
         for (const item of processedItems) {
@@ -634,7 +631,6 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                 let deductedFromConsign = 0;
                 const branchId = saleData.branchId;
     
-                // 1. Fulfill from consignment stock first (only for positive quantities)
                 if (qtyToDeduct > 0) {
                     const consignmentStock = variant.consignmentStockByBranch?.[branchId] || 0;
                     if (consignmentStock > 0) {
@@ -653,7 +649,6 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                                 qtyToDeduct -= qtyFromConsign;
                                 deductedFromConsign = qtyFromConsign;
         
-                                // Queue up consignment update.
                                 stateUpdateQueue.push(() => {
                                     setConsignments(prev => prev.map(con => {
                                         if (con.id === activeConsignment.id) {
@@ -674,15 +669,12 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                     }
                 }
     
-                // 2. Fulfill remaining from owned stock. (qtyToDeduct can be negative for returns)
                 if (qtyToDeduct !== 0) {
                     totalCostForItem += qtyToDeduct * variant.costPrice;
                 }
     
-                // 3. Calculate average cost for this cart item and update it.
                 item.costPrice = item.quantity !== 0 ? totalCostForItem / item.quantity : 0;
     
-                // 4. Queue up product stock update for both stock types.
                 const qtyFromOwned = item.quantity - deductedFromConsign;
                 stateUpdateQueue.push(() => {
                     setProducts(prevProducts => {
@@ -694,7 +686,6 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                                         if (v.id === item.variantId) {
                                             const newStockByBranch = { ...v.stockByBranch };
                                             if (qtyFromOwned !== 0) {
-                                                // This subtracts the quantity. If quantity is negative (a return), it adds to stock.
                                                 newStockByBranch[branchId] = (newStockByBranch[branchId] || 0) - qtyFromOwned;
                                             }
     
@@ -720,45 +711,70 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             }
         }
         
-        // Now, create the new Sale object with the processed items
         const totalPaid = saleData.payments.reduce((acc, p) => acc + p.amount, 0) - saleData.change;
         const amountDue = saleData.total - totalPaid;
     
         const newSale: Sale = {
             ...saleData,
-            items: processedItems, // Use the items with correct cost prices
+            items: processedItems,
             id: `sale-${Date.now()}`,
             date: new Date(),
             amountDue: amountDue > 0 ? amountDue : 0,
             status: amountDue <= 0 ? 'PAID' : 'PARTIALLY_PAID'
         };
         
-        // Execute all queued state updates for stock and consignments
         stateUpdateQueue.forEach(updateFn => updateFn());
     
-        // Update customer credit balance if necessary
         if (newSale.amountDue > 0) {
             setCustomers(prevCustomers => prevCustomers.map(c => 
                 c.id === newSale.customerId ? { ...c, creditBalance: c.creditBalance + newSale.amountDue } : c
             ));
         }
         
-        // Create stock logs for the sale
+        const depositPaymentAmount = saleData.payments.filter(p => p.method === 'Deposit').reduce((sum, p) => sum + p.amount, 0);
+
+        if (depositPaymentAmount > 0) {
+            setDeposits(prevDeposits => {
+                let amountToApply = depositPaymentAmount;
+                const updatedDeposits = [...prevDeposits];
+
+                const customerActiveDepositsIndices = updatedDeposits
+                    .map((d, index) => ({ deposit: d, index }))
+                    .filter(({ deposit }) => deposit.customerId === saleData.customerId && deposit.status === 'ACTIVE')
+                    .sort((a, b) => new Date(a.deposit.date).getTime() - new Date(b.deposit.date).getTime())
+                    .map(item => item.index);
+
+                for (const index of customerActiveDepositsIndices) {
+                    if (amountToApply <= 0) break;
+                    
+                    const deposit = updatedDeposits[index];
+                    const amountToUse = Math.min(deposit.amount, amountToApply);
+                    
+                    if (amountToUse >= deposit.amount) { // Full use
+                        updatedDeposits[index] = { ...deposit, status: 'APPLIED', appliedSaleId: newSale.id };
+                    } else { // Partial use
+                        updatedDeposits[index] = { ...deposit, amount: amountToUse, status: 'APPLIED', appliedSaleId: newSale.id };
+                        const remainderDeposit: Deposit = { ...deposit, id: `dep-rem-${Date.now()}`, amount: deposit.amount - amountToUse, date: new Date(), appliedSaleId: undefined };
+                        updatedDeposits.push(remainderDeposit);
+                    }
+                    amountToApply -= amountToUse;
+                }
+                return updatedDeposits;
+            });
+        }
+        
         const newStockLogs: StockLog[] = processedItems.map(item => ({
             id: `log-${Date.now()}-${item.variantId}`, date: new Date(),
             productId: item.productId, variantId: item.variantId,
             productName: item.name, variantName: item.variantName,
             action: item.quantity < 0 ? 'RETURN' : 'SALE',
-            quantity: -item.quantity, // For sale of 2, logs -2. For return of 1 (qty -1), logs 1.
+            quantity: -item.quantity,
             branchId: saleData.branchId, referenceId: newSale.id
         }));
         
         setStockLogs(prev => [...newStockLogs, ...prev]);
-        
-        // Add the new sale to the sales list
         setSales(prev => [newSale, ...prev]);
     
-        // Handle SMS notifications
         let notificationMessage = '';
         const customer = customers.find(c => c.id === newSale.customerId);
         if (notificationSettings.sms.twilio.enabled && customer?.phone) {
@@ -771,7 +787,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         }
         
         return { success: true, message: `Sale completed!${notificationMessage}`, newSale: newSale };
-    }, [products, consignments, customers, notificationSettings]);
+    }, [products, consignments, customers, notificationSettings, deposits]);
     
     const adjustStock = useCallback((productId: string, variantId: string, branchId: string, newStock: number, reason: string) => {
         let logEntry: StockLog | null = null;

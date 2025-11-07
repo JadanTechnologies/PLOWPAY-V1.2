@@ -61,22 +61,33 @@ const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, 
   );
 };
 
-const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm: (payments: Payment[], change: number) => void; }> = ({ totalDue, onClose, onConfirm }) => {
+const PaymentModal: React.FC<{ 
+    totalDue: number; 
+    onClose: () => void; 
+    onConfirm: (payments: Payment[], change: number) => void;
+    customerDepositBalance: number;
+}> = ({ totalDue, onClose, onConfirm, customerDepositBalance }) => {
     const [payments, setPayments] = useState<Payment[]>([]);
     const [currentAmount, setCurrentAmount] = useState('');
-    const [currentMethod, setCurrentMethod] = useState<'Cash' | 'Card' | 'Bank'>('Cash');
+    const [currentMethod, setCurrentMethod] = useState<'Cash' | 'Card' | 'Bank' | 'Deposit'>('Cash');
     const { formatCurrency } = useCurrency();
 
     const isRefund = totalDue < 0;
     const amountToSettle = Math.abs(totalDue);
     
     const totalPaid = useMemo(() => payments.reduce((acc, p) => acc + p.amount, 0), [payments]);
+    const totalPaidWithDeposit = useMemo(() => payments.filter(p => p.method === 'Deposit').reduce((acc, p) => acc + p.amount, 0), [payments]);
+    const availableDeposit = useMemo(() => customerDepositBalance - totalPaidWithDeposit, [customerDepositBalance, totalPaidWithDeposit]);
     const remaining = useMemo(() => amountToSettle - totalPaid, [amountToSettle, totalPaid]);
     const change = useMemo(() => (remaining < 0 ? Math.abs(remaining) : 0), [remaining]);
     
     const addPayment = () => {
         const amount = parseFloat(currentAmount);
         if (isNaN(amount) || amount <= 0) return;
+        if (currentMethod === 'Deposit' && amount > availableDeposit) {
+            alert(`Cannot apply more than the available deposit of ${formatCurrency(availableDeposit)}.`);
+            return;
+        }
         setPayments([...payments, { method: currentMethod, amount }]);
         setCurrentAmount('');
     };
@@ -113,10 +124,23 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                        <div className="grid grid-cols-3 gap-2">
-                            {(['Cash', 'Card', 'Bank'] as const).map(method => (
-                                <button key={method} onClick={() => setCurrentMethod(method)} className={`py-2 rounded-md font-semibold transition-colors ${currentMethod === method ? 'bg-cyan-600 text-white' : 'bg-slate-700 hover:bg-slate-600'}`}>{method}</button>
-                            ))}
+                        <div className="grid grid-cols-2 gap-2">
+                            {(['Cash', 'Card', 'Bank', 'Deposit'] as const).map(method => {
+                                const isDeposit = method === 'Deposit';
+                                const disabled = isDeposit && customerDepositBalance <= 0;
+                                const label = isDeposit ? `Deposit (${formatCurrency(availableDeposit)})` : method;
+
+                                return (
+                                    <button 
+                                        key={method} 
+                                        onClick={() => setCurrentMethod(method)} 
+                                        disabled={disabled}
+                                        className={`py-3 rounded-md font-semibold transition-colors ${currentMethod === method ? 'bg-cyan-600 text-white' : 'bg-slate-700 hover:bg-slate-600'} disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        {label}
+                                    </button>
+                                );
+                            })}
                         </div>
                         <input type="number" placeholder="Amount" value={currentAmount} onChange={e => setCurrentAmount(e.target.value)} className="w-full bg-slate-800 p-3 rounded-md text-2xl text-center border border-slate-600 focus:ring-2 focus:ring-cyan-500 focus:outline-none"/>
                         {!isRefund && currentMethod === 'Cash' && remaining > 0 && (
@@ -176,6 +200,12 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
             <div id="invoice-modal" className="bg-slate-800 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col border border-slate-700">
+                <div className="no-print p-6 text-center border-b border-slate-700">
+                    <Icon name="check" className="w-12 h-12 mx-auto text-green-400 mb-2" />
+                    <h2 className="text-2xl font-bold text-white">Sale Completed!</h2>
+                    <p className="text-slate-400">Your transaction was successful.</p>
+                </div>
+                
                 <div id="invoice-content" className="p-6 overflow-y-auto">
                     <div className="text-center mb-6">
                          {brandConfig.logoUrl ? (
@@ -292,7 +322,7 @@ const DepositModal: React.FC<{
 
 
 const PointOfSale: React.FC = () => {
-  const { products, searchTerm, addSale, branches, categories, addDeposit, customers, currentStaffUser, staffRoles } = useAppContext();
+  const { products, searchTerm, addSale, branches, categories, addDeposit, customers, deposits, currentStaffUser, staffRoles } = useAppContext();
   const { formatCurrency } = useCurrency();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('All');
@@ -319,6 +349,18 @@ const PointOfSale: React.FC = () => {
   const [isDepositModalOpen, setDepositModalOpen] = useState(false);
 
   const [saleStatus, setSaleStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const selectedCustomerId = useMemo(() => customers.find(c => c.name === customer.name)?.id, [customer.name, customers]);
+
+  const customerDepositBalance = useMemo(() => {
+    if (!selectedCustomerId || selectedCustomerId === 'cust-walkin') return 0;
+    return deposits.reduce((total, deposit) => {
+        if (deposit.customerId === selectedCustomerId && deposit.status === 'ACTIVE') {
+            return total + deposit.amount;
+        }
+        return total;
+    }, 0);
+  }, [selectedCustomerId, deposits]);
 
   const HELD_ORDERS_STORAGE_KEY = 'flowpay-held-orders';
   const [heldOrders, setHeldOrders] = useState<HeldOrder[]>(() => {
@@ -499,7 +541,7 @@ const PointOfSale: React.FC = () => {
   
   const handleRecordDeposit = async (amount: number, notes: string) => {
       const customerId = customers.find(c => c.name === customer.name)?.id;
-      if (!customerId) {
+      if (!customerId || customerId === 'cust-walkin') {
           setSaleStatus({ message: 'Cannot record deposit for a walk-in customer.', type: 'error' });
           return;
       }
@@ -611,7 +653,12 @@ const PointOfSale: React.FC = () => {
 
             </aside>
         </main>
-        {isPaymentModalOpen && <PaymentModal totalDue={total} onClose={() => setPaymentModalOpen(false)} onConfirm={handleConfirmPayment}/>}
+        {isPaymentModalOpen && <PaymentModal 
+            totalDue={total} 
+            onClose={() => setPaymentModalOpen(false)} 
+            onConfirm={handleConfirmPayment}
+            customerDepositBalance={customerDepositBalance}
+        />}
         {isInvoiceModalOpen && lastCompletedSale && <InvoiceModal sale={lastCompletedSale} onClose={() => setInvoiceModalOpen(false)} />}
         {isDepositModalOpen && <DepositModal customerName={customer.name} onClose={() => setDepositModalOpen(false)} onConfirm={handleRecordDeposit} />}
     </div>
