@@ -1,4 +1,5 @@
 
+
 // FIX: Move the 'google' namespace declaration inside the 'declare global' block to make the types available globally.
 declare global {
   interface Window {
@@ -541,6 +542,12 @@ export interface LandingPageMetrics {
     revenue: { value: number; label: string };
 }
 
+export interface MapProvider {
+    id: string;
+    name: string;
+    apiKey: string;
+}
+
 export interface SystemSettings {
   currencies: Currency[];
   defaultCurrency: string;
@@ -550,6 +557,8 @@ export interface SystemSettings {
   accessControlSettings: AccessControlSettings;
   landingPageMetrics: LandingPageMetrics;
   featuredUpdate: FeaturedUpdateSettings;
+  mapProviders: MapProvider[];
+  activeMapProviderId: string;
 }
 
 export type PaymentTransactionStatus = 'COMPLETED' | 'PENDING' | 'FAILED' | 'REJECTED';

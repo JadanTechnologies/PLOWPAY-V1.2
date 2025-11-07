@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -230,6 +231,21 @@ const App: React.FC = () => {
             favicon.href = brandConfig.faviconUrl;
         }
       }, [brandConfig]);
+
+      useEffect(() => {
+        const activeProvider = systemSettings.mapProviders.find(p => p.id === systemSettings.activeMapProviderId);
+        if (activeProvider && activeProvider.name === 'Google Maps' && activeProvider.apiKey && activeProvider.apiKey !== 'YOUR_GOOGLE_MAPS_API_KEY') {
+            const scriptId = 'google-maps-script';
+            if (!document.getElementById(scriptId)) {
+                const script = document.createElement('script');
+                script.id = scriptId;
+                script.src = `https://maps.googleapis.com/maps/api/js?key=${activeProvider.apiKey}`;
+                script.async = true;
+                document.head.appendChild(script);
+            }
+        }
+    }, [systemSettings.mapProviders, systemSettings.activeMapProviderId]);
+
 
       useEffect(() => {
         if (userRole === 'SUPER_ADMIN' && !impersonatedUser) { // Super admins are not blocked

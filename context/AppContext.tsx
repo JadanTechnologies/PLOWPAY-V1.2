@@ -1,6 +1,7 @@
 
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost, MapProvider } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -483,7 +484,12 @@ const mockSystemSettings: SystemSettings = {
         content: 'Check out our latest feature that will revolutionize your workflow.',
         link: '#',
         linkText: 'Learn More'
-    }
+    },
+    mapProviders: [
+        { id: 'google-maps', name: 'Google Maps', apiKey: 'YOUR_GOOGLE_MAPS_API_KEY' },
+        { id: 'mapbox', name: 'Mapbox', apiKey: '' },
+    ],
+    activeMapProviderId: 'google-maps',
 };
 
 

@@ -85,6 +85,8 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
             setError('Company logo is required.');
             return;
         }
+        
+        const premiumPlan = subscriptionPlans.find(p => p.name.toLowerCase() === 'premium');
 
         const result = await addTenant({
             businessName: formState.businessName,
@@ -92,7 +94,7 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
             email: formState.email,
             username: formState.email, // Simple default
             password: formState.password,
-            planId: subscriptionPlans[0]?.id || '', // Default to first plan
+            planId: premiumPlan?.id || subscriptionPlans[0]?.id || '', // Default to premium plan for trial
             companyLogoUrl: logoPreview || '',
         });
         
@@ -137,7 +139,7 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
                                 </div>
                             )}
                             <label htmlFor="logo-upload" className="cursor-pointer bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-md text-sm">
-                                <span>{logoFile ? 'Change Logo' : 'Upload Logo'}</span>
+                                <span>{logoFile ? 'Change Logo' : 'Change Logo'}</span>
                                 <input id="logo-upload" name="logo" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} required/>
                             </label>
                         </div>
