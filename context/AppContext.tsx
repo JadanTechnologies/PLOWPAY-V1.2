@@ -1,6 +1,5 @@
 
 
-
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType } from '../types';
 
@@ -1153,3 +1152,304 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         };
         setPurchaseOrders(prev => [newPO, ...prev]);
     }, []);
+
+    const updatePurchaseOrderStatus = useCallback((poId: string, status: PurchaseOrder['status']) => {
+        setPurchaseOrders(prev =>
+            prev.map(po => {
+                if (po.id === poId) {
+                    // If we are receiving the order, update stock
+                    if (status === 'RECEIVED' && po.status !== 'RECEIVED') {
+                        setProducts(prevProducts => {
+                            const productsCopy = JSON.parse(JSON.stringify(prevProducts));
+                            for (const item of po.items) {
+                                const product = productsCopy.find((p: Product) => p.variants.some(v => v.id === item.variantId));
+                                if (product) {
+                                    const variant = product.variants.find((v: ProductVariant) => v.id === item.variantId);
+                                    if (variant) {
+                                        variant.stockByBranch[po.destinationBranchId] = (variant.stockByBranch[po.destinationBranchId] || 0) + item.quantity;
+                                    }
+                                }
+                            }
+                            return productsCopy;
+                        });
+    
+                        // Add to stock log
+                        const newStockLogs: StockLog[] = po.items.map(item => ({
+                            id: `log-${Date.now()}-${item.variantId}`,
+                            date: new Date(),
+                            productId: products.find(p => p.variants.some(v => v.id === item.variantId))?.id || 'unknown',
+                            variantId: item.variantId,
+                            productName: item.productName,
+                            variantName: item.variantName,
+                            action: 'PURCHASE_RECEIVED',
+                            quantity: item.quantity,
+                            branchId: po.destinationBranchId,
+                            referenceId: po.id,
+                        }));
+                        setStockLogs(prev => [...prev, ...newStockLogs]);
+                    }
+                    return { ...po, status };
+                }
+                return po;
+            })
+        );
+    }, [products]);
+
+    const addStaffRole = useCallback((roleData: Omit<StaffRole, 'id'>) => {
+        const newRole: StaffRole = { ...roleData, id: `staff-role-${Date.now()}` };
+        setStaffRoles(prev => [...prev, newRole]);
+    }, []);
+    
+    const updateStaffRole = useCallback((roleId: string, permissions: TenantPermission[]) => {
+        setStaffRoles(prev => prev.map(r => r.id === roleId ? { ...r, permissions } : r));
+    }, []);
+    
+    const deleteStaffRole = useCallback((roleId: string) => {
+        const isInUse = staff.some(s => s.roleId === roleId);
+        if (isInUse) {
+            alert("Cannot delete a role that is assigned to staff members.");
+            return;
+        }
+        setStaffRoles(prev => prev.filter(r => r.id !== roleId));
+    }, [staff]);
+
+    const addAccount = useCallback((accountData: Omit<Account, 'id' | 'balance'>) => {
+        const newAccount: Account = { ...accountData, id: `acc-${Date.now()}`, balance: 0 };
+        setAccounts(prev => [...prev, newAccount]);
+    }, []);
+
+    const addJournalEntry = useCallback((entryData: Omit<JournalEntry, 'id' | 'date'>) => {
+        const newEntry: JournalEntry = { ...entryData, id: `je-${Date.now()}`, date: new Date() };
+        setJournalEntries(prev => [newEntry, ...prev]);
+        setAccounts(prevAccounts => {
+            const newAccounts = [...prevAccounts];
+            newEntry.transactions.forEach(tx => {
+                const accountIndex = newAccounts.findIndex(acc => acc.id === tx.accountId);
+                if (accountIndex !== -1) {
+                    newAccounts[accountIndex].balance += tx.amount;
+                }
+            });
+            return newAccounts;
+        });
+    }, []);
+
+    const addTenant = useCallback(async (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle'>): Promise<{ success: boolean; message: string }> => {
+        const existingTenant = tenants.find(t => t.email.toLowerCase() === tenantData.email.toLowerCase() || t.username.toLowerCase() === tenantData.username.toLowerCase());
+        if (existingTenant) {
+            return { success: false, message: 'An account with that email or username already exists.' };
+        }
+        const newTenant: Tenant = {
+            ...tenantData,
+            id: `tenant-${Date.now()}`,
+            joinDate: new Date(),
+            status: 'UNVERIFIED',
+            isVerified: false,
+            billingCycle: 'monthly',
+            trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 day trial
+        };
+        setTenants(prev => [newTenant, ...prev]);
+        return { success: true, message: 'Tenant created successfully. Please verify your email.' };
+    }, [tenants]);
+
+    const verifyTenant = useCallback((email: string) => {
+        setTenants(prev => prev.map(t => {
+            if (t.email.toLowerCase() === email.toLowerCase() && !t.isVerified) {
+                return { ...t, isVerified: true, status: 'TRIAL' };
+            }
+            return t;
+        }));
+    }, []);
+    
+    const updateTenantProfile = useCallback((tenantData: Partial<Omit<Tenant, 'id'>>) => {
+        if (!currentTenant) return;
+        setTenants(prev => prev.map(t => t.id === currentTenant.id ? { ...t, ...tenantData } : t));
+    }, [currentTenant]);
+
+    const updateAdminProfile = useCallback((adminData: Partial<Omit<AdminUser, 'id'>>) => {
+        if (!currentAdminUser) return;
+        setAdminUsers(prev => prev.map(u => u.id === currentAdminUser.id ? { ...u, ...adminData } : u));
+    }, [currentAdminUser]);
+    
+    const addAnnouncement = useCallback((announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => {
+        const newAnnouncement: Announcement = { ...announcementData, id: `anno-${Date.now()}`, createdAt: new Date(), readBy: [] };
+        setAnnouncements(prev => [newAnnouncement, ...prev]);
+    }, []);
+
+    const markAnnouncementAsRead = useCallback((announcementId: string, userId: string) => {
+        setAnnouncements(prev => prev.map(a => {
+            if (a.id === announcementId && !a.readBy.includes(userId)) {
+                return { ...a, readBy: [...a.readBy, userId] };
+            }
+            return a;
+        }));
+    }, []);
+
+    const addCustomer = useCallback((customerData: Omit<Customer, 'id' | 'creditBalance'>) => {
+        const newCustomer: Customer = { ...customerData, id: `cust-${Date.now()}`, creditBalance: 0 };
+        setCustomers(prev => [...prev, newCustomer]);
+    }, []);
+
+    const recordCreditPayment = useCallback((customerId: string, amount: number) => {
+        setCustomers(prev => prev.map(c => {
+            if (c.id === customerId) {
+                return { ...c, creditBalance: Math.max(0, c.creditBalance - amount) };
+            }
+            return c;
+        }));
+    }, []);
+    
+    const addConsignment = useCallback((consignmentData: Omit<Consignment, 'id' | 'status'>) => {
+        const newConsignment: Consignment = { ...consignmentData, id: `con-${Date.now()}`, status: 'ACTIVE' };
+        setConsignments(prev => [...prev, newConsignment]);
+        setProducts(prevProducts => {
+            const productsCopy = JSON.parse(JSON.stringify(prevProducts));
+            newConsignment.items.forEach(item => {
+                const product = productsCopy.find((p: Product) => p.variants.some(v => v.id === item.variantId));
+                if (product) {
+                    const variant = product.variants.find((v: ProductVariant) => v.id === item.variantId);
+                    if (variant) {
+                        if (!variant.consignmentStockByBranch) {
+                            variant.consignmentStockByBranch = {};
+                        }
+                        variant.consignmentStockByBranch[newConsignment.branchId] = (variant.consignmentStockByBranch[newConsignment.branchId] || 0) + item.quantityReceived;
+                    }
+                }
+            });
+            return productsCopy;
+        });
+    }, []);
+
+    const addCategory = useCallback((categoryName: string) => {
+        const newCategory: Category = { id: `cat-${Date.now()}`, name: categoryName };
+        setCategories(prev => [...prev, newCategory]);
+    }, []);
+    
+    const updateCategory = useCallback((categoryId: string, newName: string) => {
+        setCategories(prev => prev.map(c => c.id === categoryId ? { ...c, name: newName } : c));
+    }, []);
+    
+    const deleteCategory = useCallback((categoryId: string) => {
+        const isInUse = products.some(p => p.categoryId === categoryId);
+        if (isInUse) {
+            alert("Cannot delete a category that is currently in use by products.");
+            return;
+        }
+        setCategories(prev => prev.filter(c => c.id !== categoryId));
+    }, [products]);
+    
+    const extendTrial = useCallback((tenantId: string, days: number) => {
+        setTenants(prev => prev.map(t => {
+            if (t.id === tenantId && t.trialEndDate) {
+                const newEndDate = new Date(t.trialEndDate);
+                newEndDate.setDate(newEndDate.getDate() + days);
+                return { ...t, trialEndDate: newEndDate };
+            }
+            return t;
+        }));
+    }, []);
+
+    const activateSubscription = useCallback((tenantId: string, planId: string, billingCycle: 'monthly' | 'yearly') => {
+        setTenants(prev => prev.map(t => {
+            if (t.id === tenantId) {
+                return { ...t, status: 'ACTIVE', planId, billingCycle, trialEndDate: undefined };
+            }
+            return t;
+        }));
+    }, []);
+    
+    const changeSubscriptionPlan = useCallback((tenantId: string, newPlanId: string, billingCycle: 'monthly' | 'yearly') => {
+        setTenants(prev => prev.map(t => {
+            if (t.id === tenantId) {
+                return { ...t, planId: newPlanId, billingCycle };
+            }
+            return t;
+        }));
+    }, []);
+    
+    const processExpiredTrials = useCallback(() => {
+        let processed = 0;
+        let suspended = 0;
+        const today = new Date();
+        setTenants(prev => prev.map(t => {
+            if (t.status === 'TRIAL' && t.trialEndDate && new Date(t.trialEndDate) < today) {
+                processed++;
+                suspended++;
+                return { ...t, status: 'SUSPENDED' };
+            }
+            if (t.status === 'TRIAL') processed++;
+            return t;
+        }));
+        return { processed, suspended };
+    }, []);
+
+    const processSubscriptionPayment = useCallback(async (tenantId: string, planId: string, method: string, amount: number, billingCycle: 'monthly' | 'yearly', success: boolean, proofOfPaymentUrl?: string): Promise<{success: boolean, message: string}> => {
+        const newTransaction: PaymentTransaction = {
+            id: `txn-${Date.now()}`,
+            tenantId, planId, amount, method,
+            status: success ? (method === 'Manual' ? 'PENDING' : 'COMPLETED') : 'FAILED',
+            createdAt: new Date(),
+            proofOfPaymentUrl,
+            transactionId: success ? `pi_${Date.now()}`: undefined,
+        };
+        setPaymentTransactions(prev => [newTransaction, ...prev]);
+
+        if (success && method !== 'Manual') {
+            activateSubscription(tenantId, planId, billingCycle);
+            return { success: true, message: 'Payment successful! Your subscription is now active.' };
+        } else if (success && method === 'Manual') {
+            changeSubscriptionPlan(tenantId, planId, billingCycle);
+            return { success: true, message: 'Payment submitted for review. Your plan will be activated upon approval.'};
+        } else {
+            return { success: false, message: 'Payment failed. Please check your details and try again.' };
+        }
+    }, [activateSubscription, changeSubscriptionPlan]);
+
+    const updatePaymentTransactionStatus = useCallback((transactionId: string, newStatus: 'COMPLETED' | 'REJECTED') => {
+        setPaymentTransactions(prev => prev.map(tx => {
+            if (tx.id === transactionId) {
+                if (newStatus === 'COMPLETED' && tx.method === 'Manual') {
+                    activateSubscription(tx.tenantId, tx.planId, tx.billingCycle || 'monthly');
+                }
+                return { ...tx, status: newStatus };
+            }
+            return tx;
+        }));
+    }, [activateSubscription]);
+
+    const updateEmailTemplate = useCallback((templateId: string, newSubject: string, newBody: string) => {
+        setEmailTemplates(prev => prev.map(t => t.id === templateId ? { ...t, subject: newSubject, body: newBody } : t));
+    }, []);
+
+    const updateSmsTemplate = useCallback((templateId: string, newBody: string) => {
+        setSmsTemplates(prev => prev.map(t => t.id === templateId ? { ...t, body: newBody } : t));
+    }, []);
+
+    const markInAppNotificationAsRead = useCallback((notificationId: string) => {
+        setInAppNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
+    }, []);
+
+    const value: AppContextType = {
+        products, sales, branches, staff, staffRoles, allTenantPermissions, stockLogs, tenants, currentTenant,
+        subscriptionPlans, adminUsers, adminRoles, allPermissions, currentAdminUser, brandConfig, pageContent,
+        paymentSettings, notificationSettings, systemSettings, trucks, shipments, trackerProviders, suppliers,
+        purchaseOrders, accounts, journalEntries, announcements, customers, consignments, categories,
+        paymentTransactions, emailTemplates, smsTemplates, inAppNotifications, auditLogs, notification,
+        setNotification, searchTerm, setSearchTerm, currentLanguage, setCurrentLanguage, currentCurrency, setCurrentCurrency,
+        getMetric, addSale, adjustStock, transferStock, addProduct, updateProductVariant, addAdminUser,
+        updateAdminUser, updateAdminRole, addAdminRole, deleteAdminRole, updateBrandConfig, updatePageContent,
+        updateFaqs, updatePaymentSettings, updateNotificationSettings, updateSystemSettings, updateMaintenanceSettings,
+        updateAccessControlSettings, updateLandingPageMetrics, updateCurrentTenantSettings, updateTenantAutomations,
+        addSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan, addTruck, updateTruck, addShipment,
+        updateShipmentStatus, updateTrackerProviders, addBranch, addStaff, sellShipment, receiveShipment,
+        addPurchaseOrder, updatePurchaseOrderStatus, addStaffRole, updateStaffRole, deleteStaffRole, addAccount,
+        addJournalEntry, addTenant, verifyTenant, updateTenantProfile, updateAdminProfile, addAnnouncement,
+        markAnnouncementAsRead, addCustomer, recordCreditPayment, addConsignment, addCategory, updateCategory,
+        deleteCategory, extendTrial, activateSubscription, changeSubscriptionPlan, processExpiredTrials,
+        processSubscriptionPayment, updatePaymentTransactionStatus, updateEmailTemplate, updateSmsTemplate,
+        markInAppNotificationAsRead,
+        logout: onLogout,
+        logAction
+    };
+
+    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+};
