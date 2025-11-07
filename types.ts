@@ -1,6 +1,7 @@
 
 
 // FIX: Add a global declaration for the Google Maps API to resolve TypeScript errors.
+declare var google: any;
 declare global {
   interface Window {
     google: any;
@@ -355,8 +356,15 @@ export interface FirebaseSettings {
     vapidKey: string;
 }
 
+export interface OneSignalSettings {
+    enabled: boolean;
+    appId: string;
+    apiKey: string;
+}
+
 export interface PushSettings {
     firebase: FirebaseSettings;
+    oneSignal: OneSignalSettings;
 }
 
 export interface NotificationSettings {

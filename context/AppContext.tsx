@@ -411,9 +411,14 @@ const mockNotificationSettings: NotificationSettings = {
     },
     push: {
         firebase: {
-            enabled: false,
-            serverKey: '',
-            vapidKey: ''
+            enabled: true,
+            serverKey: 'firebase-server-key-123',
+            vapidKey: 'firebase-vapid-key-456'
+        },
+        oneSignal: {
+            enabled: true,
+            appId: 'onesignal-app-id-789',
+            apiKey: 'onesignal-api-key-abc',
         }
     }
 };
@@ -1161,9 +1166,14 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     }, []);
 
     const updateTruckVitals = useCallback((truckId: string) => {
+        const truckToUpdate = trucks.find(t => t.id === truckId);
+        if (!truckToUpdate) return;
+        
+        let notificationMessage: string | null = null;
+        
         setTrucks(prevTrucks => prevTrucks.map(truck => {
             if (truck.id === truckId) {
-                return {
+                const updatedTruck = {
                     ...truck,
                     lastUpdate: new Date(),
                     currentLocation: {
@@ -1171,12 +1181,47 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                         lat: truck.currentLocation.lat + (Math.random() - 0.5) * 0.1,
                         lng: truck.currentLocation.lng + (Math.random() - 0.5) * 0.1,
                     },
-                    currentLoad: truck.status === 'IN_TRANSIT' ? Math.max(0, truck.currentLoad + (Math.random() - 0.5) * 1000) : truck.currentLoad,
                 };
+                
+                const randomEvent = Math.random();
+                if (truck.status === 'IN_TRANSIT') {
+                    if (randomEvent < 0.1) {
+                        updatedTruck.status = 'IDLE';
+                        notificationMessage = `Truck ${truck.licensePlate} has stopped unexpectedly.`;
+                    } else if (randomEvent < 0.3) {
+                        const loadChange = Math.floor(Math.random() * 500) + 200;
+                        updatedTruck.currentLoad = Math.max(0, truck.currentLoad - loadChange);
+                        notificationMessage = `Unloaded ${loadChange}kg from ${truck.licensePlate}. Current load: ${(updatedTruck.currentLoad/1000).toFixed(1)}t.`;
+                    }
+                } else if (truck.status === 'IDLE') {
+                     if (randomEvent < 0.2) {
+                        updatedTruck.status = 'IN_TRANSIT';
+                        notificationMessage = `Truck ${truck.licensePlate} has started moving.`;
+                    } else if (randomEvent < 0.5) {
+                        const loadChange = Math.floor(Math.random() * 1000) + 500;
+                        updatedTruck.currentLoad = Math.min(truck.maxLoad, truck.currentLoad + loadChange);
+                        notificationMessage = `Added ${loadChange}kg to ${truck.licensePlate}. Current load: ${(updatedTruck.currentLoad/1000).toFixed(1)}t.`;
+                    }
+                }
+                
+                return updatedTruck;
             }
             return truck;
         }));
-    }, []);
+
+        if (notificationMessage) {
+            setInAppNotifications(prev => [
+                {
+                    id: `notif-truck-${Date.now()}`,
+                    userId: currentTenant?.id || 'tenant-1',
+                    message: notificationMessage,
+                    read: false,
+                    createdAt: new Date(),
+                },
+                ...prev
+            ]);
+        }
+    }, [trucks, currentTenant]);
 
     const updateTenantLogisticsConfig = useCallback((config: { activeTrackerProviderId: string }) => {
         setTenants(prevTenants => prevTenants.map(t =>

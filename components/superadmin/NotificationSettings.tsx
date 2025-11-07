@@ -102,6 +102,77 @@ const NotificationSettings: React.FC = () => {
                         </div>
                     </div>
                 </div>
+
+                 {/* Push Notification Settings */}
+                <div className="bg-gray-800 rounded-lg shadow-md p-6 space-y-4 lg:col-span-2">
+                    <h3 className="text-xl font-bold text-white">Push Notifications</h3>
+                    
+                    {/* Firebase Section */}
+                    <div className="p-4 rounded-lg border border-gray-700">
+                        <div className="flex justify-between items-center">
+                            <h4 className="text-lg font-semibold text-white">Firebase Cloud Messaging</h4>
+                            <Toggle
+                                enabled={formState.push.firebase.enabled}
+                                onChange={enabled => setFormState(prev => ({ ...prev, push: { ...prev.push, firebase: { ...prev.push.firebase, enabled } } }))}
+                            />
+                        </div>
+                        <div className={`space-y-4 mt-4 ${!formState.push.firebase.enabled && 'opacity-50'}`}>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400">Server Key</label>
+                                <input
+                                    type="password"
+                                    value={formState.push.firebase.serverKey}
+                                    onChange={e => setFormState(prev => ({ ...prev, push: { ...prev.push, firebase: { ...prev.push.firebase, serverKey: e.target.value } } }))}
+                                    disabled={!formState.push.firebase.enabled}
+                                    className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white disabled:bg-gray-700/50"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400">VAPID Key</label>
+                                <input
+                                    type="text"
+                                    value={formState.push.firebase.vapidKey}
+                                    onChange={e => setFormState(prev => ({ ...prev, push: { ...prev.push, firebase: { ...prev.push.firebase, vapidKey: e.target.value } } }))}
+                                    disabled={!formState.push.firebase.enabled}
+                                    className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white disabled:bg-gray-700/50"
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* OneSignal Section */}
+                    <div className="p-4 rounded-lg border border-gray-700">
+                        <div className="flex justify-between items-center">
+                            <h4 className="text-lg font-semibold text-white">OneSignal</h4>
+                            <Toggle
+                                enabled={formState.push.oneSignal.enabled}
+                                onChange={enabled => setFormState(prev => ({ ...prev, push: { ...prev.push, oneSignal: { ...prev.push.oneSignal, enabled } } }))}
+                            />
+                        </div>
+                        <div className={`space-y-4 mt-4 ${!formState.push.oneSignal.enabled && 'opacity-50'}`}>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400">App ID</label>
+                                <input
+                                    type="text"
+                                    value={formState.push.oneSignal.appId}
+                                    onChange={e => setFormState(prev => ({ ...prev, push: { ...prev.push, oneSignal: { ...prev.push.oneSignal, appId: e.target.value } } }))}
+                                    disabled={!formState.push.oneSignal.enabled}
+                                    className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white disabled:bg-gray-700/50"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400">REST API Key</label>
+                                <input
+                                    type="password"
+                                    value={formState.push.oneSignal.apiKey}
+                                    onChange={e => setFormState(prev => ({ ...prev, push: { ...prev.push, oneSignal: { ...prev.push.oneSignal, apiKey: e.target.value } } }))}
+                                    disabled={!formState.push.oneSignal.enabled}
+                                    className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white disabled:bg-gray-700/50"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

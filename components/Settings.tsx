@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
+import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { StaffRole, TenantPermission, TenantAutomations } from '../types';
 import { allCurrencies, allLanguages } from '../utils/data';
