@@ -10,6 +10,8 @@ declare global {
     namespace maps {
       class Map {
         constructor(mapDiv: Element | null, opts?: any);
+        addListener(eventName: string, handler: (...args: any[]) => void): any;
+        fitBounds(bounds: LatLngBounds): void;
       }
       class Marker {
         constructor(opts?: any);
@@ -35,6 +37,10 @@ declare global {
       class LatLngBounds {
           constructor(sw?: any, ne?: any);
           extend(point: any): void;
+          isEmpty(): boolean;
+      }
+      interface MapMouseEvent {
+          latLng: { lat: () => number, lng: () => number };
       }
     }
   }
@@ -728,6 +734,7 @@ export interface AppContextType {
   updateShipmentStatus: (shipmentId: string, status: Shipment['status']) => void;
   updateTrackerProviders: (providers: TrackerProvider[]) => void;
   addBranch: (branchName: string) => void;
+  updateBranchLocation: (branchId: string, location: { lat: number; lng: number; }) => void;
   addStaff: (staffData: Omit<Staff, 'id'>) => void;
   sellShipment: (shipmentId: string, customer: Pick<Customer, 'name' | 'phone'>) => Promise<{success: boolean; message: string;}>;
   receiveShipment: (shipmentId: string) => void;

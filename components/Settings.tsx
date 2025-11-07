@@ -1,9 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
-import { StaffRole, TenantPermission, TenantAutomations } from '../types';
+import { StaffRole, TenantPermission, TenantAutomations, Branch } from '../types';
 import { allCurrencies, allLanguages } from '../utils/data';
 import ConfirmationModal from './ConfirmationModal';
+import GoogleMap from './GoogleMap';
+
 
 type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations' | 'security';
 
@@ -182,9 +184,76 @@ const Security: React.FC = () => {
     );
 };
 
+const mapStyles = [ { elementType: "geometry", stylers: [{ color: "#242f3e" }] }, { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] }, { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] }, { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }], }, { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }], }, { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }], }, { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }], }, { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }], }, { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }], }, { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }], }, { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }], }, { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }], }, { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }], }, { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2f3948" }], }, { featureType: "transit.station", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }], }, { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }], }, { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }], }, { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }], }, ];
+
+const LocationEditModal: React.FC<{ branch: Branch; onClose: () => void; onSave: (location: { lat: number, lng: number }) => void; }> = ({ branch, onClose, onSave }) => {
+    const mapRef = useRef<HTMLDivElement>(null);
+    const markerRef = useRef<google.maps.Marker | null>(null);
+    const [selectedLocation, setSelectedLocation] = useState(branch.location);
+
+    useEffect(() => {
+        if (mapRef.current && window.google) {
+            const map = new window.google.maps.Map(mapRef.current, {
+                center: selectedLocation.lat === 0 && selectedLocation.lng === 0 ? { lat: 39.8283, lng: -98.5795 } : selectedLocation,
+                zoom: selectedLocation.lat === 0 && selectedLocation.lng === 0 ? 4 : 15,
+                styles: mapStyles,
+                disableDefaultUI: true,
+                zoomControl: true,
+            });
+
+            markerRef.current = new window.google.maps.Marker({
+                position: selectedLocation,
+                map: map,
+                draggable: true,
+            });
+
+            map.addListener('click', (e: google.maps.MapMouseEvent) => {
+                if (e.latLng) {
+                    const newLoc = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+                    setSelectedLocation(newLoc);
+                    markerRef.current?.setPosition(newLoc);
+                }
+            });
+
+            markerRef.current.addListener('dragend', (e: google.maps.MapMouseEvent) => {
+                 if (e.latLng) {
+                    const newLoc = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+                    setSelectedLocation(newLoc);
+                }
+            });
+        }
+    }, []); // Run only once
+
+    return (
+        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
+            <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-3xl h-[80vh] flex flex-col border border-slate-700">
+                <div className="flex justify-between items-center p-4 border-b border-slate-700">
+                    <h3 className="text-xl font-bold text-white">Set Location for {branch.name}</h3>
+                    <p className="text-sm text-slate-400">Click on the map or drag the pin to set the location.</p>
+                </div>
+                <div className="flex-grow bg-slate-900" ref={mapRef}>
+                     {!window.google && <p className="p-4 text-center text-red-400">Map could not be loaded. Please check your API key and internet connection.</p>}
+                </div>
+                <div className="p-4 flex justify-end gap-3 border-t border-slate-700">
+                    <button onClick={onClose} className="px-4 py-2 rounded-md bg-slate-600 text-white hover:bg-slate-500 font-semibold">Cancel</button>
+                    <button onClick={() => onSave(selectedLocation)} className="px-4 py-2 rounded-md bg-cyan-600 text-white hover:bg-cyan-500 font-semibold">Save Location</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 const Branches: React.FC = () => {
-    const { branches, addBranch, setNotification } = useAppContext();
+    const { branches, addBranch, setNotification, updateBranchLocation } = useAppContext();
     const [newBranchName, setNewBranchName] = useState('');
+    const [isLocationModalOpen, setLocationModalOpen] = useState(false);
+    const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
+
+    const openLocationModal = (branch: Branch) => {
+        setEditingBranch(branch);
+        setLocationModalOpen(true);
+    };
 
     const handleAddBranch = () => {
         const trimmedName = newBranchName.trim();
@@ -202,23 +271,42 @@ const Branches: React.FC = () => {
     };
     
     return (
-        <SettingCard title="Branches" icon="briefcase" description="Manage your business locations.">
-            <div className="space-y-4">
-                <div className="flex gap-2">
-                    <input type="text" value={newBranchName} onChange={e => setNewBranchName(e.target.value)} placeholder="New branch name" className="flex-grow bg-slate-700 border border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-cyan-500"/>
-                    <button onClick={handleAddBranch} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Add Branch</button>
+        <SettingCard title="Branches" icon="briefcase" description="Manage your business locations and visualize them on a map.">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                    <div className="flex gap-2">
+                        <input type="text" value={newBranchName} onChange={e => setNewBranchName(e.target.value)} placeholder="New branch name" className="flex-grow bg-slate-700 border border-slate-600 rounded-md py-2 px-3 focus:outline-none focus:ring-cyan-500"/>
+                        <button onClick={handleAddBranch} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Add</button>
+                    </div>
+                    <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                        {branches.map(branch => (
+                            <div key={branch.id} className="bg-slate-700/50 p-3 rounded-md flex justify-between items-center">
+                                <span className="font-semibold text-white">{branch.name}</span>
+                                <button onClick={() => openLocationModal(branch)} className="text-cyan-400 hover:text-cyan-300 font-semibold text-sm">
+                                    {branch.location.lat === 0 && branch.location.lng === 0 ? 'Set Location' : 'Edit Location'}
+                                </button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
-                <div className="space-y-2">
-                    {branches.map(branch => (
-                        <div key={branch.id} className="bg-slate-700/50 p-3 rounded-md flex justify-between items-center">
-                            <span className="font-semibold text-white">{branch.name}</span>
-                            {/* Edit/Delete functionality can be added here */}
-                        </div>
-                    ))}
+                <div className="bg-slate-900 rounded-lg overflow-hidden h-96 border border-slate-700">
+                    <GoogleMap branches={branches} />
                 </div>
             </div>
+
+            {isLocationModalOpen && editingBranch && (
+                <LocationEditModal 
+                    branch={editingBranch}
+                    onClose={() => setLocationModalOpen(false)}
+                    onSave={(location) => {
+                        updateBranchLocation(editingBranch.id, location);
+                        setNotification({type: 'success', message: `${editingBranch.name} location updated.`});
+                        setLocationModalOpen(false);
+                    }}
+                />
+            )}
         </SettingCard>
-    )
+    );
 }
 
 const Staff: React.FC = () => {

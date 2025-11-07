@@ -1322,6 +1322,14 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             }))
         })));
     }, []);
+    
+    const updateBranchLocation = useCallback((branchId: string, location: { lat: number; lng: number; }) => {
+        setBranches(prevBranches =>
+            prevBranches.map(branch =>
+                branch.id === branchId ? { ...branch, location } : branch
+            )
+        );
+    }, []);
 
     const addStaff = useCallback((staffData: Omit<Staff, 'id'>) => {
         const newStaff: Staff = {
@@ -1842,7 +1850,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updateFaqs, updatePaymentSettings, updateNotificationSettings, updateSystemSettings, updateMaintenanceSettings,
         updateAccessControlSettings, updateLandingPageMetrics, updateCurrentTenantSettings, updateTenantAutomations,
         addSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan, addTruck, updateTruck, deleteTruck, addShipment,
-        updateShipmentStatus, updateTrackerProviders, addBranch, addStaff, sellShipment, receiveShipment,
+        updateShipmentStatus, updateTrackerProviders, addBranch, updateBranchLocation, addStaff, sellShipment, receiveShipment,
         addPurchaseOrder, updatePurchaseOrderStatus, addStaffRole, updateStaffRole, deleteStaffRole, addAccount,
         addJournalEntry, addTenant, verifyTenant, updateTenantProfile, updateAdminProfile, addAnnouncement,
         markAnnouncementAsRead, addCustomer, recordCreditPayment, addDeposit, updateDeposit, addConsignment, addCategory, updateCategory,
