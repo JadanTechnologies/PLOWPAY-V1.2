@@ -151,5 +151,4 @@ const SubscriptionManagement: React.FC = () => {
     );
 };
 
-// FIX: Add default export to the component
 export default SubscriptionManagement;
