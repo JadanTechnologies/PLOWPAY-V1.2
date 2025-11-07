@@ -1337,8 +1337,18 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         return { success: true, message: 'Deposit recorded successfully.' };
     }, []);
 
-    const updateDeposit = useCallback((depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes'>>) => {
-        setDeposits(prev => prev.map(dep => dep.id === depositId ? { ...dep, ...updates } : dep));
+    const updateDeposit = useCallback((depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes' | 'appliedSaleId'>>) => {
+        setDeposits(prev => prev.map(dep => {
+            if (dep.id === depositId) {
+                const updatedDeposit = { ...dep, ...updates };
+                // If status is changed to something other than APPLIED, clear the appliedSaleId.
+                if (updates.status && updates.status !== 'APPLIED') {
+                    updatedDeposit.appliedSaleId = undefined;
+                }
+                return updatedDeposit;
+            }
+            return dep;
+        }));
     }, []);
     
     const addConsignment = useCallback((consignmentData: Omit<Consignment, 'id' | 'status'>) => {

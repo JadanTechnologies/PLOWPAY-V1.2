@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Deposit } from '../types';
@@ -14,6 +15,7 @@ const DepositManagement: React.FC = () => {
     const [selectedDeposit, setSelectedDeposit] = useState<Deposit | null>(null);
     const [newStatus, setNewStatus] = useState<'APPLIED' | 'REFUNDED' | 'ACTIVE'>('ACTIVE');
     const [notes, setNotes] = useState('');
+    const [appliedSaleIdInput, setAppliedSaleIdInput] = useState('');
 
     const customerMap = useMemo(() => new Map(customers.map(c => [c.id, c.name])), [customers]);
     const staffMap = useMemo(() => new Map(staff.map(s => [s.id, s.name])), [staff]);
@@ -28,12 +30,17 @@ const DepositManagement: React.FC = () => {
         setSelectedDeposit(deposit);
         setNewStatus(deposit.status);
         setNotes(deposit.notes || '');
+        setAppliedSaleIdInput(deposit.appliedSaleId || '');
         setModalOpen(true);
     };
 
     const handleUpdateStatus = () => {
         if (selectedDeposit) {
-            updateDeposit(selectedDeposit.id, { status: newStatus, notes });
+            updateDeposit(selectedDeposit.id, { 
+                status: newStatus, 
+                notes,
+                appliedSaleId: newStatus === 'APPLIED' ? appliedSaleIdInput : undefined
+            });
             setModalOpen(false);
         }
     };
@@ -81,7 +88,14 @@ const DepositManagement: React.FC = () => {
                                 <td className="p-3">{branchMap.get(deposit.branchId) || 'N/A'}</td>
                                 <td className="p-3 text-right font-mono font-bold text-cyan-400">{formatCurrency(deposit.amount)}</td>
                                 <td className="p-3">{staffMap.get(deposit.staffId) || 'N/A'}</td>
-                                <td className="p-3 text-center">{getStatusBadge(deposit.status)}</td>
+                                <td className="p-3 text-center">
+                                    {getStatusBadge(deposit.status)}
+                                    {deposit.status === 'APPLIED' && deposit.appliedSaleId && (
+                                        <div className="text-xs text-slate-500 mt-1 font-mono">
+                                            Sale: {deposit.appliedSaleId.slice(0, 15)}
+                                        </div>
+                                    )}
+                                </td>
                                 <td className="p-3 text-center">
                                     <button onClick={() => openModal(deposit)} className="text-yellow-400 hover:text-yellow-300 font-semibold text-sm">Manage</button>
                                 </td>
@@ -96,9 +110,26 @@ const DepositManagement: React.FC = () => {
 
             {isModalOpen && selectedDeposit && (
                  <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-                    <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-slate-700">
+                    <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-slate-700">
                         <h3 className="text-xl font-bold mb-4 text-white">Manage Deposit</h3>
-                        <p className="mb-4">Deposit ID: <span className="font-mono text-slate-400">{selectedDeposit.id}</span></p>
+                        <div className="bg-slate-900/50 p-4 rounded-md border border-slate-700 mb-4 space-y-2">
+                            <div className="flex justify-between">
+                                <span className="text-slate-400">Customer:</span>
+                                <span className="font-semibold">{customerMap.get(selectedDeposit.customerId)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-slate-400">Amount:</span>
+                                <span className="font-bold text-cyan-400">{formatCurrency(selectedDeposit.amount)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-slate-400">Date:</span>
+                                <span className="text-sm">{new Date(selectedDeposit.date).toLocaleString()}</span>
+                            </div>
+                             <div className="flex justify-between">
+                                <span className="text-slate-400">Recorded by:</span>
+                                <span>{staffMap.get(selectedDeposit.staffId)} at {branchMap.get(selectedDeposit.branchId)}</span>
+                            </div>
+                        </div>
                         <div className="space-y-4">
                             <div>
                                 <label className="text-sm font-medium text-slate-400">Status</label>
@@ -108,12 +139,24 @@ const DepositManagement: React.FC = () => {
                                     <option>REFUNDED</option>
                                 </select>
                             </div>
+                             {newStatus === 'APPLIED' && (
+                                <div>
+                                    <label className="text-sm font-medium text-slate-400">Applied to Sale ID (Optional)</label>
+                                    <input 
+                                        type="text" 
+                                        value={appliedSaleIdInput} 
+                                        onChange={e => setAppliedSaleIdInput(e.target.value)}
+                                        placeholder="Enter Sale ID..."
+                                        className="w-full bg-slate-700 p-2 rounded-md mt-1 text-white border border-slate-600 focus:ring-cyan-500 font-mono"
+                                    />
+                                </div>
+                            )}
                             <div>
                                 <label className="text-sm font-medium text-slate-400">Notes</label>
                                 <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full bg-slate-700 p-2 rounded-md mt-1 text-white border border-slate-600 focus:ring-cyan-500" />
                             </div>
                         </div>
-                        <div className="flex justify-end gap-3 mt-6">
+                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-700">
                             <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-md bg-slate-600 text-white hover:bg-slate-500 font-semibold">Cancel</button>
                             <button onClick={handleUpdateStatus} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold">Update Deposit</button>
                         </div>

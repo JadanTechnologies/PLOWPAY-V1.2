@@ -626,7 +626,7 @@ export interface AppContextType {
   addCustomer: (customerData: Omit<Customer, 'id' | 'creditBalance'>) => void;
   recordCreditPayment: (customerId: string, amount: number) => void;
   addDeposit: (depositData: Omit<Deposit, 'id' | 'date' | 'status'>) => Promise<{success: boolean, message: string}>;
-  updateDeposit: (depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes'>>) => void;
+  updateDeposit: (depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes' | 'appliedSaleId'>>) => void;
   addConsignment: (consignmentData: Omit<Consignment, 'id' | 'status'>) => void;
   addCategory: (categoryName: string) => void;
   updateCategory: (categoryId: string, newName: string) => void;
