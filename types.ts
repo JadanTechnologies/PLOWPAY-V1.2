@@ -21,7 +21,8 @@ export type TenantPermission =
  | 'accessAccounting'
  | 'viewAuditLogs'
  | 'makeDeposits'
- | 'manageDeposits';
+ | 'manageDeposits'
+ | 'accessReturns';
 
 export const allTenantPermissions: TenantPermission[] = [
     'accessPOS',
@@ -35,6 +36,7 @@ export const allTenantPermissions: TenantPermission[] = [
     'viewAuditLogs',
     'makeDeposits',
     'manageDeposits',
+    'accessReturns',
 ];
 
 
@@ -114,7 +116,7 @@ export interface Sale {
   amountDue: number;
 }
 
-export type StockLogAction = 'ADJUSTMENT' | 'TRANSFER' | 'SALE' | 'PURCHASE_RECEIVED' | 'CONSIGNMENT_IN';
+export type StockLogAction = 'ADJUSTMENT' | 'TRANSFER' | 'SALE' | 'PURCHASE_RECEIVED' | 'CONSIGNMENT_IN' | 'RETURN';
 
 
 export interface StockLog {
@@ -304,7 +306,7 @@ export interface ResendSettings {
 }
 
 export interface SMTPSettings {
-    host: string;
+    host: number;
     port: number;
     user: string;
     pass: string;

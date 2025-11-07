@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import { Product, CartItem, ProductVariant, Payment, Sale, Deposit } from '../types';
+import { Product, CartItem, ProductVariant, Payment, Sale, Deposit, TenantPermission } from '../types';
 import Icon from './icons/index.tsx';
 import Calculator from './Calculator';
 import { useCurrency } from '../hooks/useCurrency';
@@ -66,9 +66,12 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
     const [currentAmount, setCurrentAmount] = useState('');
     const [currentMethod, setCurrentMethod] = useState<'Cash' | 'Card' | 'Bank'>('Cash');
     const { formatCurrency } = useCurrency();
+
+    const isRefund = totalDue < 0;
+    const amountToSettle = Math.abs(totalDue);
     
     const totalPaid = useMemo(() => payments.reduce((acc, p) => acc + p.amount, 0), [payments]);
-    const remaining = useMemo(() => totalDue - totalPaid, [totalDue, totalPaid]);
+    const remaining = useMemo(() => amountToSettle - totalPaid, [amountToSettle, totalPaid]);
     const change = useMemo(() => (remaining < 0 ? Math.abs(remaining) : 0), [remaining]);
     
     const addPayment = () => {
@@ -90,18 +93,22 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
         }
         return Math.ceil(amount / 100) * 100;
     };
+    
+    const buttonText = isRefund
+        ? 'Confirm Refund'
+        : remaining > 0 ? 'Complete with Deposit' : 'Complete Sale';
 
     return (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
             <div className="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-lg border border-slate-700">
                 <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-2xl font-bold text-white">Payment</h3>
+                    <h3 className="text-2xl font-bold text-white">{isRefund ? 'Process Refund' : 'Payment'}</h3>
                     <button onClick={onClose} className="text-slate-400 hover:text-white"><Icon name="x-mark" className="w-6 h-6"/></button>
                 </div>
                 
                 <div className="bg-slate-950 p-4 rounded-md text-center mb-4 border border-slate-800">
-                    <p className="text-slate-400 text-lg">Total Due</p>
-                    <p className="text-5xl font-extrabold text-cyan-400 tracking-tight">{formatCurrency(totalDue)}</p>
+                    <p className="text-slate-400 text-lg">{isRefund ? 'Total to Refund' : 'Total Due'}</p>
+                    <p className={`text-5xl font-extrabold ${isRefund ? 'text-red-400' : 'text-cyan-400'} tracking-tight`}>{formatCurrency(amountToSettle)}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -112,36 +119,42 @@ const PaymentModal: React.FC<{ totalDue: number; onClose: () => void; onConfirm:
                             ))}
                         </div>
                         <input type="number" placeholder="Amount" value={currentAmount} onChange={e => setCurrentAmount(e.target.value)} className="w-full bg-slate-800 p-3 rounded-md text-2xl text-center border border-slate-600 focus:ring-2 focus:ring-cyan-500 focus:outline-none"/>
-                        {currentMethod === 'Cash' && remaining > 0 && (
+                        {!isRefund && currentMethod === 'Cash' && remaining > 0 && (
                             <div className="text-center text-sm text-slate-400">
                                 Exact: <button className="font-semibold text-cyan-400" onClick={() => handleQuickCash(remaining)}>{formatCurrency(remaining)}</button>
                                 &nbsp;|&nbsp;
                                 Next Bill: <button className="font-semibold text-cyan-400" onClick={() => handleQuickCash(nextBill(remaining))}>{formatCurrency(nextBill(remaining))}</button>
                             </div>
                         )}
-                        <button onClick={addPayment} className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-4 rounded-md text-lg">Add Payment</button>
+                        <button onClick={addPayment} className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-3 px-4 rounded-md text-lg">{isRefund ? 'Add Refund Method' : 'Add Payment'}</button>
                     </div>
 
                     <div className="bg-slate-800/50 p-4 rounded-md flex flex-col border border-slate-700">
-                         <h4 className="font-semibold mb-2">Payments Received:</h4>
+                         <h4 className="font-semibold mb-2">{isRefund ? 'Refunds Issued:' : 'Payments Received:'}</h4>
                          <ul className="flex-grow space-y-1 text-sm">
                             {payments.map((p, i) => <li key={i} className="flex justify-between"><span>{p.method}</span><span>{formatCurrency(p.amount)}</span></li>)}
-                            {payments.length === 0 && <li className="text-slate-400">No payments added.</li>}
+                            {payments.length === 0 && <li className="text-slate-400">{isRefund ? 'No refunds issued.' : 'No payments added.'}</li>}
                          </ul>
                          <div className="border-t border-slate-600 pt-2 space-y-1 mt-2 text-lg">
-                            <div className="flex justify-between"><span>Total Paid:</span><span>{formatCurrency(totalPaid)}</span></div>
-                            <div className={`flex justify-between font-bold ${remaining <= 0 ? 'text-green-400' : 'text-red-400'}`}><span>Remaining:</span><span>{remaining > 0 ? formatCurrency(remaining) : formatCurrency(0)}</span></div>
-                            {change > 0 && <div className="flex justify-between font-bold text-yellow-400"><span>Change Due:</span><span>{formatCurrency(change)}</span></div>}
+                            <div className="flex justify-between"><span>{isRefund ? 'Total Refunded:' : 'Total Paid:'}</span><span>{formatCurrency(totalPaid)}</span></div>
+                            {!isRefund && (
+                                <>
+                                    <div className={`flex justify-between font-bold ${remaining <= 0 ? 'text-green-400' : 'text-red-400'}`}><span>Remaining:</span><span>{remaining > 0 ? formatCurrency(remaining) : formatCurrency(0)}</span></div>
+                                    {change > 0 && <div className="flex justify-between font-bold text-yellow-400"><span>Change Due:</span><span>{formatCurrency(change)}</span></div>}
+                                </>
+                            )}
                          </div>
                     </div>
                 </div>
 
-                <button onClick={() => onConfirm(payments, change)} className="w-full mt-6 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white font-bold py-3 px-4 rounded-md text-xl">
-                    {remaining > 0 ? 'Complete with Deposit' : 'Complete Sale'}
+                <button onClick={() => onConfirm(payments, isRefund ? 0 : change)} className={`w-full mt-6 font-bold py-3 px-4 rounded-md text-xl text-white ${isRefund ? 'bg-red-600 hover:bg-red-500' : 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'}`}>
+                    {buttonText}
                 </button>
-                 <p className="text-xs text-slate-500 text-center mt-2">
-                    {remaining > 0 ? `An outstanding balance of ${formatCurrency(remaining)} will be recorded as credit.` : 'Payment covers total amount.'}
-                </p>
+                 {!isRefund && (
+                    <p className="text-xs text-slate-500 text-center mt-2">
+                        {remaining > 0 ? `An outstanding balance of ${formatCurrency(remaining)} will be recorded as credit.` : 'Payment covers total amount.'}
+                    </p>
+                 )}
             </div>
         </div>
     );
@@ -154,6 +167,7 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
     const tax = sale.total - subtotal + (sale.discount || 0);
     const cashier = staff.find(s => s.id === sale.staffId);
     const customer = customers.find(c => c.id === sale.customerId);
+    const isRefund = sale.total < 0;
 
     const handlePrint = () => {
         window.print();
@@ -167,13 +181,13 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
                          {brandConfig.logoUrl ? (
                             <img src={brandConfig.logoUrl} alt={`${brandConfig.name} Logo`} className="h-12 w-auto mx-auto mb-2" />
                         ) : ( <Icon name="pos" className="w-12 h-12 text-cyan-400 mx-auto" />)}
-                        <h2 className="text-2xl font-bold">{brandConfig.name}</h2>
+                        <h2 className="text-2xl font-bold">{isRefund ? 'Refund Receipt' : 'Invoice'}</h2>
                         <p className="text-sm">123 Market St, San Francisco, CA</p>
                     </div>
 
                     <div className="flex justify-between text-sm mb-4">
                         <div>
-                            <p><strong>Sale ID:</strong> {sale.id}</p>
+                            <p><strong>{isRefund ? 'Return' : 'Sale'} ID:</strong> {sale.id}</p>
                             <p><strong>Date:</strong> {sale.date.toLocaleString()}</p>
                              <p><strong>Cashier:</strong> {cashier?.name || 'N/A'}</p>
                         </div>
@@ -211,7 +225,7 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
                     
                     <div className="space-y-1 text-sm border-t border-slate-700 pt-2">
                          {sale.payments.map((p, i) => (
-                            <div key={i} className="flex justify-between"><span className="text-slate-400">Paid ({p.method}):</span><span>{formatCurrency(p.amount)}</span></div>
+                            <div key={i} className="flex justify-between"><span className="text-slate-400">{isRefund ? 'Refunded via' : 'Paid'} ({p.method}):</span><span>{formatCurrency(p.amount)}</span></div>
                          ))}
                          {sale.change > 0 && <div className="flex justify-between font-bold"><span>Change:</span><span>{formatCurrency(sale.change)}</span></div>}
                     </div>
@@ -220,7 +234,7 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
                 </div>
                 <div className="no-print mt-auto p-4 bg-slate-900/50 rounded-b-lg flex justify-end gap-3 border-t border-slate-700">
                     <button onClick={onClose} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500 font-semibold">Close</button>
-                    <button onClick={handlePrint} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 font-semibold flex items-center gap-2"><Icon name="printer" className="w-5 h-5"/>Print Invoice</button>
+                    <button onClick={handlePrint} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 font-semibold flex items-center gap-2"><Icon name="printer" className="w-5 h-5"/>Print Receipt</button>
                 </div>
             </div>
         </div>
@@ -278,13 +292,22 @@ const DepositModal: React.FC<{
 
 
 const PointOfSale: React.FC = () => {
-  const { products, searchTerm, addSale, branches, categories, addDeposit, customers } = useAppContext();
+  const { products, searchTerm, addSale, branches, categories, addDeposit, customers, currentStaffUser, staffRoles } = useAppContext();
   const { formatCurrency } = useCurrency();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('All');
   const [showFavorites, setShowFavorites] = useState(false);
   const [isCalculatorOpen, setIsCalculatorOpen] = useState(false);
   const [discount, setDiscount] = useState(0);
+  const [isReturnMode, setIsReturnMode] = useState(false);
+
+  const userPermissions = useMemo(() => {
+    if (!currentStaffUser) return new Set<TenantPermission>();
+    const role = staffRoles.find(r => r.id === currentStaffUser.roleId);
+    return new Set(role?.permissions || []);
+  }, [currentStaffUser, staffRoles]);
+  const canProcessReturns = userPermissions.has('accessReturns');
+
 
   const defaultCustomer = { name: 'Walk-in Customer', phone: '' };
   const [customer, setCustomer] = useState(defaultCustomer);
@@ -326,32 +349,51 @@ const PointOfSale: React.FC = () => {
     }
   }, [saleStatus]);
 
+  useEffect(() => {
+    if (cart.length === 0) {
+        setIsReturnMode(false);
+    }
+  }, [cart]);
+
+
   const handleAddToCart = useCallback((product: Product, variant: ProductVariant) => {
     setCart(prevCart => {
-      const existingItem = prevCart.find(item => item.variantId === variant.id);
-      if (existingItem) {
-        return prevCart.map(item =>
-          item.variantId === variant.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      }
-      return [...prevCart, { 
-          productId: product.id, 
-          variantId: variant.id, 
-          name: product.name,
-          variantName: variant.name,
-          quantity: 1, 
-          sellingPrice: variant.sellingPrice,
-          costPrice: variant.costPrice
+        const quantityChange = isReturnMode ? -1 : 1;
+        const existingItem = prevCart.find(item => item.variantId === variant.id);
+        
+        if (prevCart.length > 0 && Math.sign(prevCart[0].quantity) !== Math.sign(quantityChange)) {
+            setSaleStatus({ message: 'Cannot mix sales and returns in the same transaction.', type: 'error' });
+            return prevCart;
+        }
+
+        if (existingItem) {
+            const newQuantity = existingItem.quantity + quantityChange;
+            if (newQuantity === 0) {
+                return prevCart.filter(item => item.variantId !== variant.id);
+            }
+            return prevCart.map(item =>
+                item.variantId === variant.id ? { ...item, quantity: newQuantity } : item
+            );
+        }
+        
+        return [...prevCart, { 
+            productId: product.id, 
+            variantId: variant.id, 
+            name: product.name,
+            variantName: variant.name,
+            quantity: quantityChange, 
+            sellingPrice: variant.sellingPrice,
+            costPrice: variant.costPrice
         }];
     });
-  }, []);
+  }, [isReturnMode]);
 
   const handleUpdateQuantity = (variantId: string, delta: number) => {
     setCart(prevCart => {
       const updatedCart = prevCart.map(item =>
         item.variantId === variantId ? { ...item, quantity: item.quantity + delta } : item
       );
-      return updatedCart.filter(item => item.quantity > 0);
+      return updatedCart.filter(item => item.quantity !== 0);
     });
   };
 
@@ -369,6 +411,7 @@ const PointOfSale: React.FC = () => {
   const subtotal = useMemo(() => cart.reduce((acc, item) => acc + item.sellingPrice * item.quantity, 0), [cart]);
   const tax = subtotal * 0.08;
   const total = subtotal + tax - discount;
+  const isRefund = total < 0;
 
   const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = parseFloat(e.target.value);
@@ -387,6 +430,7 @@ const PointOfSale: React.FC = () => {
     setDiscount(0);
     setCustomer(defaultCustomer);
     setIsEditingCustomer(false);
+    setIsReturnMode(false);
   }, []);
 
   const handleHoldOrder = () => {
@@ -414,6 +458,11 @@ const PointOfSale: React.FC = () => {
       setCart(orderToRetrieve.cart);
       setCustomer(orderToRetrieve.customer);
       setDiscount(orderToRetrieve.discount);
+      if (orderToRetrieve.cart.length > 0 && orderToRetrieve.cart[0].quantity < 0) {
+        setIsReturnMode(true);
+      } else {
+        setIsReturnMode(false);
+      }
       setHeldOrders(prev => prev.filter(o => o.id !== id));
       setSaleStatus({ message: 'Held order retrieved.', type: 'success' });
     }
@@ -517,8 +566,8 @@ const PointOfSale: React.FC = () => {
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {cart.length === 0 ? (
                         <div className="text-center text-slate-500 py-16">
-                           <Icon name="pos" className="w-16 h-16 mx-auto mb-2"/>
-                           <p>Your cart is empty.</p>
+                           <Icon name={isReturnMode ? 'minus' : 'pos'} className="w-16 h-16 mx-auto mb-2"/>
+                           <p>{isReturnMode ? 'Select items to return.' : 'Your cart is empty.'}</p>
                         </div>
                     ) : (
                         cart.map(item => (
@@ -542,15 +591,21 @@ const PointOfSale: React.FC = () => {
                      <div className="flex justify-between text-sm"><span className="text-slate-400">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
                      <div className="flex justify-between text-sm"><span className="text-slate-400">Tax (8%)</span><span>{formatCurrency(tax)}</span></div>
                      <div className="flex justify-between items-center text-sm"><span className="text-slate-400">Discount</span><input type="number" value={discount} onChange={handleDiscountChange} className="w-24 bg-slate-700 p-1 rounded-md text-right border border-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500"/></div>
-                     <div className="flex justify-between font-bold text-2xl border-t border-slate-700 pt-3"><span className="text-white">Total</span><span className="text-cyan-400">{formatCurrency(total)}</span></div>
+                     <div className="flex justify-between font-bold text-2xl border-t border-slate-700 pt-3"><span className="text-white">Total</span><span className={isRefund ? 'text-red-400' : 'text-cyan-400'}>{formatCurrency(total)}</span></div>
 
-                     <div className="grid grid-cols-2 gap-2">
-                         <button onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0} className="w-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-3 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed col-span-2">
-                             Pay
-                         </button>
-                         <button onClick={clearOrder} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Clear</button>
-                         <button onClick={handleHoldOrder} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Hold</button>
-                         <button onClick={() => setDepositModalOpen(true)} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md col-span-2">Record Deposit</button>
+                     <div className="grid grid-cols-3 gap-2">
+                        <button onClick={clearOrder} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Clear</button>
+                        <button onClick={handleHoldOrder} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Hold</button>
+                        {canProcessReturns ? (
+                            <button onClick={() => setIsReturnMode(!isReturnMode)} className={`${isReturnMode ? 'bg-red-600 hover:bg-red-500 ring-2 ring-white/70' : 'bg-slate-700 hover:bg-slate-600'} font-semibold py-2 px-4 rounded-md transition-colors`}>
+                                Return Mode
+                            </button>
+                        ) : <div />}
+                        
+                        <button onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0} className={`w-full font-bold py-3 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed col-span-3 ${isRefund ? 'bg-red-600 hover:bg-red-500' : 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'}`}>
+                            {isRefund ? `Process Refund ${formatCurrency(Math.abs(total))}` : 'Pay'}
+                        </button>
+                        <button onClick={() => setDepositModalOpen(true)} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md col-span-3">Record Deposit</button>
                      </div>
                 </div>
 

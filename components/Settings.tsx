@@ -4,9 +4,8 @@ import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { StaffRole, TenantPermission, TenantAutomations } from '../types';
 
-type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations';
+type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations' | 'security';
 
-// FIX: Add missing properties 'makeDeposits' and 'manageDeposits'.
 const permissionLabels: Record<TenantPermission, string> = {
     accessPOS: 'Access Point of Sale',
     manageInventory: 'Manage Inventory',
@@ -19,10 +18,11 @@ const permissionLabels: Record<TenantPermission, string> = {
     viewAuditLogs: 'View Audit Logs',
     makeDeposits: 'Make Deposits',
     manageDeposits: 'Manage Deposits',
+    accessReturns: 'Process Returns',
 };
 
 const permissionGroups: Record<string, TenantPermission[]> = {
-    'Sales & Operations': ['accessPOS', 'managePurchases', 'makeDeposits'],
+    'Sales & Operations': ['accessPOS', 'managePurchases', 'makeDeposits', 'accessReturns'],
     'Inventory & Logistics': ['manageInventory', 'manageLogistics'],
     'Administration': ['viewReports', 'manageStaff', 'accessSettings', 'accessAccounting', 'viewAuditLogs', 'manageDeposits'],
 };
@@ -104,6 +104,8 @@ const Settings: React.FC = () => {
     // State for the General Settings form
     const [formCurrency, setFormCurrency] = useState(currentCurrency);
     const [formLanguage, setFormLanguage] = useState(currentLanguage);
+    const [logoutTimeout, setLogoutTimeout] = useState(currentTenant?.logoutTimeout || 0);
+
     const [automationsForm, setAutomationsForm] = useState(
         currentTenant?.automations || { generateEODReport: false, sendLowStockAlerts: false }
     );
@@ -119,6 +121,7 @@ const Settings: React.FC = () => {
     
     useEffect(() => {
         setAutomationsForm(currentTenant?.automations || { generateEODReport: false, sendLowStockAlerts: false });
+        setLogoutTimeout(currentTenant?.logoutTimeout || 0);
     }, [currentTenant]);
 
 
@@ -141,6 +144,12 @@ const Settings: React.FC = () => {
         });
         alert('Settings saved!');
     };
+
+    const handleSecuritySettingsSave = () => {
+        updateCurrentTenantSettings({ logoutTimeout });
+        alert('Security settings saved!');
+    };
+
 
     const handleAutomationToggle = (key: keyof TenantAutomations) => {
         setAutomationsForm(prev => ({ ...prev, [key]: !prev[key] }));
@@ -354,6 +363,28 @@ const Settings: React.FC = () => {
                          </div>
                     </div>
                 );
+            case 'security':
+                return (
+                    <div className="max-w-2xl space-y-6">
+                         <div className="bg-slate-900/50 p-6 rounded-lg border border-slate-700">
+                            <h3 className="text-xl font-semibold mb-4 text-white">Security</h3>
+                            <div>
+                                <label htmlFor="logoutTimeout" className="block text-sm font-medium text-slate-400">Automatic Staff Logout</label>
+                                <input 
+                                    type="number" 
+                                    id="logoutTimeout"
+                                    value={logoutTimeout}
+                                    onChange={(e) => setLogoutTimeout(parseInt(e.target.value, 10) || 0)}
+                                    className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"
+                                />
+                                <p className="text-xs text-slate-500 mt-1">Set the inactivity time in minutes before a staff member is automatically logged out. Set to 0 to disable.</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <button onClick={handleSecuritySettingsSave} className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-2 px-4 rounded-md">Save Security Settings</button>
+                        </div>
+                    </div>
+                );
         }
     };
 
@@ -368,6 +399,7 @@ const Settings: React.FC = () => {
             <h2 className="text-2xl font-bold text-white mb-6">Settings</h2>
             <div className="flex flex-wrap gap-2 border-b border-slate-700 mb-6 pb-2">
                 <TabButton tab="general" label="General" />
+                <TabButton tab="security" label="Security" />
                 <TabButton tab="automations" label="Automations" />
                 <TabButton tab="branches" label="Branches" />
                 <TabButton tab="staff" label="Staff" />

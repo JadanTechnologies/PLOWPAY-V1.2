@@ -21,7 +21,7 @@ const mockCategories: Category[] = [
 
 const mockStaffRoles: StaffRole[] = [
     { id: 'staff-role-manager', name: 'Manager', permissions: [...allTenantPermissions] },
-    { id: 'staff-role-cashier', name: 'Cashier', permissions: ['accessPOS', 'viewReports', 'makeDeposits'] },
+    { id: 'staff-role-cashier', name: 'Cashier', permissions: ['accessPOS', 'viewReports', 'makeDeposits', 'accessReturns'] },
     { id: 'staff-role-logistics', name: 'Logistics', permissions: ['manageLogistics', 'manageInventory'] },
 ];
 
@@ -381,7 +381,7 @@ const mockNotificationSettings: NotificationSettings = {
     email: {
         provider: 'resend',
         resend: { apiKey: 're_123456789' },
-        smtp: { host: 'smtp.example.com', port: 587, user: 'user', pass: 'password' }
+        smtp: { host: 587, port: 587, user: 'user', pass: 'password' }
     },
     sms: {
         twilio: {
@@ -634,51 +634,53 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                 let deductedFromConsign = 0;
                 const branchId = saleData.branchId;
     
-                // 1. Fulfill from consignment stock first
-                const consignmentStock = variant.consignmentStockByBranch?.[branchId] || 0;
-                if (consignmentStock > 0) {
-                    const qtyFromConsign = Math.min(qtyToDeduct, consignmentStock);
-                    
-                    const activeConsignment = consignments.find(c => 
-                        c.branchId === branchId &&
-                        c.status === 'ACTIVE' &&
-                        c.items.some(ci => ci.variantId === item.variantId)
-                    );
-    
-                    if (activeConsignment) {
-                        const consignmentItem = activeConsignment.items.find(ci => ci.variantId === item.variantId);
-                        if (consignmentItem) {
-                            totalCostForItem += qtyFromConsign * consignmentItem.costPrice;
-                            qtyToDeduct -= qtyFromConsign;
-                            deductedFromConsign = qtyFromConsign;
-    
-                            // Queue up consignment update.
-                            stateUpdateQueue.push(() => {
-                                setConsignments(prev => prev.map(con => {
-                                    if (con.id === activeConsignment.id) {
-                                        return {
-                                            ...con,
-                                            items: con.items.map(ci => 
-                                                ci.variantId === item.variantId 
-                                                    ? { ...ci, quantitySold: ci.quantitySold + qtyFromConsign } 
-                                                    : ci
-                                            )
-                                        };
-                                    }
-                                    return con;
-                                }));
-                            });
+                // 1. Fulfill from consignment stock first (only for positive quantities)
+                if (qtyToDeduct > 0) {
+                    const consignmentStock = variant.consignmentStockByBranch?.[branchId] || 0;
+                    if (consignmentStock > 0) {
+                        const qtyFromConsign = Math.min(qtyToDeduct, consignmentStock);
+                        
+                        const activeConsignment = consignments.find(c => 
+                            c.branchId === branchId &&
+                            c.status === 'ACTIVE' &&
+                            c.items.some(ci => ci.variantId === item.variantId)
+                        );
+        
+                        if (activeConsignment) {
+                            const consignmentItem = activeConsignment.items.find(ci => ci.variantId === item.variantId);
+                            if (consignmentItem) {
+                                totalCostForItem += qtyFromConsign * consignmentItem.costPrice;
+                                qtyToDeduct -= qtyFromConsign;
+                                deductedFromConsign = qtyFromConsign;
+        
+                                // Queue up consignment update.
+                                stateUpdateQueue.push(() => {
+                                    setConsignments(prev => prev.map(con => {
+                                        if (con.id === activeConsignment.id) {
+                                            return {
+                                                ...con,
+                                                items: con.items.map(ci => 
+                                                    ci.variantId === item.variantId 
+                                                        ? { ...ci, quantitySold: ci.quantitySold + qtyFromConsign } 
+                                                        : ci
+                                                )
+                                            };
+                                        }
+                                        return con;
+                                    }));
+                                });
+                            }
                         }
                     }
                 }
     
-                // 2. Fulfill remaining from owned stock.
-                if (qtyToDeduct > 0) {
+                // 2. Fulfill remaining from owned stock. (qtyToDeduct can be negative for returns)
+                if (qtyToDeduct !== 0) {
                     totalCostForItem += qtyToDeduct * variant.costPrice;
                 }
     
                 // 3. Calculate average cost for this cart item and update it.
-                item.costPrice = item.quantity > 0 ? totalCostForItem / item.quantity : 0;
+                item.costPrice = item.quantity !== 0 ? totalCostForItem / item.quantity : 0;
     
                 // 4. Queue up product stock update for both stock types.
                 const qtyFromOwned = item.quantity - deductedFromConsign;
@@ -691,7 +693,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                                     variants: p.variants.map(v => {
                                         if (v.id === item.variantId) {
                                             const newStockByBranch = { ...v.stockByBranch };
-                                            if (qtyFromOwned > 0) {
+                                            if (qtyFromOwned !== 0) {
+                                                // This subtracts the quantity. If quantity is negative (a return), it adds to stock.
                                                 newStockByBranch[branchId] = (newStockByBranch[branchId] || 0) - qtyFromOwned;
                                             }
     
@@ -745,7 +748,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             id: `log-${Date.now()}-${item.variantId}`, date: new Date(),
             productId: item.productId, variantId: item.variantId,
             productName: item.name, variantName: item.variantName,
-            action: 'SALE', quantity: -item.quantity,
+            action: item.quantity < 0 ? 'RETURN' : 'SALE',
+            quantity: -item.quantity, // For sale of 2, logs -2. For return of 1 (qty -1), logs 1.
             branchId: saleData.branchId, referenceId: newSale.id
         }));
         
