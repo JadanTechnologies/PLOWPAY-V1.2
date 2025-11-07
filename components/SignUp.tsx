@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { View } from '../App';
-import Icon from '/components/icons/index.tsx';
+import Icon from './icons/index.tsx';
 import { useAppContext } from '../hooks/useAppContext';
 
 interface SignUpProps {
-  onNavigate: (view: View) => void;
+  onNavigate: (view: View, data?: any) => void;
 }
 
 const PasswordStrengthMeter: React.FC<{ password?: string }> = ({ password = '' }) => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { EmailTemplate, SmsTemplate } from '../../types';
-import Icon from '/components/icons/index.tsx';
+import Icon from '../icons/index.tsx';
 
 const TemplateManagement: React.FC = () => {
     const { emailTemplates, smsTemplates, updateEmailTemplate, updateSmsTemplate } = useAppContext();

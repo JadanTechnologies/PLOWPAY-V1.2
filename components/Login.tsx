@@ -1,8 +1,7 @@
 
 
-
 import React, { useState } from 'react';
-import Icon from '/components/icons/index.tsx';
+import Icon from './icons/index.tsx';
 import { mockTenants } from '../context/AppContext';
 import { useAppContext } from '../hooks/useAppContext';
 import { View } from '../App';

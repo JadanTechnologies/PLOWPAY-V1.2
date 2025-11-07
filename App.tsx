@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -7,7 +8,7 @@ import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { useAppContext } from './hooks/useAppContext';
 import { FaqItem, PageContent, NotificationType } from './types';
-import Icon from '/components/icons/index.tsx';
+import Icon from './components/icons/index.tsx';
 import SignUp from './components/SignUp';
 import ForgotPassword from './components/ForgotPassword';
 import MaintenancePage from './components/MaintenancePage';

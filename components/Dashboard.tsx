@@ -1,10 +1,9 @@
 
 
-
 import React from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useAppContext } from '../hooks/useAppContext';
-import Icon from '/components/icons/index.tsx';
+import Icon from './icons/index.tsx';
 import { Sale } from '../types';
 import { useCurrency } from '../hooks/useCurrency';
 import { useTranslation } from '../hooks/useTranslation';

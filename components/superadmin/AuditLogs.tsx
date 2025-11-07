@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AuditLog } from '../../types';
-import Icon from '/components/icons/index.tsx';
+import Icon from '../icons/index.tsx';
 
 const SuperAdminAuditLogs: React.FC = () => {
     const { auditLogs } = useAppContext();

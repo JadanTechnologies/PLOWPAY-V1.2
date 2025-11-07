@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
@@ -15,7 +13,7 @@ import NotificationSettings from './NotificationSettings';
 import SubscriptionManagement from './SubscriptionManagement';
 import { useAppContext } from '../../hooks/useAppContext';
 import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language, LandingPageMetrics } from '../../types';
-import Icon from '/components/icons/index.tsx';
+import Icon from '../icons/index.tsx';
 import { usePermissions } from '../../hooks/usePermissions';
 import Announcements from './Announcements';
 import PaymentTransactions from './PaymentTransactions';

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Tenant, TenantStatus } from '../../types';
-import Icon from '/components/icons/index.tsx';
+import Icon from '../icons/index.tsx';
 import TenantDetailModal from './TenantDetailModal';
 
 const TenantManagement: React.FC = () => {

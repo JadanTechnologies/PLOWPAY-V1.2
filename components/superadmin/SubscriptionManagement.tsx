@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { SubscriptionPlan } from '../../types';
-import Icon from '/components/icons/index.tsx';
+import Icon from '../icons/index.tsx';
 import { useCurrency } from '../../hooks/useCurrency';
 
 const SubscriptionManagement: React.FC = () => {
@@ -103,72 +103,53 @@ const SubscriptionManagement: React.FC = () => {
                         </div>
                         <ul className="space-y-2 text-gray-300 text-sm mb-6">
                             {plan.features.map((feature, i) => (
-                                <li key={i} className="flex items-start">
-                                    <Icon name="check" className="w-5 h-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                                    <span>{feature}</span>
+                                <li key={i} className="flex items-center">
+                                    <Icon name="check" className="w-4 h-4 mr-2 text-green-400"/>
+                                    {feature}
                                 </li>
                             ))}
                         </ul>
-                        <div className="mt-auto flex justify-end space-x-2">
-                             <button onClick={() => openModal(plan)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-3 py-1 rounded-md text-sm">Edit</button>
-                             <button onClick={() => handleDelete(plan.id)} className="text-rose-400 hover:text-rose-300 font-semibold px-3 py-1 rounded-md text-sm">Delete</button>
+                        <div className="mt-auto flex items-center space-x-2">
+                            <button onClick={() => openModal(plan)} className="w-full bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-2 px-4 rounded-md text-sm">Edit</button>
+                            <button onClick={() => handleDelete(plan.id)} className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-2 px-4 rounded-md text-sm">Delete</button>
                         </div>
                     </div>
                 ))}
             </div>
-
+            
             {isModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
-                    <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[90vh] flex flex-col">
-                        <h3 className="text-xl font-bold mb-4 text-white">{editingPlan ? 'Edit' : 'Add'} Subscription Plan</h3>
-                        <form onSubmit={handleSubmit} className="flex-grow overflow-y-auto pr-2 -mr-2 space-y-4">
-                            <div>
-                                <label className="text-sm text-gray-400">Plan Name</label>
-                                <input name="name" value={formData.name} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1" required />
+                <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
+                    <form onSubmit={handleSubmit} className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
+                        <h3 className="text-xl font-bold mb-4 text-white">{editingPlan ? 'Edit Plan' : 'Add New Plan'}</h3>
+                        <div className="flex-grow overflow-y-auto pr-2 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><label className="text-sm">Plan Name</label><input type="text" name="name" value={formData.name} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
+                                <div><label className="text-sm">Monthly Price</label><input type="number" name="price" value={formData.price} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
+                                <div><label className="text-sm">Yearly Price</label><input type="number" name="priceYearly" value={formData.priceYearly} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
+                                <div className="flex items-center"><input type="checkbox" name="recommended" checked={formData.recommended} onChange={handleFormChange} className="h-4 w-4 rounded"/><label className="ml-2">Recommended Plan</label></div>
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-sm text-gray-400">Price (per month)</label>
-                                    <input name="price" type="number" value={formData.price} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1" required />
-                                </div>
-                                <div>
-                                    <label className="text-sm text-gray-400">Price (per year)</label>
-                                    <input name="priceYearly" type="number" value={formData.priceYearly} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1" required />
-                                </div>
-                            </div>
+                            <div><label className="text-sm">Description</label><input type="text" name="description" value={formData.description} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
                             <div>
-                                <label className="text-sm text-gray-400">Description</label>
-                                <input name="description" value={formData.description} onChange={handleFormChange} className="w-full bg-gray-700 p-2 rounded-md mt-1" required />
-                            </div>
-                            <div>
-                                <label className="text-sm text-gray-400 mb-2 block">Features</label>
-                                <div className="space-y-2">
-                                    {formData.features.map((feature, index) => (
-                                        <div key={index} className="flex items-center gap-2">
-                                            <input value={feature} onChange={e => handleFeatureChange(index, e.target.value)} className="w-full bg-gray-700 p-2 rounded-md text-sm" placeholder={`Feature ${index + 1}`} />
-                                            <button type="button" onClick={() => removeFeatureRow(index)} className="text-red-500 hover:text-red-400 p-1"><Icon name="trash" className="w-5 h-5"/></button>
-                                        </div>
-                                    ))}
-                                </div>
+                                <label className="text-sm">Features</label>
+                                {formData.features.map((feature, index) => (
+                                    <div key={index} className="flex items-center gap-2 mt-1">
+                                        <input type="text" value={feature} onChange={e => handleFeatureChange(index, e.target.value)} className="w-full bg-gray-700 p-2 rounded-md text-sm" />
+                                        <button type="button" onClick={() => removeFeatureRow(index)} className="text-rose-500 p-1"><Icon name="trash" className="w-5 h-5"/></button>
+                                    </div>
+                                ))}
                                 <button type="button" onClick={addFeatureRow} className="text-cyan-400 text-sm font-semibold mt-2">+ Add Feature</button>
                             </div>
-                             <div className="flex items-center">
-                                <input id="recommended" name="recommended" type="checkbox" checked={formData.recommended} onChange={handleFormChange} className="h-4 w-4 text-cyan-600 bg-gray-700 border-gray-600 rounded focus:ring-cyan-500"/>
-                                <label htmlFor="recommended" className="ml-2 block text-sm text-gray-300">Mark as Recommended</label>
-                            </div>
-
-                        </form>
-                         <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-gray-700">
-                            <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500">Cancel</button>
-                            <button type="submit" onClick={handleSubmit} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500">
-                                {editingPlan ? 'Save Changes' : 'Create Plan'}
-                            </button>
                         </div>
-                    </div>
+                        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-700">
+                            <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md bg-gray-600">Cancel</button>
+                            <button type="submit" className="px-4 py-2 rounded-md bg-cyan-600">{editingPlan ? 'Save Changes' : 'Create Plan'}</button>
+                        </div>
+                    </form>
                 </div>
             )}
         </div>
     );
 };
 
+// FIX: Add default export to the component
 export default SubscriptionManagement;

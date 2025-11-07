@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 // FIX: Alias the NotificationSettings type to avoid a name collision with the component.
 import { NotificationSettings as NotificationSettingsType } from '../../types';
-import Icon from '/components/icons/index.tsx';
+import Icon from '../icons/index.tsx';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
     return (

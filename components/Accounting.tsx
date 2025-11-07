@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import Icon from '/components/icons/index.tsx';
+import Icon from './icons/index.tsx';
 import { Account, JournalEntry } from '../types';
 import { useCurrency } from '../hooks/useCurrency';
 

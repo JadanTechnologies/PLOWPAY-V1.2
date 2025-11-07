@@ -15,7 +15,7 @@ import {
     Cell,
 } from 'recharts';
 import { useAppContext } from '../../hooks/useAppContext';
-import Icon from '/components/icons/index.tsx';
+import Icon from '../icons/index.tsx';
 
 const MetricCard: React.FC<{ title: string; value: string; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-700">

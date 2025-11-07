@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminUser } from '../../types';
-import Icon from '/components/icons/index.tsx';
+import Icon from '../icons/index.tsx';
 
 const SuperAdminProfile: React.FC = () => {
     const { currentAdminUser, updateAdminProfile } = useAppContext();

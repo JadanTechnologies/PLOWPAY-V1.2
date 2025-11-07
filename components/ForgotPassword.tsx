@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View } from '../App';
-import Icon from '/components/icons/index.tsx';
+import Icon from './icons/index.tsx';
 import { useAppContext } from '../hooks/useAppContext';
 
 interface ForgotPasswordProps {

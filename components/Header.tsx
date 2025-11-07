@@ -1,11 +1,7 @@
 
 
-
-
-
-
 import React, { useState, useEffect, useMemo } from 'react';
-import Icon from '/components/icons/index.tsx';
+import Icon from './icons/index.tsx';
 import { useAppContext } from '../hooks/useAppContext';
 import { Announcement } from '../types';
 import { useTranslation } from '../hooks/useTranslation';

@@ -2,7 +2,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant, Payment, Sale } from '../types';
-import Icon from '/components/icons/index.tsx';
+import Icon from './icons/index.tsx';
 import Calculator from './Calculator';
 import { useCurrency } from '../hooks/useCurrency';
 

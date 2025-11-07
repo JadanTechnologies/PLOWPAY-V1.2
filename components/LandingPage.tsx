@@ -1,8 +1,7 @@
 
 
-
 import React from 'react';
-import Icon from '/components/icons/index.tsx';
+import Icon from './icons/index.tsx';
 import { View } from '../App';
 import { useAppContext } from '../hooks/useAppContext';
 import { useCurrency } from '../hooks/useCurrency';

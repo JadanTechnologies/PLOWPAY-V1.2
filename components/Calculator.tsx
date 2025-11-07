@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import Icon from '/components/icons/index.tsx';
+import Icon from './icons/index.tsx';
 
 interface CalculatorProps {
     onClose: () => void;

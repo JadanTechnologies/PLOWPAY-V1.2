@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AccessControlSettings } from '../../types';
-import Icon from '/components/icons/index.tsx';
+import Icon from '../icons/index.tsx';
 
 const ListInput: React.FC<{ label: string, value: string[], onChange: (value: string[]) => void }> = ({ label, value, onChange }) => (
     <div>
