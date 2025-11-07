@@ -19,7 +19,6 @@ const DetailItem: React.FC<{ icon: string; label: string; value?: string | React
 );
 
 const getStatusBadge = (status: Tenant['status']) => {
-    // FIX: Add UNVERIFIED to styles object
     const styles: {[key in Tenant['status']]: string} = {
         ACTIVE: 'bg-green-500/20 text-green-300',
         SUSPENDED: 'bg-red-500/20 text-red-300',

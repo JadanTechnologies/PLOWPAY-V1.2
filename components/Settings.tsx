@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons';
@@ -18,14 +15,12 @@ const permissionLabels: Record<TenantPermission, string> = {
     manageLogistics: 'Manage Logistics',
     managePurchases: 'Manage Purchases',
     accessAccounting: 'Access Accounting',
-    // FIX: Add missing 'viewAuditLogs' label
     viewAuditLogs: 'View Audit Logs',
 };
 
 const permissionGroups: Record<string, TenantPermission[]> = {
     'Sales & Operations': ['accessPOS', 'managePurchases'],
     'Inventory & Logistics': ['manageInventory', 'manageLogistics'],
-    // FIX: Add 'viewAuditLogs' to the 'Administration' group
     'Administration': ['viewReports', 'manageStaff', 'accessSettings', 'accessAccounting', 'viewAuditLogs'],
 };
 

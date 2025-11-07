@@ -43,7 +43,6 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, billingCycle, onComplete }) =
             }
             // Simulate file upload and get a URL
             const mockProofUrl = `/uploads/proof_${Date.now()}.jpg`;
-            // FIX: Pass the billingCycle argument to processSubscriptionPayment.
             const { success, message } = await processSubscriptionPayment(currentTenant.id, plan.id, method, price, billingCycle, true, mockProofUrl);
             setStatus(success ? 'PENDING_MANUAL' : 'ERROR');
             setStatusMessage(message);
@@ -51,7 +50,6 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, billingCycle, onComplete }) =
             // Simulate online payment API call
             setTimeout(async () => {
                 const isSuccess = Math.random() > 0.1; // 90% success rate
-                // FIX: Pass the billingCycle argument to processSubscriptionPayment.
                 const { success, message } = await processSubscriptionPayment(currentTenant.id, plan.id, method, price, billingCycle, isSuccess);
                 setStatus(success ? 'SUCCESS' : 'ERROR');
                 setStatusMessage(message);

@@ -15,12 +15,10 @@ const permissionLabels: Record<Permission, string> = {
     managePaymentGateways: 'Manage Payment Gateways',
     manageNotificationSettings: 'Manage Notification Settings',
     manageAnnouncements: 'Manage Announcements',
-    // FIX: Add missing 'viewAuditLogs' label
     viewAuditLogs: 'View Audit Logs',
 };
 
 const permissionGroups: Record<string, Permission[]> = {
-    // FIX: Add 'viewAuditLogs' to the 'Platform Management' group
     'Platform Management': ['viewPlatformDashboard', 'manageSystemSettings', 'viewAuditLogs'],
     'User & Tenant Management': ['manageTenants', 'manageSubscriptions', 'manageTeam', 'manageRoles'],
     'Financial & Communications': ['managePaymentGateways', 'manageNotificationSettings', 'manageAnnouncements']

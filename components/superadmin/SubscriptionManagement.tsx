@@ -10,7 +10,6 @@ const SubscriptionManagement: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingPlan, setEditingPlan] = useState<SubscriptionPlan | null>(null);
 
-    // FIX: Add missing 'priceYearly' property.
     const initialFormState: Omit<SubscriptionPlan, 'id'> = {
         name: '',
         price: 0,
@@ -24,7 +23,6 @@ const SubscriptionManagement: React.FC = () => {
     const openModal = (plan: SubscriptionPlan | null = null) => {
         if (plan) {
             setEditingPlan(plan);
-            // FIX: Include priceYearly when setting form data for an existing plan.
             setFormData({ name: plan.name, price: plan.price, priceYearly: plan.priceYearly, description: plan.description, features: plan.features, recommended: plan.recommended });
         } else {
             setEditingPlan(null);
@@ -49,7 +47,6 @@ const SubscriptionManagement: React.FC = () => {
     const handleFeatureChange = (index: number, value: string) => {
         const newFeatures = [...formData.features];
         newFeatures[index] = value;
-        // FIX: Completed the state setter function which was truncated.
         setFormData(prev => ({ ...prev, features: newFeatures }));
     };
 

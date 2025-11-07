@@ -50,7 +50,6 @@ const LogisticsManagement: React.FC = () => {
 
     // Form states
     const [truckForm, setTruckForm] = useState({ licensePlate: '', driverName: '', status: 'IDLE' as Truck['status'] });
-    // FIX: Changed `Sale['customer']` to `Pick<Customer, 'name' | 'phone'>` to match the correct type.
     const [sellShipmentForm, setSellShipmentForm] = useState<Pick<Customer, 'name' | 'phone'>>({ name: '', phone: '' });
     const [trackerSettingsForm, setTrackerSettingsForm] = useState<TrackerProvider[]>(trackerProviders);
 

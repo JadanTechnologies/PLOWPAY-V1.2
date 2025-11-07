@@ -66,7 +66,6 @@ const Billing: React.FC<BillingProps> = ({ onStartCheckout }) => {
         return <div>Loading...</div>;
     }
     
-    // FIX: Update function signature to accept all TenantStatus values and add 'UNVERIFIED' style.
     const getStatusBadge = (status: TenantStatus) => {
         const styles: {[key in TenantStatus]: string} = {
             ACTIVE: 'bg-green-500/20 text-green-300',

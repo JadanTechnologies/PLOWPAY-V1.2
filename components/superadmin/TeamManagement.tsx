@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminUser, AdminUserStatus, Permission } from '../../types';
@@ -18,7 +16,6 @@ const permissionLabels: Record<Permission, string> = {
     managePaymentGateways: 'Manage Payment Gateways',
     manageNotificationSettings: 'Manage Notification Settings',
     manageAnnouncements: 'Manage Announcements',
-    // FIX: Added missing 'viewAuditLogs' permission label.
     viewAuditLogs: 'View Audit Logs',
 };
 

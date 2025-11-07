@@ -277,7 +277,6 @@ const Settings: React.FC = () => {
              case 'landing':
                 return (
                      <div className="space-y-6">
-                        {/* FIX: Use Object.keys with type assertion to properly type 'item' */}
                         {Object.keys(landingMetrics).map((key) => {
                             const metricKey = key as keyof LandingPageMetrics;
                             const item = landingMetrics[metricKey];
