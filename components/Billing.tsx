@@ -1,10 +1,6 @@
 
-
-
-
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-// FIX: Import TenantStatus type.
 import { SubscriptionPlan, TenantStatus } from '../types';
 import Icon from './icons';
 import { useCurrency } from '../hooks/useCurrency';

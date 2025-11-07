@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState } from 'react';
 import { SubscriptionPlan } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
