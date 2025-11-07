@@ -149,6 +149,8 @@ export interface Truck {
     address: string;
   };
   lastUpdate: Date;
+  currentLoad: number; // in kg
+  maxLoad: number; // in kg
 }
 
 export interface Shipment {
@@ -215,6 +217,9 @@ export interface Tenant {
   isVerified: boolean;
   billingCycle: 'monthly' | 'yearly';
   logoutTimeout?: number; // in minutes
+  logisticsConfig?: {
+    activeTrackerProviderId: string;
+  };
 }
 
 export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED';
@@ -623,12 +628,14 @@ export interface AppContextType {
   updateAccessControlSettings: (settings: AccessControlSettings) => void;
   updateLandingPageMetrics: (metrics: LandingPageMetrics) => void;
   updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout'>>) => void;
+  updateTenantLogisticsConfig: (config: { activeTrackerProviderId: string; }) => void;
   updateTenantAutomations: (newAutomations: Partial<TenantAutomations>) => void;
   addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => void;
   updateSubscriptionPlan: (planId: string, planData: Partial<Omit<SubscriptionPlan, 'id'>>) => void;
   deleteSubscriptionPlan: (planId: string) => void;
   addTruck: (truckData: Omit<Truck, 'id' | 'lastUpdate'>) => void;
   updateTruck: (truckId: string, truckData: Partial<Omit<Truck, 'id'>>) => void;
+  updateTruckVitals: (truckId: string) => void;
   addShipment: (shipmentData: Omit<Shipment, 'id'>) => void;
   updateShipmentStatus: (shipmentId: string, status: Shipment['status']) => void;
   updateTrackerProviders: (providers: TrackerProvider[]) => void;

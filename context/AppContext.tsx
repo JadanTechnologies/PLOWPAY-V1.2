@@ -119,6 +119,7 @@ const generateMockTenants = (): Tenant[] => {
             },
             isVerified: status !== 'UNVERIFIED',
             billingCycle: i % 2 === 0 ? 'monthly' : 'yearly',
+            logisticsConfig: isDemoTenant ? { activeTrackerProviderId: 'teltonika' } : undefined,
         });
     }
     return tenants.sort((a,b) => b.joinDate.getTime() - a.joinDate.getTime());
@@ -230,6 +231,9 @@ const mockAdminUsers = generateMockAdminUsers();
 
 const mockTrackerProviders: TrackerProvider[] = [
     { id: 'teltonika', name: 'Teltonika', apiKey: '', apiEndpoint: 'https://teltonika-api.com/v1' },
+    { id: 'samsara', name: 'Samsara', apiKey: '', apiEndpoint: 'https://api.samsara.com' },
+    { id: 'geotab', name: 'Geotab', apiKey: '', apiEndpoint: 'https://my.geotab.com/api' },
+    { id: 'keeptruckin', name: 'KeepTruckin (Motive)', apiKey: '', apiEndpoint: 'https://api.keeptruckin.com' },
     { id: 'other', name: 'Other Provider', apiKey: '', apiEndpoint: '' },
 ];
 
@@ -240,7 +244,9 @@ const mockTrucks: Truck[] = [
         driverName: 'John Smith', 
         status: 'IN_TRANSIT', 
         currentLocation: { lat: 34.0522, lng: -118.2437, address: 'Los Angeles, CA' },
-        lastUpdate: new Date()
+        lastUpdate: new Date(),
+        currentLoad: 15400,
+        maxLoad: 25000,
     },
     { 
         id: 'truck-2', 
@@ -248,7 +254,9 @@ const mockTrucks: Truck[] = [
         driverName: 'Maria Garcia', 
         status: 'IDLE', 
         currentLocation: { lat: 40.7128, lng: -74.0060, address: 'New York, NY' },
-        lastUpdate: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
+        lastUpdate: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        currentLoad: 0,
+        maxLoad: 20000,
     },
     { 
         id: 'truck-3', 
@@ -256,7 +264,9 @@ const mockTrucks: Truck[] = [
         driverName: 'Chen Wei', 
         status: 'MAINTENANCE', 
         currentLocation: { lat: 29.7604, lng: -95.3698, address: 'Houston, TX' },
-        lastUpdate: new Date(Date.now() - 24 * 60 * 60 * 1000) // 1 day ago
+        lastUpdate: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+        currentLoad: 5000,
+        maxLoad: 22000,
     },
 ];
 
@@ -1141,6 +1151,30 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         ));
     }, []);
 
+    const updateTruckVitals = useCallback((truckId: string) => {
+        setTrucks(prevTrucks => prevTrucks.map(truck => {
+            if (truck.id === truckId) {
+                return {
+                    ...truck,
+                    lastUpdate: new Date(),
+                    currentLocation: {
+                        ...truck.currentLocation,
+                        lat: truck.currentLocation.lat + (Math.random() - 0.5) * 0.1,
+                        lng: truck.currentLocation.lng + (Math.random() - 0.5) * 0.1,
+                    },
+                    currentLoad: truck.status === 'IN_TRANSIT' ? Math.max(0, truck.currentLoad + (Math.random() - 0.5) * 1000) : truck.currentLoad,
+                };
+            }
+            return truck;
+        }));
+    }, []);
+
+    const updateTenantLogisticsConfig = useCallback((config: { activeTrackerProviderId: string }) => {
+        setTenants(prevTenants => prevTenants.map(t =>
+            t.id === CURRENT_TENANT_ID ? { ...t, logisticsConfig: { ...(t.logisticsConfig || { activeTrackerProviderId: '' }), ...config } } : t
+        ));
+    }, []);
+
     const addShipment = useCallback((shipmentData: Omit<Shipment, 'id'>) => {
         setShipments(prev => [
             ...prev,
@@ -1653,6 +1687,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         processSubscriptionPayment, updatePaymentTransactionStatus, updateEmailTemplate, updateSmsTemplate,
         markInAppNotificationAsRead,
         submitSupportTicket, replyToSupportTicket, updateTicketStatus,
+        updateTruckVitals, updateTenantLogisticsConfig,
         logout: onLogout,
         logAction
     };

@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import { Truck, Shipment, TrackerProvider, Branch, Customer, Sale, ProductVariant } from '../../types';
+import { Truck, Shipment, TrackerProvider, Customer } from '../../types';
 import Icon from './icons/index.tsx';
 
 type ModalState = 'NONE' | 'TRUCK' | 'SHIPMENT' | 'SELL_SHIPMENT';
@@ -37,19 +37,24 @@ const getStatusBadge = (status: Truck['status'] | Shipment['status']) => {
 
 const LogisticsManagement: React.FC = () => {
     const { 
-      trucks, shipments, trackerProviders, branches,
-      addTruck, addShipment, 
-      updateTrackerProviders, sellShipment, receiveShipment
+      trucks, shipments, trackerProviders, branches, currentTenant,
+      addTruck, 
+      updateTrackerProviders, sellShipment, receiveShipment,
+      updateTruckVitals, updateTenantLogisticsConfig
     } = useAppContext();
     type ActiveTab = 'dashboard' | 'trucks' | 'shipments' | 'settings';
     const [activeTab, setActiveTab] = useState<ActiveTab>('dashboard');
     const [modal, setModal] = useState<ModalState>('NONE');
     const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
+    const [isMapModalOpen, setMapModalOpen] = useState(false);
+    const [hoveredTruck, setHoveredTruck] = useState<Truck | null>(null);
 
     // Form states
-    const [truckForm, setTruckForm] = useState({ licensePlate: '', driverName: '', status: 'IDLE' as Truck['status'] });
+    const [truckForm, setTruckForm] = useState({ licensePlate: '', driverName: '', status: 'IDLE' as Truck['status'], maxLoad: 20000 });
     const [sellShipmentForm, setSellShipmentForm] = useState<Pick<Customer, 'name' | 'phone'>>({ name: '', phone: '' });
     const [trackerSettingsForm, setTrackerSettingsForm] = useState<TrackerProvider[]>(trackerProviders);
+    
+    const activeTrackerProviderId = currentTenant?.logisticsConfig?.activeTrackerProviderId || trackerProviders[0]?.id || '';
 
     useEffect(() => {
         setTrackerSettingsForm(trackerProviders);
@@ -75,10 +80,13 @@ const LogisticsManagement: React.FC = () => {
         totalTrucks: trucks.length,
         inTransitTrucks: trucks.filter(t => t.status === 'IN_TRANSIT').length,
         inTransitShipments: shipments.filter(s => s.status === 'IN_TRANSIT').length,
-        deliveredShipments: shipments.filter(s => s.status === 'DELIVERED').length,
+        totalLoadInTransit: trucks.filter(t => t.status === 'IN_TRANSIT').reduce((sum, t) => sum + t.currentLoad, 0),
     }), [trucks, shipments]);
 
     const handleOpenModal = (modalType: ModalState, data?: any) => {
+        if (modalType === 'TRUCK') {
+            setTruckForm({ licensePlate: '', driverName: '', status: 'IDLE', maxLoad: 20000 });
+        }
         if (modalType === 'SELL_SHIPMENT' && data) {
             setSelectedShipment(data);
             setSellShipmentForm({ name: '', phone: '' });
@@ -89,7 +97,7 @@ const LogisticsManagement: React.FC = () => {
     const handleCloseModal = () => setModal('NONE');
 
     const handleAddTruck = () => {
-        addTruck({ ...truckForm, currentLocation: { lat: 0, lng: 0, address: 'N/A' }});
+        addTruck({ ...truckForm, currentLoad: 0, currentLocation: { lat: 0, lng: 0, address: 'N/A' }});
         handleCloseModal();
     };
 
@@ -102,6 +110,14 @@ const LogisticsManagement: React.FC = () => {
     
     const branchMap = useMemo(() => new Map(branches.map(b => [b.id, b.name])), [branches]);
     const truckMap = useMemo(() => new Map(trucks.map(t => [t.id, t.licensePlate])), [trucks]);
+    
+    const latlongToPercent = (lat: number, lng: number) => {
+        const minLat = 24, maxLat = 50;
+        const minLng = -125, maxLng = -66;
+        const y = 100 - ((lat - minLat) / (maxLat - minLat)) * 100;
+        const x = ((lng - minLng) / (maxLng - minLng)) * 100;
+        return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
+    };
 
     const renderContent = () => {
         switch (activeTab) {
@@ -111,16 +127,19 @@ const LogisticsManagement: React.FC = () => {
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
                            <MetricCard title="Total Trucks" value={metrics.totalTrucks} iconName="truck" iconBgColor="bg-blue-500" />
                            <MetricCard title="Trucks In-Transit" value={metrics.inTransitTrucks} iconName="truck" iconBgColor="bg-cyan-500" />
-                           <MetricCard title="Shipments In-Transit" value={metrics.inTransitShipments} iconName="pos" iconBgColor="bg-purple-500" />
-                           <MetricCard title="Shipments Delivered" value={metrics.deliveredShipments} iconName="inventory" iconBgColor="bg-green-500" />
+                           <MetricCard title="Total Load In-Transit" value={`${(metrics.totalLoadInTransit / 1000).toFixed(1)} t`} iconName="inventory" iconBgColor="bg-purple-500" />
+                           <MetricCard title="Shipments In-Transit" value={metrics.inTransitShipments} iconName="pos" iconBgColor="bg-orange-500" />
                         </div>
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <div className="p-4 bg-gray-800 rounded-lg shadow-md">
-                                <h3 className="mb-4 text-lg font-semibold text-white">Live Fleet Map</h3>
-                                <div className="bg-gray-900/50 rounded-lg h-80 flex flex-col p-4 overflow-y-auto">
+                                <h3 className="mb-4 text-lg font-semibold text-white">Live Fleet Status</h3>
+                                <button onClick={() => setMapModalOpen(true)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 px-4 rounded-md flex items-center justify-center mb-4 transition-transform hover:scale-105">
+                                    <Icon name="map-pin" className="w-6 h-6 mr-3"/>View Live Fleet Map
+                                </button>
+                                <div className="bg-gray-900/50 rounded-lg h-64 flex flex-col p-2 overflow-y-auto">
                                     {trucks.map(truck => (
                                         <div key={truck.id} className="flex items-center p-2 rounded-md hover:bg-gray-700/50">
-                                            <Icon name="map-pin" className={`w-6 h-6 mr-3 ${truck.status === 'IN_TRANSIT' ? 'text-blue-400' : 'text-gray-500'}`} />
+                                            <Icon name="truck" className={`w-6 h-6 mr-3 ${truck.status === 'IN_TRANSIT' ? 'text-blue-400' : 'text-gray-500'}`} />
                                             <div>
                                                 <p className="font-semibold">{truck.licensePlate} - {truck.driverName}</p>
                                                 <p className="text-sm text-gray-400">{truck.currentLocation.address}</p>
@@ -162,15 +181,27 @@ const LogisticsManagement: React.FC = () => {
                          </div>
                          <div className="overflow-x-auto">
                            <table className="w-full text-left">
-                               <thead className="border-b border-gray-700">
+                               <thead className="border-b border-gray-700 text-xs uppercase">
                                    <tr>
-                                       <th className="p-3">License Plate</th><th className="p-3">Driver Name</th><th className="p-3">Current Location</th><th className="p-3">Last Update</th><th className="p-3 text-center">Status</th>
+                                       <th className="p-3">License Plate</th><th className="p-3">Driver Name</th><th className="p-3">Load</th><th className="p-3">Location</th><th className="p-3">Last Update</th><th className="p-3 text-center">Status</th><th className="p-3 text-center">Actions</th>
                                    </tr>
                                </thead>
                                <tbody>
                                 {trucks.map(truck => (
-                                    <tr key={truck.id} className="border-b border-gray-700 hover:bg-gray-700/50">
-                                        <td className="p-3 font-mono">{truck.licensePlate}</td><td className="p-3">{truck.driverName}</td><td className="p-3">{truck.currentLocation.address}</td><td className="p-3 text-sm text-gray-400">{truck.lastUpdate.toLocaleString()}</td><td className="p-3 text-center">{getStatusBadge(truck.status)}</td>
+                                    <tr key={truck.id} className="border-b border-gray-700 hover:bg-gray-700/50 text-sm">
+                                        <td className="p-3 font-mono">{truck.licensePlate}</td><td className="p-3">{truck.driverName}</td>
+                                        <td className="p-3">
+                                            <div className="w-full bg-gray-700 rounded-full h-2.5">
+                                                <div className="bg-cyan-500 h-2.5 rounded-full" style={{ width: `${(truck.currentLoad / truck.maxLoad) * 100}%` }}></div>
+                                            </div>
+                                            <div className="text-xs text-center mt-1 text-gray-400">
+                                                {(truck.currentLoad / 1000).toFixed(1)}t / {(truck.maxLoad / 1000).toFixed(1)}t
+                                            </div>
+                                        </td>
+                                        <td className="p-3">{truck.currentLocation.address}</td><td className="p-3 text-gray-400">{truck.lastUpdate.toLocaleString()}</td><td className="p-3 text-center">{getStatusBadge(truck.status)}</td>
+                                        <td className="p-3 text-center">
+                                            <button onClick={() => updateTruckVitals(truck.id)} className="text-cyan-400 hover:text-cyan-300 font-semibold text-xs">Simulate Update</button>
+                                        </td>
                                     </tr>
                                 ))}
                                </tbody>
@@ -211,20 +242,31 @@ const LogisticsManagement: React.FC = () => {
                      </div>
                 );
             case 'settings':
+                 const selectedProvider = trackerSettingsForm.find(p => p.id === activeTrackerProviderId);
                  return (
                      <div className="p-6 bg-gray-800 rounded-lg shadow-md max-w-2xl mx-auto">
                          <h2 className="text-2xl font-bold text-white mb-6">Tracker Provider Settings</h2>
                          <div className="space-y-6">
-                            {trackerSettingsForm.map(provider => (
-                                <div key={provider.id} className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
-                                    <h3 className="text-xl font-semibold text-white mb-4">{provider.name}</h3>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400">Active Tracker Provider</label>
+                                <select
+                                    value={activeTrackerProviderId}
+                                    onChange={e => updateTenantLogisticsConfig({ activeTrackerProviderId: e.target.value })}
+                                    className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-indigo-500 focus:border-indigo-500"
+                                >
+                                    {trackerProviders.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+                            {selectedProvider && (
+                                <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                                    <h3 className="text-xl font-semibold text-white mb-4">Configure {selectedProvider.name}</h3>
                                     <div className="space-y-4">
                                         <div>
                                             <label className="block text-sm font-medium text-gray-400">API Key</label>
                                             <input 
                                                 type="password" 
-                                                value={provider.apiKey} 
-                                                onChange={e => handleTrackerSettingsChange(provider.id, 'apiKey', e.target.value)}
+                                                value={selectedProvider.apiKey} 
+                                                onChange={e => handleTrackerSettingsChange(selectedProvider.id, 'apiKey', e.target.value)}
                                                 placeholder="Enter API Key" 
                                                 className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-indigo-500 focus:border-indigo-500"
                                             />
@@ -233,15 +275,15 @@ const LogisticsManagement: React.FC = () => {
                                             <label className="block text-sm font-medium text-gray-400">API Endpoint URL</label>
                                             <input 
                                                 type="text" 
-                                                value={provider.apiEndpoint} 
-                                                onChange={e => handleTrackerSettingsChange(provider.id, 'apiEndpoint', e.target.value)}
+                                                value={selectedProvider.apiEndpoint} 
+                                                onChange={e => handleTrackerSettingsChange(selectedProvider.id, 'apiEndpoint', e.target.value)}
                                                 placeholder="Enter API Endpoint" 
                                                 className="mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md py-2 px-3 text-white focus:ring-indigo-500 focus:border-indigo-500"
                                             />
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                            )}
                          </div>
                          <div className="text-right mt-6">
                             <button onClick={handleSaveTrackerSettings} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md">Save Settings</button>
@@ -273,6 +315,7 @@ const LogisticsManagement: React.FC = () => {
                         <div className="space-y-4">
                             <div><label className="text-sm">License Plate</label><input type="text" onChange={e => setTruckForm({...truckForm, licensePlate: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
                             <div><label className="text-sm">Driver Name</label><input type="text" onChange={e => setTruckForm({...truckForm, driverName: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
+                            <div><label className="text-sm">Max Load (kg)</label><input type="number" value={truckForm.maxLoad} onChange={e => setTruckForm({...truckForm, maxLoad: parseInt(e.target.value, 10) || 0})} className="w-full bg-gray-700 p-2 rounded-md mt-1"/></div>
                             <div><label className="text-sm">Status</label><select onChange={e => setTruckForm({...truckForm, status: e.target.value as Truck['status']})} className="w-full bg-gray-700 p-2 rounded-md mt-1"><option>IDLE</option><option>IN_TRANSIT</option><option>MAINTENANCE</option></select></div>
                         </div>
                         <div className="flex justify-end gap-3 mt-6"><button onClick={handleCloseModal} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500">Cancel</button><button onClick={handleAddTruck} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500">Save</button></div>
@@ -292,6 +335,39 @@ const LogisticsManagement: React.FC = () => {
                     </div>
                 </div>
             )}
+            {isMapModalOpen && (
+                <div className="fixed inset-0 bg-black/90 z-50 flex flex-col p-4">
+                    <div className="flex justify-between items-center mb-4 flex-shrink-0">
+                        <h2 className="text-2xl font-bold text-white">Live Fleet Map</h2>
+                        <button onClick={() => setMapModalOpen(false)} className="bg-gray-700 hover:bg-gray-600 text-white rounded-full p-2">
+                            <Icon name="x-mark" className="w-6 h-6" />
+                        </button>
+                    </div>
+                    <div className="relative flex-grow bg-gray-800 rounded-lg overflow-hidden bg-[url('https://www.openstreetmap.org/assets/map-background-628a50c8b26f16d8085a218204f8b958e08d54637f37452d3f2c58e1a062484f.png')] bg-cover bg-center">
+                         <div className="absolute top-2 left-2 text-white bg-black/50 p-2 rounded-md text-sm font-semibold">
+                           <p>MAP PLACEHOLDER</p>
+                           <p className="text-xs font-normal">This is a simulated map for demonstration purposes.</p>
+                         </div>
+                        {trucks.map(truck => {
+                            const pos = latlongToPercent(truck.currentLocation.lat, truck.currentLocation.lng);
+                            return (
+                                <div key={truck.id} style={{ left: `${pos.x}%`, top: `${pos.y}%` }} className="absolute -translate-x-1/2 -translate-y-1/2" onMouseEnter={() => setHoveredTruck(truck)} onMouseLeave={() => setHoveredTruck(null)}>
+                                    <Icon name="truck" className={`w-8 h-8 ${truck.status === 'IN_TRANSIT' ? 'text-cyan-400' : 'text-gray-500'} transition-transform hover:scale-125 drop-shadow-lg`}/>
+                                    {hoveredTruck?.id === truck.id && (
+                                        <div className="absolute bottom-full mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-md border border-gray-700 shadow-lg -translate-x-1/2 left-1/2">
+                                            <p className="font-bold">{truck.licensePlate}</p>
+                                            <p>{truck.driverName}</p>
+                                            <p>Load: {(truck.currentLoad / 1000).toFixed(1)}t / {(truck.maxLoad / 1000).toFixed(1)}t</p>
+                                            <p>Status: {truck.status}</p>
+                                            <p className="text-gray-400 mt-1">Last Update: {truck.lastUpdate.toLocaleTimeString()}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+             )}
         </div>
     );
 };
