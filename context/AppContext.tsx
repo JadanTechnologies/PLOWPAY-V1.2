@@ -1,15 +1,19 @@
 
 
-import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
+import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const mockBranches: Branch[] = [
-    { id: 'branch-1', name: 'Downtown' },
-    { id: 'branch-2', name: 'Uptown' },
-    { id: 'branch-3', name: 'Westside' },
-    { id: 'branch-4', name: 'Eastside' },
+    // FIX: Add missing 'location' property
+    { id: 'branch-1', name: 'Downtown', location: { lat: 34.0522, lng: -118.2437 } },
+    // FIX: Add missing 'location' property
+    { id: 'branch-2', name: 'Uptown', location: { lat: 40.7831, lng: -73.9712 } },
+    // FIX: Add missing 'location' property
+    { id: 'branch-3', name: 'Westside', location: { lat: 34.0522, lng: -118.2437 } },
+    // FIX: Add missing 'location' property
+    { id: 'branch-4', name: 'Eastside', location: { lat: 40.7831, lng: -73.9712 } },
 ];
 
 const mockCategories: Category[] = [
@@ -255,6 +259,7 @@ const mockTrucks: Truck[] = [
         lastUpdate: new Date(),
         currentLoad: 15400,
         maxLoad: 25000,
+        tenantId: 'tenant-1'
     },
     { 
         id: 'truck-2', 
@@ -265,6 +270,7 @@ const mockTrucks: Truck[] = [
         lastUpdate: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
         currentLoad: 0,
         maxLoad: 20000,
+        tenantId: 'tenant-1'
     },
     { 
         id: 'truck-3', 
@@ -275,6 +281,18 @@ const mockTrucks: Truck[] = [
         lastUpdate: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
         currentLoad: 5000,
         maxLoad: 22000,
+        tenantId: 'tenant-1'
+    },
+     { 
+        id: 'truck-4', 
+        licensePlate: 'TRK-004', 
+        driverName: 'Sam Wilson', 
+        status: 'IN_TRANSIT', 
+        currentLocation: { lat: 39.9526, lng: -75.1652, address: 'Philadelphia, PA' },
+        lastUpdate: new Date(),
+        currentLoad: 18000,
+        maxLoad: 25000,
+        tenantId: 'tenant-2'
     },
 ];
 
@@ -460,7 +478,6 @@ const mockSystemSettings: SystemSettings = {
         users: { value: 15000, label: 'Active Users Daily' },
         revenue: { value: 50, label: 'Million in Revenue Secured' },
     },
-    // FIX: Added missing 'featuredUpdate' property to satisfy the SystemSettings type.
     featuredUpdate: {
         isActive: false,
         title: 'New Feature Available!',
@@ -1273,6 +1290,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         const newBranch: Branch = {
             id: `branch-${Date.now()}`,
             name: branchName,
+            location: { lat: 0, lng: 0 }
         };
         setBranches(prev => [...prev, newBranch]);
         setProducts(prev => prev.map(p => ({
@@ -1698,7 +1716,6 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         setInAppNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
     }, []);
     
-    // FIX: Updated submitSupportTicket type to reflect that id and timestamp are added by the context provider.
     const submitSupportTicket = useCallback((ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'status' | 'messages'> & { messages: Omit<TicketMessage, 'id' | 'timestamp'>[] }) => {
         if (!currentTenant) return;
         const newTicket: SupportTicket = {
@@ -1775,11 +1792,30 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             : t
         ));
     }, []);
+    
+    // Memoized, tenant-scoped data
+    const isSuperAdminView = !!currentAdminUser;
+
+    const tenantScopedTrucks = useMemo(() => {
+        if (isSuperAdminView || !currentTenant) return trucks;
+        return trucks.filter(t => t.tenantId === currentTenant.id);
+    }, [trucks, currentTenant, isSuperAdminView]);
+
+    const tenantTruckIds = useMemo(() => new Set(tenantScopedTrucks.map(t => t.id)), [tenantScopedTrucks]);
+
+    const tenantScopedShipments = useMemo(() => {
+        if (isSuperAdminView || !currentTenant) return shipments;
+        return shipments.filter(s => tenantTruckIds.has(s.truckId));
+    }, [shipments, tenantTruckIds, currentTenant, isSuperAdminView]);
+
 
     const value: AppContextType = {
         products, sales, branches, staff, staffRoles, currentStaffUser, allTenantPermissions, stockLogs, tenants, currentTenant,
         subscriptionPlans, adminUsers, adminRoles, allPermissions, currentAdminUser, brandConfig, pageContent, blogPosts,
-        paymentSettings, notificationSettings, systemSettings, trucks, shipments, trackerProviders, suppliers,
+        paymentSettings, notificationSettings, systemSettings, 
+        trucks: tenantScopedTrucks, 
+        shipments: tenantScopedShipments, 
+        trackerProviders, suppliers,
         purchaseOrders, accounts, journalEntries, announcements, customers, consignments, deposits, categories,
         paymentTransactions, emailTemplates, smsTemplates, inAppNotifications, auditLogs, supportTickets, notification,
         setNotification, searchTerm, setSearchTerm, theme, setTheme, currentLanguage, setCurrentLanguage, currentCurrency, setCurrentCurrency,

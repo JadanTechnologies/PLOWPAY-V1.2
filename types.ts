@@ -1,25 +1,39 @@
+// FIX: Move the 'google' namespace declaration inside the 'declare global' block to make the types available globally.
+declare global {
+  interface Window {
+    google: any;
+  }
 
-
-// FIX: Add a global declaration for the Google Maps API to resolve TypeScript errors.
-declare namespace google {
-  namespace maps {
-    class Map {
-      constructor(mapDiv: Element | null, opts?: any);
-    }
-    class Marker {
-      constructor(opts?: any);
-      setMap(map: Map | null): void;
-      setPosition(latLng: any): void;
-      addListener(eventName: string, handler: (...args: any[]) => void): any;
-    }
-    class InfoWindow {
-      constructor(opts?: any);
-      setContent(content: string | Element | null): void;
-      open(map?: Map, anchor?: any): void;
-      close(): void;
-    }
-    class Point {
-      constructor(x: number, y: number);
+  namespace google {
+    namespace maps {
+      class Map {
+        constructor(mapDiv: Element | null, opts?: any);
+      }
+      class Marker {
+        constructor(opts?: any);
+        setMap(map: Map | null): void;
+        setPosition(latLng: any): void;
+        addListener(eventName: string, handler: (...args: any[]) => void): any;
+      }
+      class InfoWindow {
+        constructor(opts?: any);
+        setContent(content: string | Element | null): void;
+        open(map?: Map, anchor?: any): void;
+        close(): void;
+      }
+      class Point {
+        constructor(x: number, y: number);
+      }
+      class Polyline {
+        constructor(opts?: any);
+        setMap(map: Map | null): void;
+        // FIX: Add setPath method to Polyline
+        setPath(path: any): void;
+      }
+      class LatLngBounds {
+          constructor(sw?: any, ne?: any);
+          extend(point: any): void;
+      }
     }
   }
 }
@@ -28,6 +42,10 @@ declare namespace google {
 export interface Branch {
   id: string;
   name: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
 }
 
 export interface StaffRole {
@@ -176,6 +194,7 @@ export interface Truck {
   lastUpdate: Date;
   currentLoad: number; // in kg
   maxLoad: number; // in kg
+  tenantId: string;
 }
 
 export interface Shipment {

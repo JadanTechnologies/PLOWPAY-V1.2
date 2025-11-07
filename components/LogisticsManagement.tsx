@@ -1,5 +1,3 @@
-
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Truck, Shipment, TrackerProvider, Customer } from '../../types';
@@ -99,7 +97,8 @@ const LogisticsManagement: React.FC = () => {
     const handleCloseModal = () => setModal('NONE');
 
     const handleAddTruck = () => {
-        addTruck({ ...truckForm, currentLoad: 0, currentLocation: { lat: 0, lng: 0, address: 'N/A' }});
+        if (!currentTenant) return;
+        addTruck({ ...truckForm, tenantId: currentTenant.id, currentLoad: 0, currentLocation: { lat: 0, lng: 0, address: 'N/A' }});
         handleCloseModal();
     };
 
@@ -339,15 +338,15 @@ const LogisticsManagement: React.FC = () => {
                     </div>
                     <div className="relative flex-grow bg-gray-800 rounded-lg overflow-hidden">
                         {typeof window.google === 'undefined' ? (
-                            <div className="flex flex-col items-center justify-center h-full text-center">
-                                <Icon name="x-mark" className="w-12 h-12 text-red-500 mb-4" />
-                                <h3 className="text-xl font-bold text-white">Google Maps Failed to Load</h3>
-                                <p className="text-gray-400 mt-2 max-w-md">
-                                    Please ensure you have a valid Google Maps API key in your <code>index.html</code> file and a working internet connection.
+                            <div className="flex flex-col items-center justify-center h-full text-center p-8">
+                                <Icon name="x-mark" className="w-16 h-16 text-red-500 mb-4" />
+                                <h3 className="text-2xl font-bold text-white">Google Maps API Failed to Load</h3>
+                                <p className="text-slate-400 mt-2 max-w-md">
+                                    Please ensure you have a valid Google Maps API key in your <code>index.html</code> file and that your internet connection is working. The map cannot be displayed without it.
                                 </p>
                             </div>
                         ) : (
-                            <GoogleMap trucks={trucks} />
+                            <GoogleMap trucks={trucks} shipments={shipments} branches={branches} />
                         )}
                     </div>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Truck } from '../types';
+import { Truck, Shipment, Branch } from '../types';
 
 const mapStyles = [
   { elementType: "geometry", stylers: [{ color: "#242f3e" }] },
@@ -82,10 +82,17 @@ const mapStyles = [
   },
 ];
 
-const GoogleMap: React.FC<{ trucks: Truck[] }> = ({ trucks }) => {
+interface GoogleMapProps {
+    trucks: Truck[];
+    shipments?: Shipment[];
+    branches?: Branch[];
+}
+
+const GoogleMap: React.FC<GoogleMapProps> = ({ trucks, shipments = [], branches = [] }) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const markersRef = useRef<Map<string, google.maps.Marker>>(new Map());
+    const polylinesRef = useRef<Map<string, google.maps.Polyline>>(new Map());
     const infoWindowRef = useRef<google.maps.InfoWindow | null>(null);
 
     // Initialize map
@@ -141,7 +148,7 @@ const GoogleMap: React.FC<{ trucks: Truck[] }> = ({ trucks }) => {
                             anchor: new google.maps.Point(12, 12),
                         },
                     });
-
+                    
                     const infoWindowContent = `
                         <div style="color: black; font-family: sans-serif; padding: 5px; max-width: 200px;">
                             <h4 style="font-weight: bold; margin: 0 0 5px; color: #0f172a">${truck.licensePlate}</h4>
@@ -164,6 +171,59 @@ const GoogleMap: React.FC<{ trucks: Truck[] }> = ({ trucks }) => {
             });
         }
     }, [map, trucks]);
+
+    // Update Polylines for shipments
+    useEffect(() => {
+        if (map) {
+            const currentPolylines = polylinesRef.current;
+            const inTransitShipmentIds = new Set(shipments.filter(s => s.status === 'IN_TRANSIT').map(s => s.id));
+
+            // Remove old polylines
+            currentPolylines.forEach((line, shipmentId) => {
+                if (!inTransitShipmentIds.has(shipmentId)) {
+                    line.setMap(null);
+                    currentPolylines.delete(shipmentId);
+                }
+            });
+
+            // Add/update polylines for in-transit shipments
+            shipments.forEach(shipment => {
+                if (shipment.status === 'IN_TRANSIT') {
+                    const truck = trucks.find(t => t.id === shipment.truckId);
+                    const branch = branches.find(b => b.id === shipment.destination);
+
+                    if (truck && branch?.location) {
+                        const path = [truck.currentLocation, branch.location];
+                        const existingPolyline = currentPolylines.get(shipment.id);
+
+                        if (existingPolyline) {
+                            (existingPolyline as any).setPath(path);
+                        } else {
+                            const lineSymbol = {
+                                path: 'M 0,-1 0,1',
+                                strokeOpacity: 1,
+                                scale: 4,
+                            };
+                            const newPolyline = new google.maps.Polyline({
+                                path,
+                                geodesic: true,
+                                strokeColor: '#06b6d4',
+                                strokeOpacity: 0,
+                                strokeWeight: 2,
+                                icons: [{
+                                    icon: lineSymbol,
+                                    offset: '0',
+                                    repeat: '20px'
+                                }],
+                            });
+                            newPolyline.setMap(map);
+                            currentPolylines.set(shipment.id, newPolyline);
+                        }
+                    }
+                }
+            });
+        }
+    }, [map, shipments, trucks, branches]);
 
     return <div ref={mapRef} style={{ width: '100%', height: '100%' }} />;
 };

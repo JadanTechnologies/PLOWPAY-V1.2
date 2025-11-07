@@ -1,6 +1,3 @@
-
-
-
 import React from 'react';
 import { SuperAdminPage } from '../../App';
 import Icon from '../icons/index.tsx';
