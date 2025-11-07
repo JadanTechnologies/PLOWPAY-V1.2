@@ -1,5 +1,3 @@
-
-
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost } from '../types';
 
@@ -570,12 +568,11 @@ const mockSupportTickets: SupportTicket[] = [
 interface AppContextProviderProps {
     children: ReactNode;
     onLogout?: () => void;
+    loggedInUser: AdminUser | Tenant | null;
 }
 
 const TENANTS_STORAGE_KEY = 'flowpay-tenants';
 const SALES_STORAGE_KEY = 'flowpay-sales';
-// The simple login logic implies we are always tenant-1 for the demo
-const CURRENT_TENANT_ID = 'tenant-1';
 
 const getInitialTheme = (): 'light' | 'dark' => {
     if (typeof window !== 'undefined' && window.localStorage) {
@@ -593,7 +590,7 @@ const getInitialTheme = (): 'light' | 'dark' => {
 };
 
 
-export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children, onLogout = () => {} }) => {
+export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children, onLogout = () => {}, loggedInUser }) => {
     const [products, setProducts] = useState<Product[]>(mockProducts);
     
     const [sales, setSales] = useState<Sale[]>(() => {
@@ -618,16 +615,21 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         return mockTenants;
     });
 
-    const [currentTenant, setCurrentTenant] = useState<Tenant | null>(() => {
-        const initialTenants = (() => {
-            try {
-                const stored = window.localStorage.getItem(TENANTS_STORAGE_KEY);
-                return stored ? JSON.parse(stored).map((t: any) => ({ ...t, joinDate: new Date(t.joinDate), trialEndDate: t.trialEndDate ? new Date(t.trialEndDate) : undefined })) : mockTenants;
-            } catch { return mockTenants; }
-        })();
-        return initialTenants.find((t: Tenant) => t.id === CURRENT_TENANT_ID) || null;
-    });
+    const currentAdminUser = useMemo(() => {
+        if (loggedInUser && 'roleId' in loggedInUser && loggedInUser.roleId.startsWith('role-')) {
+            return loggedInUser as AdminUser;
+        }
+        return null;
+    }, [loggedInUser]);
 
+    const currentTenant = useMemo(() => {
+        if (loggedInUser && 'businessName' in loggedInUser) {
+            // Find the full tenant object from the `tenants` state array to ensure reactivity
+            return tenants.find(t => t.id === loggedInUser.id) || null;
+        }
+        return null;
+    }, [loggedInUser, tenants]);
+    
     useEffect(() => {
         try {
             window.localStorage.setItem(SALES_STORAGE_KEY, JSON.stringify(sales));
@@ -637,12 +639,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     useEffect(() => {
         try {
             window.localStorage.setItem(TENANTS_STORAGE_KEY, JSON.stringify(tenants));
-            const updatedCurrentTenant = tenants.find(t => t.id === CURRENT_TENANT_ID) || null;
-            if (JSON.stringify(updatedCurrentTenant) !== JSON.stringify(currentTenant)) {
-                setCurrentTenant(updatedCurrentTenant);
-            }
         } catch (e) { console.error("Failed to save tenants to storage", e); }
-    }, [tenants, currentTenant]);
+    }, [tenants]);
 
     const [branches, setBranches] = useState<Branch[]>(mockBranches);
     const [categories, setCategories] = useState<Category[]>(mockCategories);
@@ -652,14 +650,13 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(mockSubscriptionPlans);
     const [adminUsers, setAdminUsers] = useState<AdminUser[]>(mockAdminUsers);
     const [adminRoles, setAdminRoles] = useState<AdminRole[]>(mockAdminRoles);
-    const [currentAdminUser, setCurrentAdminUser] = useState<AdminUser | null>(mockAdminUsers.find(u => u.email === 'super@flowpay.com') || null);
     const [brandConfig, setBrandConfig] = useState<BrandConfig>(mockBrandConfig);
     const [pageContent, setPageContent] = useState<PageContent>(mockPageContent);
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>(mockPaymentSettings);
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>(mockNotificationSettings);
     const [systemSettings, setSystemSettings] = useState<SystemSettings>(mockSystemSettings);
-    const [currentLanguage, setCurrentLanguage] = useState<string>(currentTenant?.language || mockSystemSettings.defaultLanguage);
-    const [currentCurrency, setCurrentCurrency] = useState<string>(currentTenant?.currency || mockSystemSettings.defaultCurrency);
+    const [currentLanguage, setCurrentLanguage] = useState<string>(systemSettings.defaultLanguage);
+    const [currentCurrency, setCurrentCurrency] = useState<string>(systemSettings.defaultCurrency);
     const [trucks, setTrucks] = useState<Truck[]>(mockTrucks);
     const [shipments, setShipments] = useState<Shipment[]>(mockShipments);
     const [trackerProviders, setTrackerProviders] = useState<TrackerProvider[]>(mockTrackerProviders);
@@ -682,8 +679,14 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [notification, setNotification] = useState<NotificationType | null>(null);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
-    // To test permissions, change the index: 0=Manager (all perms), 1=Cashier (limited), 2=Logistics (limited)
-    const [currentStaffUser, setCurrentStaffUser] = useState<Staff | null>(mockStaff[0]);
+    const currentStaffUser = useMemo(() => {
+        if (currentTenant) {
+            // For demo purposes, we assume the first "Manager" staff member is the one using the app.
+            // A real implementation would have a separate staff login.
+            return staff.find(s => s.roleId === 'staff-role-manager') || staff[0] || null;
+        }
+        return null;
+    }, [currentTenant, staff]);
 
     useEffect(() => {
         const root = window.document.documentElement;
@@ -717,6 +720,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         if (currentTenant) {
             setCurrentLanguage(currentTenant.language || systemSettings.defaultLanguage);
             setCurrentCurrency(currentTenant.currency || systemSettings.defaultCurrency);
+        } else {
+            setCurrentLanguage(systemSettings.defaultLanguage);
+            setCurrentCurrency(systemSettings.defaultCurrency);
         }
     }, [currentTenant, systemSettings.defaultLanguage, systemSettings.defaultCurrency]);
 
@@ -1138,23 +1144,23 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const updateCurrentTenantSettings = useCallback((newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout'>>) => {
         setTenants(prevTenants =>
             prevTenants.map(t =>
-                t.id === CURRENT_TENANT_ID ? { ...t, ...newSettings } : t
+                t.id === currentTenant?.id ? { ...t, ...newSettings } : t
             )
         );
         if(newSettings.language) setCurrentLanguage(newSettings.language);
         if(newSettings.currency) setCurrentCurrency(newSettings.currency);
-    }, []);
+    }, [currentTenant]);
     
     const updateTenantAutomations = useCallback((newAutomations: Partial<TenantAutomations>) => {
         setTenants(prevTenants =>
             prevTenants.map(t => {
-                if (t.id === CURRENT_TENANT_ID) {
+                if (t.id === currentTenant?.id) {
                     return { ...t, automations: { ...(t.automations || { generateEODReport: false, sendLowStockAlerts: false }), ...newAutomations } };
                 }
                 return t;
             })
         );
-    }, []);
+    }, [currentTenant]);
 
     const addSubscriptionPlan = useCallback((planData: Omit<SubscriptionPlan, 'id'>) => {
         setSubscriptionPlans(prev => [
@@ -1262,9 +1268,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
 
     const updateTenantLogisticsConfig = useCallback((config: { activeTrackerProviderId: string }) => {
         setTenants(prevTenants => prevTenants.map(t =>
-            t.id === CURRENT_TENANT_ID ? { ...t, logisticsConfig: { ...(t.logisticsConfig || { activeTrackerProviderId: '' }), ...config } } : t
+            t.id === currentTenant?.id ? { ...t, logisticsConfig: { ...(t.logisticsConfig || { activeTrackerProviderId: '' }), ...config } } : t
         ));
-    }, []);
+    }, [currentTenant]);
 
     const addShipment = useCallback((shipmentData: Omit<Shipment, 'id'>) => {
         setShipments(prev => [

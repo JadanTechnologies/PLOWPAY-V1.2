@@ -1,13 +1,11 @@
-
-
 import React, { useState } from 'react';
 import Icon from './icons/index.tsx';
-import { mockTenants } from '../context/AppContext';
 import { useAppContext } from '../hooks/useAppContext';
 import { View } from '../App';
+import { AdminUser, Tenant } from '../types';
 
 interface LoginProps {
-  onLoginSuccess: (role: 'TENANT' | 'SUPER_ADMIN') => void;
+  onLoginSuccess: (user: AdminUser | Tenant) => void;
   onNavigate: (view: View) => void;
 }
 
@@ -15,7 +13,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { brandConfig, updateLastLogin } = useAppContext();
+  const { brandConfig, updateLastLogin, tenants, adminUsers } = useAppContext();
 
 
   const handleLogin = (e: React.FormEvent) => {
@@ -26,19 +24,21 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
     // In a real app, this would be the request IP. We simulate it here.
     const simulatedIp = '203.0.113.42'; 
 
-    // Find a tenant that matches either the username or email
-    const tenant = mockTenants.find(t => t.username.toLowerCase() === lowerCaseInput || t.email.toLowerCase() === lowerCaseInput);
-
-    // Mock authentication with specific credentials for each role
-    if ((lowerCaseInput === 'super' || lowerCaseInput === 'super@flowpay.com') && password === 'super') {
-      updateLastLogin(lowerCaseInput, simulatedIp);
-      onLoginSuccess('SUPER_ADMIN');
-    } else if (tenant && tenant.password === password) {
-       updateLastLogin(lowerCaseInput, simulatedIp);
-       onLoginSuccess('TENANT');
-    } else {
-      setError('Invalid credentials. Please try again.');
+    const adminUser = adminUsers.find(u => (u.username?.toLowerCase() === lowerCaseInput || u.email.toLowerCase() === lowerCaseInput) && u.password === password);
+    if (adminUser) {
+        updateLastLogin(lowerCaseInput, simulatedIp);
+        onLoginSuccess(adminUser);
+        return;
     }
+
+    const tenantUser = tenants.find(t => (t.username.toLowerCase() === lowerCaseInput || t.email.toLowerCase() === lowerCaseInput) && t.password === password);
+    if (tenantUser) {
+       updateLastLogin(lowerCaseInput, simulatedIp);
+       onLoginSuccess(tenantUser);
+       return;
+    }
+
+    setError('Invalid credentials. Please try again.');
   };
   
   return (

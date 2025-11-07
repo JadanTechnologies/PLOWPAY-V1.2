@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
 import SuperAdminPanel from './components/superadmin/SuperAdminPanel';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { useAppContext } from './hooks/useAppContext';
-import { FaqItem, PageContent, NotificationType, BlogPost } from './types';
+import { FaqItem, PageContent, NotificationType, BlogPost, AdminUser, Tenant } from './types';
 import Icon from './components/icons/index.tsx';
 import SignUp from './components/SignUp';
 import ForgotPassword from './components/ForgotPassword';
@@ -179,16 +180,16 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('landing');
-  const [userRole, setUserRole] = useState<'TENANT' | 'SUPER_ADMIN' | null>(null);
+  const [loggedInUser, setLoggedInUser] = useState<AdminUser | Tenant | null>(null);
   const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
 
-  const handleLoginSuccess = (role: 'TENANT' | 'SUPER_ADMIN') => {
-    setUserRole(role);
+  const handleLoginSuccess = (user: AdminUser | Tenant) => {
+    setLoggedInUser(user);
     setView('app');
   };
 
   const handleLogout = () => {
-    setUserRole(null);
+    setLoggedInUser(null);
     setView('landing');
   };
 
@@ -204,6 +205,13 @@ const App: React.FC = () => {
       const { isActive: isMaintenanceMode, message: maintenanceMessage } = systemSettings.maintenanceSettings || { isActive: false, message: '' };
       const { accessControlSettings } = systemSettings;
       const [isBlocked, setIsBlocked] = useState(false);
+
+      const userRole = useMemo(() => {
+          if (!loggedInUser) return null;
+          if ('roleId' in loggedInUser && loggedInUser.roleId.startsWith('role-')) return 'SUPER_ADMIN';
+          if ('businessName' in loggedInUser) return 'TENANT';
+          return null;
+      }, [loggedInUser]);
 
       useEffect(() => {
         document.title = `${brandConfig.name} - SaaS POS`;
@@ -304,7 +312,7 @@ const App: React.FC = () => {
         viewComponent = <InfoPage pageKey={view} setView={handleNavigate} />;
         break;
       case 'app':
-        if (userRole) {
+        if (loggedInUser) {
           viewComponent = userRole === 'TENANT' ? <TenantApp /> : <SuperAdminPanel />;
         } else {
             setTimeout(() => setView('login'), 0); 
@@ -325,7 +333,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <AppContextProvider onLogout={handleLogout}>
+    <AppContextProvider loggedInUser={loggedInUser} onLogout={handleLogout}>
       <RenderedView/>
     </AppContextProvider>
   )
