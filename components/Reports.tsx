@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
+import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Sale, Customer, PurchaseOrder, Consignment, Supplier } from '../types';
-import { useCurrency } from '../../hooks/useCurrency';
+import { useCurrency } from '../hooks/useCurrency';
 
 type ReportTab = 'profit_loss' | 'sales' | 'credit' | 'purchases' | 'consignment' | 'deposit_sales';
 
@@ -89,22 +89,80 @@ const DetailedSalesReport: React.FC<{ data: any[], totals: any, formatCurrency: 
 );
 
 const CreditSalesReport: React.FC<{ data: (Sale & { customerName: string })[], formatCurrency: (val: number) => string }> = ({ data, formatCurrency }) => {
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const totalOutstanding = data.reduce((acc, sale) => acc + sale.amountDue, 0);
+
+    const toggleRow = (id: string) => {
+        setExpandedRows(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) newSet.delete(id);
+            else newSet.add(id);
+            return newSet;
+        });
+    };
+
     return (
         <div>
             <table className="w-full text-left">
-                <thead className="border-b border-gray-700"><tr><th className="p-3">Sale ID</th><th className="p-3">Customer</th><th className="p-3">Date</th><th className="p-3 text-right">Total</th><th className="p-3 text-right">Amount Due</th></tr></thead>
+                <thead className="border-b border-gray-700">
+                    <tr>
+                        <th className="p-3 w-12"></th>
+                        <th className="p-3">Sale ID</th>
+                        <th className="p-3">Customer</th>
+                        <th className="p-3">Date</th>
+                        <th className="p-3 text-right">Total</th>
+                        <th className="p-3 text-right">Amount Due</th>
+                    </tr>
+                </thead>
                 <tbody>
                     {data.map(sale => (
-                        <tr key={sale.id} className="border-b border-gray-700">
-                            <td className="p-3 font-mono">{sale.id}</td><td className="p-3">{sale.customerName}</td>
-                            <td className="p-3">{new Date(sale.date).toLocaleDateString()}</td><td className="p-3 text-right font-mono">{formatCurrency(sale.total)}</td>
-                            <td className="p-3 text-right font-mono font-bold text-red-400">{formatCurrency(sale.amountDue)}</td>
-                        </tr>
+                        <React.Fragment key={sale.id}>
+                            <tr className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer" onClick={() => toggleRow(sale.id)}>
+                                <td className="p-3">
+                                    <button>
+                                        <Icon name={expandedRows.has(sale.id) ? 'chevronDown' : 'chevronRight'} className="w-5 h-5"/>
+                                    </button>
+                                </td>
+                                <td className="p-3 font-mono">{sale.id}</td>
+                                <td className="p-3">{sale.customerName}</td>
+                                <td className="p-3">{new Date(sale.date).toLocaleDateString()}</td>
+                                <td className="p-3 text-right font-mono">{formatCurrency(sale.total)}</td>
+                                <td className="p-3 text-right font-mono font-bold text-red-400">{formatCurrency(sale.amountDue)}</td>
+                            </tr>
+                            {expandedRows.has(sale.id) && (
+                                <tr className="bg-gray-900/50">
+                                    <td colSpan={6} className="p-4">
+                                        <div className="p-3 bg-gray-700/50 rounded-md">
+                                            <h4 className="font-semibold text-sm mb-2 text-white">Items in this Sale</h4>
+                                            <table className="w-full text-xs">
+                                                <thead>
+                                                    <tr className="border-b border-gray-600">
+                                                        <th className="p-1 text-left">Item Name</th>
+                                                        <th className="p-1 text-right">Quantity</th>
+                                                        <th className="p-1 text-right">Unit Price</th>
+                                                        <th className="p-1 text-right">Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {sale.items.map(item => (
+                                                        <tr key={item.variantId}>
+                                                            <td className="p-1">{item.name} ({item.variantName})</td>
+                                                            <td className="p-1 text-right">{item.quantity}</td>
+                                                            <td className="p-1 text-right font-mono">{formatCurrency(item.sellingPrice)}</td>
+                                                            <td className="p-1 text-right font-mono">{formatCurrency(item.sellingPrice * item.quantity)}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </React.Fragment>
                     ))}
                 </tbody>
                 <tfoot className="font-bold border-t-2 border-gray-600">
-                    <tr><td colSpan={4} className="p-3 text-right">Total Outstanding</td><td className="p-3 text-right font-mono text-red-400">{formatCurrency(totalOutstanding)}</td></tr>
+                    <tr><td colSpan={5} className="p-3 text-right">Total Outstanding</td><td className="p-3 text-right font-mono text-red-400">{formatCurrency(totalOutstanding)}</td></tr>
                 </tfoot>
             </table>
         </div>
@@ -112,36 +170,139 @@ const CreditSalesReport: React.FC<{ data: (Sale & { customerName: string })[], f
 };
 
 const DepositSalesReport: React.FC<{ data: any[], formatCurrency: (val: number) => string }> = ({ data, formatCurrency }) => {
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const totalFromDeposits = data.reduce((acc, sale) => acc + sale.depositAmount, 0);
+
+    const toggleRow = (id: string) => {
+        setExpandedRows(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) newSet.delete(id);
+            else newSet.add(id);
+            return newSet;
+        });
+    };
+
     return (
         <div>
             <table className="w-full text-left">
-                <thead className="border-b border-gray-700"><tr><th className="p-3">Sale ID</th><th className="p-3">Customer</th><th className="p-3">Date</th><th className="p-3 text-right">Total Sale</th><th className="p-3 text-right">Paid by Deposit</th></tr></thead>
+                <thead className="border-b border-gray-700">
+                    <tr>
+                        <th className="p-3 w-12"></th>
+                        <th className="p-3">Sale ID</th>
+                        <th className="p-3">Customer</th>
+                        <th className="p-3">Date</th>
+                        <th className="p-3 text-right">Total Sale</th>
+                        <th className="p-3 text-right">Paid by Deposit</th>
+                    </tr>
+                </thead>
                 <tbody>
                     {data.map(sale => (
-                        <tr key={sale.id} className="border-b border-gray-700">
-                            <td className="p-3 font-mono">{sale.id}</td><td className="p-3">{sale.customerName}</td>
-                            <td className="p-3">{new Date(sale.date).toLocaleDateString()}</td><td className="p-3 text-right font-mono">{formatCurrency(sale.total)}</td>
-                            <td className="p-3 text-right font-mono font-bold text-cyan-400">{formatCurrency(sale.depositAmount)}</td>
-                        </tr>
+                        <React.Fragment key={sale.id}>
+                            <tr className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer" onClick={() => toggleRow(sale.id)}>
+                                <td className="p-3">
+                                    <button><Icon name={expandedRows.has(sale.id) ? 'chevronDown' : 'chevronRight'} className="w-5 h-5"/></button>
+                                </td>
+                                <td className="p-3 font-mono">{sale.id}</td>
+                                <td className="p-3">{sale.customerName}</td>
+                                <td className="p-3">{new Date(sale.date).toLocaleDateString()}</td>
+                                <td className="p-3 text-right font-mono">{formatCurrency(sale.total)}</td>
+                                <td className="p-3 text-right font-mono font-bold text-cyan-400">{formatCurrency(sale.depositAmount)}</td>
+                            </tr>
+                             {expandedRows.has(sale.id) && (
+                                <tr className="bg-gray-900/50">
+                                    <td colSpan={6} className="p-4">
+                                        <div className="p-3 bg-gray-700/50 rounded-md">
+                                            <h4 className="font-semibold text-sm mb-2 text-white">Items in this Sale</h4>
+                                            <table className="w-full text-xs">
+                                                <thead>
+                                                    <tr className="border-b border-gray-600"><th className="p-1 text-left">Item Name</th><th className="p-1 text-right">Quantity</th><th className="p-1 text-right">Unit Price</th><th className="p-1 text-right">Total</th></tr>
+                                                </thead>
+                                                <tbody>
+                                                    {sale.items.map((item: any) => (
+                                                        <tr key={item.variantId}>
+                                                            <td className="p-1">{item.name} ({item.variantName})</td><td className="p-1 text-right">{item.quantity}</td>
+                                                            <td className="p-1 text-right font-mono">{formatCurrency(item.sellingPrice)}</td><td className="p-1 text-right font-mono">{formatCurrency(item.sellingPrice * item.quantity)}</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            )}
+                        </React.Fragment>
                     ))}
                 </tbody>
                 <tfoot className="font-bold border-t-2 border-gray-600">
-                    <tr><td colSpan={4} className="p-3 text-right">Total Paid from Deposits</td><td className="p-3 text-right font-mono text-cyan-400">{formatCurrency(totalFromDeposits)}</td></tr>
+                    <tr><td colSpan={5} className="p-3 text-right">Total Paid from Deposits</td><td className="p-3 text-right font-mono text-cyan-400">{formatCurrency(totalFromDeposits)}</td></tr>
                 </tfoot>
             </table>
         </div>
     );
 };
 
-const PurchaseOrdersReport: React.FC<{ data: PurchaseOrder[], suppliers: Map<string, string>, branches: Map<string, string>, formatCurrency: (val: number) => string }> = ({ data, suppliers, branches, formatCurrency }) => (
-    <table className="w-full text-left">
-        <thead className="border-b border-gray-700"><tr><th className="p-3">PO Number</th><th className="p-3">Date</th><th className="p-3">Supplier</th><th className="p-3">Destination</th><th className="p-3 text-right">Total</th><th className="p-3 text-center">Status</th></tr></thead>
-        <tbody>
-            {data.map(po => (<tr key={po.id} className="border-b border-gray-700"><td className="p-3 font-mono">{po.poNumber}</td><td className="p-3">{new Date(po.createdAt).toLocaleDateString()}</td><td className="p-3">{suppliers.get(po.supplierId)}</td><td className="p-3">{branches.get(po.destinationBranchId)}</td><td className="p-3 text-right font-mono">{formatCurrency(po.total)}</td><td className="p-3 text-center">{po.status}</td></tr>))}
-        </tbody>
-    </table>
-);
+const PurchaseOrdersReport: React.FC<{ data: PurchaseOrder[], suppliers: Map<string, string>, branches: Map<string, string>, formatCurrency: (val: number) => string }> = ({ data, suppliers, branches, formatCurrency }) => {
+    const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+    const toggleRow = (id: string) => {
+        setExpandedRows(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) newSet.delete(id);
+            else newSet.add(id);
+            return newSet;
+        });
+    };
+
+    return (
+        <table className="w-full text-left">
+            <thead className="border-b border-gray-700">
+                <tr>
+                    <th className="p-3 w-12"></th>
+                    <th className="p-3">PO Number</th><th className="p-3">Date</th><th className="p-3">Supplier</th><th className="p-3">Destination</th><th className="p-3 text-right">Total</th><th className="p-3 text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {data.map(po => (
+                    <React.Fragment key={po.id}>
+                        <tr className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer" onClick={() => toggleRow(po.id)}>
+                            <td className="p-3"><button><Icon name={expandedRows.has(po.id) ? 'chevronDown' : 'chevronRight'} className="w-5 h-5"/></button></td>
+                            <td className="p-3 font-mono">{po.poNumber}</td>
+                            <td className="p-3">{new Date(po.createdAt).toLocaleDateString()}</td>
+                            <td className="p-3">{suppliers.get(po.supplierId)}</td>
+                            <td className="p-3">{branches.get(po.destinationBranchId)}</td>
+                            <td className="p-3 text-right font-mono">{formatCurrency(po.total)}</td>
+                            <td className="p-3 text-center">{po.status}</td>
+                        </tr>
+                        {expandedRows.has(po.id) && (
+                            <tr className="bg-gray-900/50">
+                                <td colSpan={7} className="p-4">
+                                    <div className="p-3 bg-gray-700/50 rounded-md">
+                                        <h4 className="font-semibold text-sm mb-2 text-white">Items in this Order</h4>
+                                        <table className="w-full text-xs">
+                                            <thead>
+                                                <tr className="border-b border-gray-600"><th className="p-1 text-left">Item Name</th><th className="p-1 text-right">Quantity</th><th className="p-1 text-right">Unit Cost</th><th className="p-1 text-right">Total Cost</th></tr>
+                                            </thead>
+                                            <tbody>
+                                                {po.items.map(item => (
+                                                    <tr key={item.variantId}>
+                                                        <td className="p-1">{item.productName} ({item.variantName})</td>
+                                                        <td className="p-1 text-right">{item.quantity}</td>
+                                                        <td className="p-1 text-right font-mono">{formatCurrency(item.cost)}</td>
+                                                        <td className="p-1 text-right font-mono">{formatCurrency(item.cost * item.quantity)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        )}
+                    </React.Fragment>
+                ))}
+            </tbody>
+        </table>
+    );
+};
 
 const ConsignmentReport: React.FC<{ data: any[], formatCurrency: (val: number) => string }> = ({ data, formatCurrency }) => (
     <div className="space-y-6">
