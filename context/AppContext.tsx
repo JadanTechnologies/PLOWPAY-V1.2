@@ -1,8 +1,9 @@
 
 
 
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -54,7 +55,8 @@ export const allPermissions: Permission[] = [
     'manageSystemSettings',
     'managePaymentGateways',
     'manageNotificationSettings',
-    'manageAnnouncements'
+    'manageAnnouncements',
+    'viewAuditLogs'
 ];
 
 const mockAdminRoles: AdminRole[] = [
@@ -569,6 +571,28 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>(mockEmailTemplates);
     const [smsTemplates, setSmsTemplates] = useState<SmsTemplate[]>(mockSmsTemplates);
     const [inAppNotifications, setInAppNotifications] = useState<InAppNotification[]>(mockInAppNotifications);
+    // FIX: Add missing state for notification and auditLogs
+    const [notification, setNotification] = useState<NotificationType | null>(null);
+    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+
+    // FIX: Add missing logAction implementation
+    const logAction = useCallback((action: string, details: string, user?: { id: string; name: string; type: 'STAFF' | 'TENANT' | 'SUPER_ADMIN' }) => {
+        const userToLog = user || (currentAdminUser ? { id: currentAdminUser.id, name: currentAdminUser.name, type: 'SUPER_ADMIN' } : (currentTenant ? { id: currentTenant.id, name: currentTenant.ownerName, type: 'TENANT' } : null));
+    
+        if (userToLog) {
+            const newLog: AuditLog = {
+                id: `log-${Date.now()}`,
+                timestamp: new Date(),
+                userId: userToLog.id,
+                userName: userToLog.name,
+                userType: userToLog.type,
+                tenantId: (userToLog.type === 'STAFF' || userToLog.type === 'TENANT') ? currentTenant?.id : undefined,
+                action,
+                details,
+            };
+            setAuditLogs(prev => [newLog, ...prev]);
+        }
+    }, [currentAdminUser, currentTenant]);
 
     useEffect(() => {
         if (currentTenant) {
@@ -1469,6 +1493,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         emailTemplates,
         smsTemplates,
         inAppNotifications,
+        auditLogs,
+        notification,
+        setNotification,
+        logAction,
         searchTerm,
         currentLanguage,
         currentCurrency,

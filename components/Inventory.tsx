@@ -3,6 +3,7 @@
 
 
 
+
 import React, {useState, useMemo} from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, ProductVariant, StockLog, Category } from '../types';
@@ -458,7 +459,6 @@ const Inventory: React.FC = () => {
                             </div>
                         </div>
                     )}
-                    {/* ... other modals will follow a similar pattern ... */}
                     {isAddProductModalOpen && (
                          <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[90vh] flex flex-col border border-slate-700">
                              <h3 className="text-xl font-bold mb-4 text-white">Add New Product</h3>
@@ -478,14 +478,35 @@ const Inventory: React.FC = () => {
                                 <h4 className="text-lg font-semibold mb-2 text-white">Variants</h4>
                                 {newProductVariants.map((variant, index) => (
                                     <div key={index} className="bg-slate-900/50 p-4 rounded-md border border-slate-700 mb-4">
-                                        {/* ... variant form fields ... */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            <input placeholder="Variant Name (e.g., Large)" value={variant.name} onChange={e => handleVariantChange(index, 'name', e.target.value)} required className="w-full bg-slate-700 p-2 rounded-md text-sm border border-slate-600"/>
+                                            <input placeholder="SKU" value={variant.sku} onChange={e => handleVariantChange(index, 'sku', e.target.value)} required className="w-full bg-slate-700 p-2 rounded-md text-sm border border-slate-600"/>
+                                            <input type="number" placeholder="Selling Price" value={variant.sellingPrice} onChange={e => handleVariantChange(index, 'sellingPrice', Number(e.target.value))} className="w-full bg-slate-700 p-2 rounded-md text-sm border border-slate-600"/>
+                                            <input type="number" placeholder="Cost Price" value={variant.costPrice} onChange={e => handleVariantChange(index, 'costPrice', Number(e.target.value))} className="w-full bg-slate-700 p-2 rounded-md text-sm border border-slate-600"/>
+                                            <input placeholder="Batch #" value={variant.batchNumber || ''} onChange={e => handleVariantChange(index, 'batchNumber', e.target.value)} className="w-full bg-slate-700 p-2 rounded-md text-sm border border-slate-600"/>
+                                            <input type="date" placeholder="Expiry Date" value={variant.expiryDate || ''} onChange={e => handleVariantChange(index, 'expiryDate', e.target.value)} className="w-full bg-slate-700 p-2 rounded-md text-sm border border-slate-600"/>
+                                        </div>
+                                        <h5 className="text-sm font-semibold mt-4 mb-2 text-slate-300">Initial Stock</h5>
+                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                            {branches.map(branch => (
+                                                <div key={branch.id}>
+                                                    <label className="text-xs text-slate-400">{branch.name}</label>
+                                                    <input type="number" value={variant.stockByBranch[branch.id] || 0} onChange={e => handleVariantStockChange(index, branch.id, e.target.value)} className="w-full bg-slate-700 p-1 rounded-md text-xs border border-slate-600"/>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        {index > 0 && (
+                                            <div className="text-right mt-2">
+                                                <button type="button" onClick={() => removeVariantRow(index)} className="text-red-500 hover:text-red-400 text-xs font-semibold">Remove Variant</button>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
-                                <button onClick={addVariantRow} className="mt-4 text-cyan-400 font-semibold text-sm">+ Add Variant</button>
+                                <button type="button" onClick={addVariantRow} className="mt-4 text-cyan-400 font-semibold text-sm">+ Add Variant</button>
                              </div>
                              <div className="mt-6 flex justify-end space-x-3 pt-4 border-t border-slate-700">
-                                <button onClick={closeAddProductModal} className="px-4 py-2 rounded-md bg-slate-600 font-semibold">Cancel</button>
-                                <button onClick={handleAddProduct} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 font-semibold">Save</button>
+                                <button type="button" onClick={closeAddProductModal} className="px-4 py-2 rounded-md bg-slate-600 font-semibold">Cancel</button>
+                                <button type="button" onClick={handleAddProduct} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 font-semibold">Save Product</button>
                              </div>
                          </div>
                     )}

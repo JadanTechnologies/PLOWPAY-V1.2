@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminUser, AdminUserStatus, Permission } from '../../types';
@@ -15,8 +17,9 @@ const permissionLabels: Record<Permission, string> = {
     manageSystemSettings: 'Manage System Settings',
     managePaymentGateways: 'Manage Payment Gateways',
     manageNotificationSettings: 'Manage Notification Settings',
-    // FIX: Added missing permission label for 'manageAnnouncements'.
     manageAnnouncements: 'Manage Announcements',
+    // FIX: Added missing 'viewAuditLogs' permission label.
+    viewAuditLogs: 'View Audit Logs',
 };
 
 const TeamManagement: React.FC = () => {

@@ -1,8 +1,4 @@
 
-
-
-
-
 import React from 'react';
 import { Page } from '../App';
 import Icon from './icons';
@@ -63,21 +59,22 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
   const { t } = useTranslation();
 
   const navItems = [
-    { page: 'DASHBOARD', icon: 'layout-grid', label: t('dashboard'), key: 'dashboard' },
-    { page: 'POS', icon: 'pos', label: t('pos'), key: 'pos' },
-    { page: 'INVENTORY', icon: 'inventory', label: t('inventory'), key: 'inventory' },
-    { page: 'PURCHASES', icon: 'clipboard-document-list', label: t('purchases'), key: 'purchases' },
-    { page: 'CONSIGNMENT', icon: 'briefcase', label: t('consignment'), key: 'consignment' },
-    { page: 'LOGISTICS', icon: 'truck', label: t('logistics'), key: 'logistics' },
-    { page: 'CREDIT_MANAGEMENT', icon: 'users', label: t('creditManagement'), key: 'credit_management' },
-    { page: 'ACCOUNTING', icon: 'calculator', label: t('accounting'), key: 'accounting' },
-    { page: 'REPORTS', icon: 'chart-bar', label: t('reports'), key: 'reports' },
-    { page: 'BILLING', icon: 'credit-card', label: t('billing'), key: 'billing' },
+    { page: 'DASHBOARD', icon: 'layout-grid', label: t('dashboard') },
+    { page: 'POS', icon: 'pos', label: t('pos') },
+    { page: 'INVENTORY', icon: 'inventory', label: t('inventory') },
+    { page: 'PURCHASES', icon: 'clipboard-document-list', label: t('purchases') },
+    { page: 'CONSIGNMENT', icon: 'briefcase', label: t('consignment') },
+    { page: 'LOGISTICS', icon: 'truck', label: t('logistics') },
+    { page: 'CREDIT_MANAGEMENT', icon: 'users', label: t('creditManagement') },
+    { page: 'ACCOUNTING', icon: 'calculator', label: t('accounting') },
+    { page: 'REPORTS', icon: 'chart-bar', label: t('reports') },
+    { page: 'BILLING', icon: 'credit-card', label: t('billing') },
   ];
   
   const bottomNavItems = [
-      { page: 'PROFILE', icon: 'user', label: t('profile'), key: 'profile' },
-      { page: 'SETTINGS', icon: 'settings', label: t('settings'), key: 'settings' },
+      { page: 'AUDIT_LOGS', icon: 'shield-check', label: t('auditLogs') },
+      { page: 'PROFILE', icon: 'user', label: t('profile') },
+      { page: 'SETTINGS', icon: 'settings', label: t('settings') },
   ]
 
   return (

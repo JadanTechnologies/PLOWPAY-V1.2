@@ -1,11 +1,4 @@
 
-
-
-
-
-
-
-
 import React, { useState, useCallback } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -24,6 +17,7 @@ import Billing from './Billing';
 import { SubscriptionPlan } from '../types';
 import Checkout from './Checkout';
 import TenantProfile from './tenant/Profile';
+import TenantAuditLogs from './tenant/AuditLogs';
 
 
 const TenantApp: React.FC = () => {
@@ -74,6 +68,8 @@ const TenantApp: React.FC = () => {
         return checkoutState ? <Checkout plan={checkoutState.plan} billingCycle={checkoutState.billingCycle} onComplete={onCheckoutComplete} /> : <Billing onStartCheckout={startCheckout} />;
       case 'PROFILE':
         return <TenantProfile />;
+      case 'AUDIT_LOGS':
+        return <TenantAuditLogs />;
       default:
         return <Dashboard />;
     }

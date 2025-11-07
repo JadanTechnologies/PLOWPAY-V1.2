@@ -1,7 +1,4 @@
 
-
-
-
 export interface Branch {
   id: string;
   name: string;
@@ -21,7 +18,8 @@ export type TenantPermission =
  | 'accessSettings'
  | 'manageLogistics'
  | 'managePurchases'
- | 'accessAccounting';
+ | 'accessAccounting'
+ | 'viewAuditLogs';
 
 export const allTenantPermissions: TenantPermission[] = [
     'accessPOS',
@@ -32,6 +30,7 @@ export const allTenantPermissions: TenantPermission[] = [
     'manageLogistics',
     'managePurchases',
     'accessAccounting',
+    'viewAuditLogs',
 ];
 
 
@@ -219,7 +218,8 @@ export type Permission =
   | 'manageSystemSettings'
   | 'managePaymentGateways'
   | 'manageNotificationSettings'
-  | 'manageAnnouncements';
+  | 'manageAnnouncements'
+  | 'viewAuditLogs';
 
 export interface AdminRole {
     id: string;
@@ -494,6 +494,22 @@ export interface InAppNotification {
   createdAt: Date;
 }
 
+export interface AuditLog {
+    id: string;
+    timestamp: Date;
+    userId: string;
+    userName: string;
+    userType: 'TENANT' | 'STAFF' | 'SUPER_ADMIN';
+    tenantId?: string; // To scope logs for tenant admins
+    action: string; // e.g., 'UPDATED_PRODUCT', 'DELETED_USER'
+    details: string; // e.g., "Updated Product 'Laptop' (ID: prod-1)"
+}
+
+export interface NotificationType {
+    message: string;
+    type: 'success' | 'error' | 'info';
+}
+
 export interface AppContextType {
   products: Product[];
   sales: Sale[];
@@ -529,6 +545,10 @@ export interface AppContextType {
   emailTemplates: EmailTemplate[];
   smsTemplates: SmsTemplate[];
   inAppNotifications: InAppNotification[];
+  auditLogs: AuditLog[];
+  notification: NotificationType | null;
+  setNotification: (notification: NotificationType | null) => void;
+  logAction: (action: string, details: string, user?: { id: string; name: string; type: 'STAFF' | 'TENANT' | 'SUPER_ADMIN' }) => void;
   searchTerm: string;
   currentLanguage: string;
   currentCurrency: string;

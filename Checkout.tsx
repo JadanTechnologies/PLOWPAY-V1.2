@@ -1,10 +1,9 @@
 
-
 import React, { useState } from 'react';
-import { SubscriptionPlan } from '../types';
-import { useAppContext } from '../hooks/useAppContext';
-import Icon from './icons';
-import { useCurrency } from '../hooks/useCurrency';
+import { SubscriptionPlan } from './types';
+import { useAppContext } from './hooks/useAppContext';
+import Icon from './components/icons';
+import { useCurrency } from './hooks/useCurrency';
 
 interface CheckoutProps {
     plan: SubscriptionPlan;
@@ -21,7 +20,7 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, billingCycle, onComplete }) =
     const [proofOfPayment, setProofOfPayment] = useState<File | null>(null);
     const [status, setStatus] = useState<PaymentStatus>('IDLE');
     const [statusMessage, setStatusMessage] = useState('');
-
+    
     const price = billingCycle === 'yearly' ? plan.priceYearly : plan.price;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,7 +43,7 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, billingCycle, onComplete }) =
             }
             // Simulate file upload and get a URL
             const mockProofUrl = `/uploads/proof_${Date.now()}.jpg`;
-            // FIX: Added missing 'billingCycle' argument to the function call.
+            // FIX: Pass the billingCycle argument to processSubscriptionPayment.
             const { success, message } = await processSubscriptionPayment(currentTenant.id, plan.id, method, price, billingCycle, true, mockProofUrl);
             setStatus(success ? 'PENDING_MANUAL' : 'ERROR');
             setStatusMessage(message);
@@ -52,7 +51,7 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, billingCycle, onComplete }) =
             // Simulate online payment API call
             setTimeout(async () => {
                 const isSuccess = Math.random() > 0.1; // 90% success rate
-                // FIX: Added missing 'billingCycle' argument to the function call.
+                // FIX: Pass the billingCycle argument to processSubscriptionPayment.
                 const { success, message } = await processSubscriptionPayment(currentTenant.id, plan.id, method, price, billingCycle, isSuccess);
                 setStatus(success ? 'SUCCESS' : 'ERROR');
                 setStatusMessage(message);
@@ -133,4 +132,20 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, billingCycle, onComplete }) =
                                     <p className="text-sm text-gray-400 whitespace-pre-wrap mb-4">{paymentSettings.manual.details}</p>
                                     <div>
                                         <label className="text-sm font-medium text-gray-300">Upload Proof of Payment</label>
-                                        <input type="file" onChange={
+                                        <input type="file" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-indigo-300 hover:file:bg-gray-600"/>
+                                        {proofOfPayment && <p className="text-xs text-green-400 mt-1">File selected: {proofOfPayment.name}</p>}
+                                    </div>
+                                    <button onClick={() => handlePayment('Manual')} disabled={status === 'PROCESSING'} className="w-full mt-4 p-3 bg-indigo-600 rounded-lg hover:bg-indigo-500 font-semibold transition-colors disabled:opacity-50">
+                                        I have paid, Submit for Review
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+export default Checkout;

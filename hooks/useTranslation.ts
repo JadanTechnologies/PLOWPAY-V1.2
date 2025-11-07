@@ -1,7 +1,4 @@
 
-
-
-
 import { useMemo } from 'react';
 import { useAppContext } from './useAppContext';
 
@@ -26,6 +23,7 @@ const translations: Record<string, Record<string, string>> = {
     maintenance: 'Maintenance',
     accessManagement: 'Access Management',
     profile: 'Profile',
+    auditLogs: 'Audit Logs',
   },
   es: {
     dashboard: 'Tablero',
@@ -47,6 +45,7 @@ const translations: Record<string, Record<string, string>> = {
     maintenance: 'Mantenimiento',
     accessManagement: 'Gestión de Acceso',
     profile: 'Perfil',
+    auditLogs: 'Registros de Auditoría',
   },
   fr: {
     dashboard: 'Tableau de Bord',
@@ -68,6 +67,7 @@ const translations: Record<string, Record<string, string>> = {
     maintenance: 'Maintenance',
     accessManagement: 'Gestion d\'accès',
     profile: 'Profil',
+    auditLogs: 'Journaux d\'audit',
   }
 };
 
@@ -75,7 +75,8 @@ export const useTranslation = () => {
   const { currentLanguage, setCurrentLanguage, systemSettings } = useAppContext();
 
   const t = (key: string): string => {
-    return translations[currentLanguage]?.[key] || key;
+    const lowerKey = key.toLowerCase();
+    return translations[currentLanguage]?.[lowerKey] || key;
   };
   
   const availableLanguages = useMemo(() => {

@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState, useEffect } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -9,7 +6,7 @@ import SuperAdminPanel from './components/superadmin/SuperAdminPanel';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { useAppContext } from './hooks/useAppContext';
-import { FaqItem, PageContent } from './types';
+import { FaqItem, PageContent, NotificationType } from './types';
 import Icon from './components/icons';
 import SignUp from './components/SignUp';
 import ForgotPassword from './components/ForgotPassword';
@@ -18,9 +15,62 @@ import AccessDeniedPage from './components/AccessDeniedPage';
 import VerificationPage from './components/VerificationPage';
 
 
-export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'LOGISTICS' | 'PURCHASES' | 'ACCOUNTING' | 'REPORTS' | 'SETTINGS' | 'CREDIT_MANAGEMENT' | 'CONSIGNMENT' | 'BILLING' | 'CHECKOUT' | 'PROFILE';
-export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENT_GATEWAYS' | 'PAYMENT_TRANSACTIONS' | 'NOTIFICATIONS' | 'TEMPLATE_MANAGEMENT' | 'SETTINGS' | 'ANNOUNCEMENTS' | 'MAINTENANCE' | 'ACCESS_MANAGEMENT' | 'PROFILE';
+export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'LOGISTICS' | 'PURCHASES' | 'ACCOUNTING' | 'REPORTS' | 'SETTINGS' | 'CREDIT_MANAGEMENT' | 'CONSIGNMENT' | 'BILLING' | 'CHECKOUT' | 'PROFILE' | 'AUDIT_LOGS';
+export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENT_GATEWAYS' | 'PAYMENT_TRANSACTIONS' | 'NOTIFICATIONS' | 'TEMPLATE_MANAGEMENT' | 'SETTINGS' | 'ANNOUNCEMENTS' | 'MAINTENANCE' | 'ACCESS_MANAGEMENT' | 'PROFILE' | 'AUDIT_LOGS';
 export type View = 'landing' | 'login' | 'signup' | 'forgot_password' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq' | 'help' | 'api' | 'blog' | 'app' | 'verification';
+
+// Global Notification/Toast Component
+const Notification: React.FC<{ notification: NotificationType | null, onDismiss: () => void }> = ({ notification, onDismiss }) => {
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        if (notification) {
+            setIsVisible(true);
+            const timer = setTimeout(() => {
+                setIsVisible(false);
+                // Allow time for fade-out animation before dismissing
+                setTimeout(onDismiss, 300);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [notification, onDismiss]);
+
+    if (!notification) return null;
+    
+    const baseClasses = "fixed top-5 right-5 w-full max-w-sm p-4 rounded-lg shadow-2xl z-[100] transition-all duration-300 ease-in-out transform";
+    const visibilityClasses = isVisible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-12";
+    
+    const typeClasses = {
+        success: 'bg-green-600/90 backdrop-blur-sm border border-green-500 text-white',
+        error: 'bg-red-600/90 backdrop-blur-sm border border-red-500 text-white',
+        info: 'bg-blue-600/90 backdrop-blur-sm border border-blue-500 text-white',
+    };
+    
+    const iconMap = {
+        success: 'check',
+        error: 'x-mark',
+        info: 'notification',
+    };
+
+    return (
+        <div className={`${baseClasses} ${typeClasses[notification.type]} ${visibilityClasses}`}>
+            <div className="flex items-start">
+                <div className="flex-shrink-0">
+                    <Icon name={iconMap[notification.type]} className="w-6 h-6" />
+                </div>
+                <div className="ml-3 w-0 flex-1 pt-0.5">
+                    <p className="text-sm font-medium">{notification.message}</p>
+                </div>
+                <div className="ml-4 flex-shrink-0 flex">
+                    <button onClick={() => setIsVisible(false)} className="inline-flex rounded-md text-white/70 hover:text-white/100 focus:outline-none">
+                        <Icon name="x-mark" className="w-5 h-5" />
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 // InfoPage component to display text-based content
 const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ pageKey, setView }) => {
@@ -134,7 +184,7 @@ const App: React.FC = () => {
   };
   
   const RenderedView = () => {
-      const { brandConfig, systemSettings } = useAppContext();
+      const { brandConfig, systemSettings, notification, setNotification } = useAppContext();
       const { isActive: isMaintenanceMode, message: maintenanceMessage } = systemSettings.maintenanceSettings || { isActive: false, message: '' };
       const { accessControlSettings } = systemSettings;
       const [isBlocked, setIsBlocked] = useState(false);
@@ -208,18 +258,24 @@ const App: React.FC = () => {
     if (isMaintenanceMode && userRole !== 'SUPER_ADMIN') {
         return <MaintenancePage message={maintenanceMessage} />;
     }
-
+    
+    let viewComponent;
     switch (view) {
       case 'landing':
-        return <LandingPage onNavigate={handleNavigate} />;
+        viewComponent = <LandingPage onNavigate={handleNavigate} />;
+        break;
       case 'login':
-        return <Login onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
+        viewComponent = <Login onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
+        break;
       case 'signup':
-        return <SignUp onNavigate={handleNavigate} />;
+        viewComponent = <SignUp onNavigate={handleNavigate} />;
+        break;
       case 'verification':
-        return <VerificationPage email={verificationEmail} onNavigate={handleNavigate} />;
+        viewComponent = <VerificationPage email={verificationEmail} onNavigate={handleNavigate} />;
+        break;
       case 'forgot_password':
-        return <ForgotPassword onNavigate={handleNavigate} />;
+        viewComponent = <ForgotPassword onNavigate={handleNavigate} />;
+        break;
       case 'terms':
       case 'privacy':
       case 'refund':
@@ -229,16 +285,27 @@ const App: React.FC = () => {
       case 'help':
       case 'api':
       case 'blog':
-        return <InfoPage pageKey={view} setView={handleNavigate} />;
+        viewComponent = <InfoPage pageKey={view} setView={handleNavigate} />;
+        break;
       case 'app':
         if (userRole) {
-          return userRole === 'TENANT' ? <TenantApp /> : <SuperAdminPanel />;
+          viewComponent = userRole === 'TENANT' ? <TenantApp /> : <SuperAdminPanel />;
+        } else {
+            setTimeout(() => setView('login'), 0); 
+            viewComponent = <Login onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
         }
-        setTimeout(() => setView('login'), 0); 
-        return <Login onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
+        break;
       default:
-        return <LandingPage onNavigate={handleNavigate} />;
+        viewComponent = <LandingPage onNavigate={handleNavigate} />;
+        break;
     }
+
+    return (
+        <>
+            <Notification notification={notification} onDismiss={() => setNotification(null)} />
+            {viewComponent}
+        </>
+    );
   }
 
   return (

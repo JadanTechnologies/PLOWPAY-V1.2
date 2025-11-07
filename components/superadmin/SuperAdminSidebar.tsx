@@ -1,8 +1,4 @@
 
-
-
-
-
 import React from 'react';
 import { SuperAdminPage } from '../../App';
 import Icon from '../icons';
@@ -67,19 +63,20 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
     { page: 'TENANTS', icon: 'briefcase', label: 'Tenants', permission: 'manageTenants' },
     { page: 'SUBSCRIPTIONS', icon: 'credit-card', label: 'Subscriptions', permission: 'manageSubscriptions' },
     { page: 'PAYMENT_TRANSACTIONS', icon: 'calculator', label: 'Transactions', permission: 'managePaymentGateways' },
-    { page: 'PAYMENT_GATEWAYS', icon: 'cash', label: 'Payment Gateways', permission: 'managePaymentGateways' },
-    { page: 'NOTIFICATIONS', icon: 'notification', label: 'Notification Settings', permission: 'manageNotificationSettings' },
-    { page: 'TEMPLATE_MANAGEMENT', icon: 'clipboard-document-list', label: 'Templates', permission: 'manageNotificationSettings' },
     { page: 'ANNOUNCEMENTS', icon: 'chat-bubble-left-right', label: 'Announcements', permission: 'manageAnnouncements' },
     { page: 'TEAM_MANAGEMENT', icon: 'users', label: 'Team', permission: 'manageTeam' },
     { page: 'ROLE_MANAGEMENT', icon: 'lock-closed', label: 'Roles', permission: 'manageRoles' },
-    { page: 'MAINTENANCE', icon: 'settings', label: 'Maintenance', permission: 'manageSystemSettings' },
-    { page: 'ACCESS_MANAGEMENT', icon: 'lock-closed', label: 'Access Management', permission: 'manageSystemSettings' },
+    { page: 'AUDIT_LOGS', icon: 'shield-check', label: 'Audit Logs', permission: 'viewAuditLogs' },
   ] as const;
 
   const bottomNavItems = [
     { page: 'PROFILE', icon: 'user', label: 'Profile', permission: 'viewPlatformDashboard'}, // All admins can see their own profile
     { page: 'SETTINGS', icon: 'settings', label: 'Settings', permission: 'manageSystemSettings' },
+    { page: 'PAYMENT_GATEWAYS', icon: 'cash', label: 'Payment Gateways', permission: 'managePaymentGateways' },
+    { page: 'NOTIFICATIONS', icon: 'notification', label: 'Notifications', permission: 'manageNotificationSettings' },
+    { page: 'TEMPLATE_MANAGEMENT', icon: 'clipboard-document-list', label: 'Templates', permission: 'manageNotificationSettings' },
+    { page: 'MAINTENANCE', icon: 'settings', label: 'Maintenance', permission: 'manageSystemSettings' },
+    { page: 'ACCESS_MANAGEMENT', icon: 'lock-closed', label: 'Access Management', permission: 'manageSystemSettings' },
   ] as const;
 
   return (
