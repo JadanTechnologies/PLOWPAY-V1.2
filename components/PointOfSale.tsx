@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant, Payment, Sale, Deposit, TenantPermission, Customer } from '../types';
@@ -544,11 +543,22 @@ const PointOfSale: React.FC = () => {
   const handleAddToCart = useCallback((product: Product, variant: ProductVariant) => {
     setCart(prevCart => {
         const quantityChange = isReturnMode ? -1 : 1;
-        const existingItem = prevCart.find(item => item.variantId === variant.id);
-        
+
         if (prevCart.length > 0 && Math.sign(prevCart[0].quantity) !== Math.sign(quantityChange)) {
             setSaleStatus({ message: 'Cannot mix sales and returns in the same transaction.', type: 'error' });
             return prevCart;
+        }
+        
+        const existingItem = prevCart.find(item => item.variantId === variant.id);
+        
+        // Stock Check (only for sales, not returns)
+        if (!isReturnMode) {
+            const availableStock = (variant.stockByBranch[currentBranchId] || 0) + (variant.consignmentStockByBranch?.[currentBranchId] || 0);
+            const currentCartQty = existingItem ? existingItem.quantity : 0;
+            if (currentCartQty + 1 > availableStock) {
+                setSaleStatus({ message: `Cannot add more ${product.name} (${variant.name}). Only ${availableStock} in stock.`, type: 'error' });
+                return prevCart;
+            }
         }
 
         if (existingItem) {
@@ -571,16 +581,37 @@ const PointOfSale: React.FC = () => {
             costPrice: variant.costPrice
         }];
     });
-  }, [isReturnMode]);
+  }, [isReturnMode, currentBranchId, setSaleStatus]);
 
-  const handleUpdateQuantity = (variantId: string, delta: number) => {
+  const handleUpdateQuantity = useCallback((variantId: string, delta: number) => {
     setCart(prevCart => {
-      const updatedCart = prevCart.map(item =>
-        item.variantId === variantId ? { ...item, quantity: item.quantity + delta } : item
+      const itemToUpdate = prevCart.find(item => item.variantId === variantId);
+      if (!itemToUpdate) return prevCart;
+
+      const newQuantity = itemToUpdate.quantity + delta;
+      
+      // Stock Check for increasing quantity in sale mode
+      if (!isReturnMode && delta > 0) {
+        const product = products.find(p => p.id === itemToUpdate.productId);
+        const variant = product?.variants.find(v => v.id === variantId);
+        if (product && variant) {
+            const availableStock = (variant.stockByBranch[currentBranchId] || 0) + (variant.consignmentStockByBranch?.[currentBranchId] || 0);
+            if (newQuantity > availableStock) {
+                setSaleStatus({ message: `Cannot add more ${product.name} (${variant.name}). Only ${availableStock} in stock.`, type: 'error' });
+                return prevCart;
+            }
+        }
+      }
+
+      if (newQuantity === 0) {
+        return prevCart.filter(item => item.variantId !== variantId);
+      }
+      
+      return prevCart.map(item =>
+        item.variantId === variantId ? { ...item, quantity: newQuantity } : item
       );
-      return updatedCart.filter(item => item.quantity !== 0);
     });
-  };
+  }, [isReturnMode, products, currentBranchId, setSaleStatus]);
 
   const categoryOptions = useMemo(() => [{ id: 'All', name: 'All Categories' }, ...categories], [categories]);
 
