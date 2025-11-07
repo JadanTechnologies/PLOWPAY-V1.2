@@ -183,14 +183,22 @@ const Security: React.FC = () => {
 };
 
 const Branches: React.FC = () => {
-    const { branches, addBranch } = useAppContext();
+    const { branches, addBranch, setNotification } = useAppContext();
     const [newBranchName, setNewBranchName] = useState('');
 
     const handleAddBranch = () => {
-        if (newBranchName.trim()) {
-            addBranch(newBranchName.trim());
-            setNewBranchName('');
+        const trimmedName = newBranchName.trim();
+        if (!trimmedName) {
+            setNotification({ type: 'error', message: 'Branch name cannot be empty.' });
+            return;
         }
+        if (branches.some(b => b.name.toLowerCase() === trimmedName.toLowerCase())) {
+            setNotification({ type: 'error', message: 'A branch with this name already exists.' });
+            return;
+        }
+        
+        addBranch(trimmedName);
+        setNewBranchName('');
     };
     
     return (

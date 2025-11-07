@@ -32,6 +32,7 @@ const Inventory: React.FC = () => {
     const [transferFromBranchId, setTransferFromBranchId] = useState<string>('');
     const [transferToBranchId, setTransferToBranchId] = useState<string>('');
     const [transferQuantity, setTransferQuantity] = useState('');
+    const [transferConfirmMessage, setTransferConfirmMessage] = useState<React.ReactNode>(null);
 
     // Add Product Modal State
     const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
@@ -125,6 +126,9 @@ const Inventory: React.FC = () => {
             const quantity = parseInt(transferQuantity, 10);
             const availableStock = selectedVariant.stockByBranch[transferFromBranchId] || 0;
             if(quantity > 0 && quantity <= availableStock) {
+                setTransferConfirmMessage(
+                    <>Are you sure you want to transfer <strong>{transferQuantity}</strong> unit(s) of <strong>{selectedProduct.name} ({selectedVariant.name})</strong> from <strong>{branchMap.get(transferFromBranchId)}</strong> to <strong>{branchMap.get(transferToBranchId)}</strong>?</>
+                );
                 setTransferConfirmModalOpen(true);
             } else {
                 alert(`Invalid quantity. Please ensure it's a positive number and not more than the available stock of ${availableStock}.`);
@@ -437,7 +441,7 @@ const Inventory: React.FC = () => {
                 title="Confirm Stock Transfer"
                 confirmText="Transfer"
             >
-                Are you sure you want to transfer <strong>{transferQuantity}</strong> unit(s) of <strong>{selectedProduct?.name} ({selectedVariant?.name})</strong> from <strong>{branchMap.get(transferFromBranchId)}</strong> to <strong>{branchMap.get(transferToBranchId)}</strong>?
+                {transferConfirmMessage}
             </ConfirmationModal>
 
             {/* Modals */}
