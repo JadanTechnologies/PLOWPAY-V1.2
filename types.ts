@@ -1,3 +1,4 @@
+
 // FIX: Move the 'google' namespace declaration inside the 'declare global' block to make the types available globally.
 declare global {
   interface Window {
@@ -760,5 +761,7 @@ export interface AppContextType {
   updateBlogPost: (postId: string, postData: Partial<Omit<BlogPost, 'id' | 'authorId' | 'authorName' | 'createdAt'>>) => void;
   deleteBlogPost: (postId: string) => void;
   updateLastLogin: (email: string, ip: string) => void;
+  impersonatedUser: Tenant | null;
+  stopImpersonating: () => void;
   logout: () => void;
 }

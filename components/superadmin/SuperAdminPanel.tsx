@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
@@ -10,7 +11,7 @@ import PaymentGateways from './PaymentSettings';
 import NotificationSettings from './NotificationSettings';
 import SubscriptionManagement from './SubscriptionManagement';
 import { useAppContext } from '../../hooks/useAppContext';
-import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language, LandingPageMetrics, FeaturedUpdateSettings } from '../../types';
+import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language, LandingPageMetrics, FeaturedUpdateSettings, Tenant } from '../../types';
 import Icon from '../icons/index.tsx';
 import { usePermissions } from '../../hooks/usePermissions';
 import Announcements from './Announcements';
@@ -369,7 +370,11 @@ const AccessDenied: React.FC = () => (
     </div>
 );
 
-const SuperAdminPanel: React.FC = () => {
+interface SuperAdminPanelProps {
+  onImpersonate: (tenant: Tenant) => void;
+}
+
+const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onImpersonate }) => {
     const [currentPage, setCurrentPage] = useState<SuperAdminPage>('PLATFORM_DASHBOARD');
     const [isSidebarOpen, setSidebarOpen] = useState(true);
     const { hasPermission } = usePermissions();
@@ -383,7 +388,7 @@ const SuperAdminPanel: React.FC = () => {
             case 'PLATFORM_DASHBOARD':
                 return hasPermission('viewPlatformDashboard') ? <PlatformDashboard /> : <AccessDenied />;
             case 'TENANTS':
-                return hasPermission('manageTenants') ? <TenantManagement /> : <AccessDenied />;
+                return hasPermission('manageTenants') ? <TenantManagement onImpersonate={onImpersonate} /> : <AccessDenied />;
             case 'SUBSCRIPTIONS':
                 return hasPermission('manageSubscriptions') ? <SubscriptionManagement /> : <AccessDenied />;
             case 'TEAM_MANAGEMENT':

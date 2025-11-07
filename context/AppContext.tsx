@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost } from '../types';
 
@@ -569,6 +570,8 @@ interface AppContextProviderProps {
     children: ReactNode;
     onLogout?: () => void;
     loggedInUser: AdminUser | Tenant | null;
+    impersonatedUser: Tenant | null;
+    onStopImpersonating: () => void;
 }
 
 const TENANTS_STORAGE_KEY = 'flowpay-tenants';
@@ -590,7 +593,7 @@ const getInitialTheme = (): 'light' | 'dark' => {
 };
 
 
-export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children, onLogout = () => {}, loggedInUser }) => {
+export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children, onLogout = () => {}, loggedInUser, impersonatedUser, onStopImpersonating }) => {
     const [products, setProducts] = useState<Product[]>(mockProducts);
     
     const [sales, setSales] = useState<Sale[]>(() => {
@@ -623,12 +626,15 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     }, [loggedInUser]);
 
     const currentTenant = useMemo(() => {
+        if (impersonatedUser) {
+            return tenants.find(t => t.id === impersonatedUser.id) || null;
+        }
         if (loggedInUser && 'businessName' in loggedInUser) {
             // Find the full tenant object from the `tenants` state array to ensure reactivity
             return tenants.find(t => t.id === loggedInUser.id) || null;
         }
         return null;
-    }, [loggedInUser, tenants]);
+    }, [loggedInUser, tenants, impersonatedUser]);
     
     useEffect(() => {
         try {
@@ -1800,7 +1806,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     }, []);
     
     // Memoized, tenant-scoped data
-    const isSuperAdminView = !!currentAdminUser;
+    const isSuperAdminView = !!currentAdminUser && !impersonatedUser;
 
     const tenantScopedTrucks = useMemo(() => {
         if (isSuperAdminView || !currentTenant) return trucks;
@@ -1842,6 +1848,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addBlogPost, updateBlogPost, deleteBlogPost,
         updateTruckVitals, updateTenantLogisticsConfig,
         updateLastLogin,
+        impersonatedUser,
+        stopImpersonating: onStopImpersonating,
         logout: onLogout,
         logAction
     };

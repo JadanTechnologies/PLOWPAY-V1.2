@@ -181,15 +181,25 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
 const App: React.FC = () => {
   const [view, setView] = useState<View>('landing');
   const [loggedInUser, setLoggedInUser] = useState<AdminUser | Tenant | null>(null);
+  const [impersonatedUser, setImpersonatedUser] = useState<Tenant | null>(null);
   const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
 
   const handleLoginSuccess = (user: AdminUser | Tenant) => {
     setLoggedInUser(user);
     setView('app');
   };
+  
+  const handleImpersonate = (tenant: Tenant) => {
+    setImpersonatedUser(tenant);
+  };
+
+  const handleStopImpersonating = () => {
+    setImpersonatedUser(null);
+  };
 
   const handleLogout = () => {
     setLoggedInUser(null);
+    setImpersonatedUser(null);
     setView('landing');
   };
 
@@ -222,7 +232,7 @@ const App: React.FC = () => {
       }, [brandConfig]);
 
       useEffect(() => {
-        if (userRole === 'SUPER_ADMIN') {
+        if (userRole === 'SUPER_ADMIN' && !impersonatedUser) { // Super admins are not blocked
             setIsBlocked(false);
             return;
         }
@@ -272,7 +282,7 @@ const App: React.FC = () => {
 
         setIsBlocked(checkAccess());
 
-    }, [accessControlSettings, userRole]);
+    }, [accessControlSettings, userRole, impersonatedUser]);
 
 
     if (isBlocked) {
@@ -313,7 +323,16 @@ const App: React.FC = () => {
         break;
       case 'app':
         if (loggedInUser) {
-          viewComponent = userRole === 'TENANT' ? <TenantApp /> : <SuperAdminPanel />;
+          const isSuperAdmin = 'roleId' in loggedInUser && loggedInUser.roleId.startsWith('role-');
+          const isImpersonating = isSuperAdmin && !!impersonatedUser;
+
+          if (isImpersonating) {
+            viewComponent = <TenantApp />;
+          } else if (isSuperAdmin) {
+            viewComponent = <SuperAdminPanel onImpersonate={handleImpersonate} />;
+          } else { // is a Tenant
+            viewComponent = <TenantApp />;
+          }
         } else {
             setTimeout(() => setView('login'), 0); 
             viewComponent = <Login onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
@@ -333,7 +352,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <AppContextProvider loggedInUser={loggedInUser} onLogout={handleLogout}>
+    <AppContextProvider loggedInUser={loggedInUser} onLogout={handleLogout} impersonatedUser={impersonatedUser} onStopImpersonating={handleStopImpersonating}>
       <RenderedView/>
     </AppContextProvider>
   )

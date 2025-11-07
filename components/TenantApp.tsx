@@ -1,5 +1,4 @@
 
-
 import React, { useState, useCallback, useMemo } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -28,8 +27,10 @@ import TenantSupport from './tenant/Support';
 const TenantApp: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('DASHBOARD');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const { currentTenant } = useAppContext();
+  const { currentTenant, currentAdminUser, stopImpersonating, impersonatedUser } = useAppContext();
   const [isExpiryBannerVisible, setExpiryBannerVisible] = useState(true);
+  
+  const isImpersonating = !!impersonatedUser;
   
   const [checkoutState, setCheckoutState] = useState<{plan: SubscriptionPlan, billingCycle: 'monthly' | 'yearly'} | null>(null);
 
@@ -113,6 +114,15 @@ const TenantApp: React.FC = () => {
           setIsOpen={setSidebarOpen}
         />
         <div className="flex-1 flex flex-col overflow-hidden">
+          {isImpersonating && currentTenant && (
+            <div className="bg-yellow-500/90 backdrop-blur-sm text-yellow-900 p-2 flex items-center justify-center text-sm font-semibold shadow-lg z-50">
+                <Icon name="user" className="w-5 h-5 mr-2" />
+                <span>You ({currentAdminUser?.name}) are impersonating {currentTenant.businessName}.</span>
+                <button onClick={stopImpersonating} className="ml-4 bg-yellow-700 text-white px-3 py-1 rounded-md hover:bg-yellow-800 text-xs font-bold">
+                    Return to Super Admin
+                </button>
+            </div>
+          )}
           <Header 
             pageTitle={currentPage} 
             toggleSidebar={() => setSidebarOpen(!isSidebarOpen)}

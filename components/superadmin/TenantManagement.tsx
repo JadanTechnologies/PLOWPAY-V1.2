@@ -1,12 +1,15 @@
 
-
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Tenant, TenantStatus } from '../../types';
 import Icon from '../icons/index.tsx';
 import TenantDetailModal from './TenantDetailModal';
 
-const TenantManagement: React.FC = () => {
+interface TenantManagementProps {
+    onImpersonate: (tenant: Tenant) => void;
+}
+
+const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) => {
     const { tenants, subscriptionPlans, addTenant, extendTrial, activateSubscription } = useAppContext();
     const [modal, setModal] = useState<'NONE' | 'ADD_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE'>('NONE');
     const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
@@ -121,6 +124,7 @@ const TenantManagement: React.FC = () => {
                                 </td>
                                 <td className="p-3 whitespace-nowrap text-slate-400 font-mono">{tenant.lastLoginIp || 'N/A'}</td>
                                 <td className="p-3 text-center whitespace-nowrap space-x-2">
+                                     <button onClick={() => onImpersonate(tenant)} title="Impersonate Tenant" className="text-cyan-400 hover:text-cyan-300 font-semibold px-2 py-1 rounded-md text-xs">Impersonate</button>
                                      <button onClick={() => openModal('VIEW_TENANT', tenant)} className="text-sky-400 hover:text-sky-300 font-semibold px-2 py-1 rounded-md text-xs">View</button>
                                      <button className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-xs">Edit</button>
                                      {tenant.status === 'TRIAL' && (
