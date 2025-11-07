@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -7,7 +8,7 @@ import SuperAdminPanel from './components/superadmin/SuperAdminPanel';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { useAppContext } from './hooks/useAppContext';
-import { FaqItem, PageContent, NotificationType } from './types';
+import { FaqItem, PageContent, NotificationType, BlogPost } from './types';
 import Icon from './components/icons/index.tsx';
 import SignUp from './components/SignUp';
 import ForgotPassword from './components/ForgotPassword';
@@ -17,7 +18,7 @@ import VerificationPage from './components/VerificationPage';
 
 
 export type Page = 'DASHBOARD' | 'POS' | 'INVENTORY' | 'LOGISTICS' | 'PURCHASES' | 'ACCOUNTING' | 'REPORTS' | 'SETTINGS' | 'CREDIT_MANAGEMENT' | 'CONSIGNMENT' | 'BILLING' | 'CHECKOUT' | 'PROFILE' | 'AUDIT_LOGS' | 'DEPOSIT_MANAGEMENT' | 'SUPPORT';
-export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENT_GATEWAYS' | 'PAYMENT_TRANSACTIONS' | 'NOTIFICATIONS' | 'TEMPLATE_MANAGEMENT' | 'SETTINGS' | 'ANNOUNCEMENTS' | 'MAINTENANCE' | 'ACCESS_MANAGEMENT' | 'PROFILE' | 'AUDIT_LOGS' | 'SUPPORT_TICKETS';
+export type SuperAdminPage = 'PLATFORM_DASHBOARD' | 'TENANTS' | 'SUBSCRIPTIONS' | 'TEAM_MANAGEMENT' | 'ROLE_MANAGEMENT' | 'PAYMENT_GATEWAYS' | 'PAYMENT_TRANSACTIONS' | 'NOTIFICATIONS' | 'TEMPLATE_MANAGEMENT' | 'SETTINGS' | 'ANNOUNCEMENTS' | 'MAINTENANCE' | 'ACCESS_MANAGEMENT' | 'PROFILE' | 'AUDIT_LOGS' | 'SUPPORT_TICKETS' | 'BLOG_MANAGEMENT';
 export type View = 'landing' | 'login' | 'signup' | 'forgot_password' | 'terms' | 'privacy' | 'refund' | 'contact' | 'about' | 'faq' | 'help' | 'api' | 'blog' | 'app' | 'verification';
 
 // Global Notification/Toast Component
@@ -75,9 +76,9 @@ const Notification: React.FC<{ notification: NotificationType | null, onDismiss:
 
 // InfoPage component to display text-based content
 const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ pageKey, setView }) => {
-    const { brandConfig, pageContent } = useAppContext();
+    const { brandConfig, pageContent, blogPosts } = useAppContext();
 
-    const keyMap: Record<string, keyof Omit<PageContent, 'faqs'>> = {
+    const keyMap: Record<string, keyof Omit<PageContent, 'faqs' | 'blog'>> = {
         'about': 'about',
         'contact': 'contact',
         'terms': 'terms',
@@ -85,11 +86,10 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
         'refund': 'refund',
         'help': 'helpCenter',
         'api': 'apiDocs',
-        'blog': 'blog'
     };
 
     const contentKey = keyMap[pageKey];
-    const content = pageKey === 'faq' ? pageContent.faqs : pageContent[contentKey];
+    const content = pageKey === 'faq' ? pageContent.faqs : pageKey === 'blog' ? null : pageContent[contentKey];
 
     const titleMap: Record<string, string> = {
         about: 'About Us',
@@ -100,7 +100,7 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
         faq: 'Frequently Asked Questions',
         help: 'Help Center',
         api: 'API Documentation',
-        blog: 'Blog'
+        blog: 'Our Blog'
     };
     const title = titleMap[pageKey];
 
@@ -127,6 +127,20 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
         );
     };
 
+    const BlogList: React.FC<{ posts: BlogPost[] }> = ({ posts }) => (
+        <div className="space-y-8">
+            {posts.filter(p => p.status === 'PUBLISHED').map(post => (
+                 <div key={post.id} className="bg-slate-900 p-8 rounded-lg border border-slate-800">
+                     <h2 className="text-3xl font-bold text-white mb-2">{post.title}</h2>
+                     <p className="text-sm text-slate-500 mb-4">By {post.authorName} on {new Date(post.createdAt).toLocaleDateString()}</p>
+                     {post.featuredImage && <img src={post.featuredImage} alt={post.title} className="rounded-lg mb-4 max-h-80 w-full object-cover"/>}
+                     <div className="prose prose-invert max-w-none text-slate-300" dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br />') }} />
+                 </div>
+            ))}
+            {posts.filter(p => p.status === 'PUBLISHED').length === 0 && <p>No blog posts published yet.</p>}
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-slate-950 text-slate-300">
              <header className="bg-slate-900/80 backdrop-blur-sm border-b border-slate-800">
@@ -150,13 +164,17 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
             </header>
             <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <h1 className="text-4xl font-bold text-white mb-8">{title}</h1>
-                <div className="bg-slate-900 p-8 rounded-lg border border-slate-800">
-                    {pageKey === 'faq' ? (
-                        <FaqAccordion items={content as FaqItem[]} />
-                    ) : (
-                       <div className="prose prose-invert max-w-none text-slate-300" dangerouslySetInnerHTML={{ __html: (content as string).replace(/\n/g, '<br />') }}></div>
-                    )}
-                </div>
+                 {pageKey === 'blog' ? (
+                    <BlogList posts={blogPosts} />
+                ) : (
+                    <div className="bg-slate-900 p-8 rounded-lg border border-slate-800">
+                        {pageKey === 'faq' ? (
+                            <FaqAccordion items={content as FaqItem[]} />
+                        ) : (
+                           <div className="prose prose-invert max-w-none text-slate-300" dangerouslySetInnerHTML={{ __html: (content as string).replace(/\n/g, '<br />') }}></div>
+                        )}
+                    </div>
+                )}
             </main>
         </div>
     );

@@ -3,7 +3,6 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { AdminRole, Permission } from '../../types';
 import Icon from '../icons/index.tsx';
 
-// FIX: Added 'manageSupport' to permissionLabels to include all possible permissions.
 const permissionLabels: Record<Permission, string> = {
     viewPlatformDashboard: 'View Platform Dashboard',
     manageTenants: 'Manage Tenants',
@@ -16,13 +15,13 @@ const permissionLabels: Record<Permission, string> = {
     manageAnnouncements: 'Manage Announcements',
     viewAuditLogs: 'View Audit Logs',
     manageSupport: 'Manage Support Tickets',
+    manageBlog: 'Manage Blog Posts',
 };
 
-// FIX: Added 'manageSupport' to the 'User & Tenant Management' permission group.
 const permissionGroups: Record<string, Permission[]> = {
     'Platform Management': ['viewPlatformDashboard', 'manageSystemSettings', 'viewAuditLogs'],
     'User & Tenant Management': ['manageTenants', 'manageSubscriptions', 'manageTeam', 'manageRoles', 'manageSupport'],
-    'Financial & Communications': ['managePaymentGateways', 'manageNotificationSettings', 'manageAnnouncements']
+    'Financial & Communications': ['managePaymentGateways', 'manageNotificationSettings', 'manageAnnouncements', 'manageBlog']
 };
 
 const CollapsibleSection: React.FC<{

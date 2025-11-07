@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useCallback, useEffect } from 'react';
 import { SuperAdminPage } from '../../App';
 import SuperAdminSidebar from './SuperAdminSidebar';
@@ -12,7 +13,7 @@ import PaymentGateways from './PaymentSettings';
 import NotificationSettings from './NotificationSettings';
 import SubscriptionManagement from './SubscriptionManagement';
 import { useAppContext } from '../../hooks/useAppContext';
-import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language, LandingPageMetrics } from '../../types';
+import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language, LandingPageMetrics, FeaturedUpdateSettings } from '../../types';
 import Icon from '../icons/index.tsx';
 import { usePermissions } from '../../hooks/usePermissions';
 import Announcements from './Announcements';
@@ -23,6 +24,7 @@ import AccessManagement from './AccessManagement';
 import SuperAdminProfile from './Profile';
 import SuperAdminAuditLogs from './AuditLogs';
 import SupportManagement from './SupportManagement';
+import BlogManagement from './BlogManagement';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
     return (
@@ -42,7 +44,7 @@ const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void 
 };
 
 const Settings: React.FC = () => {
-    type SettingsTab = 'branding' | 'content' | 'faqs' | 'currencies' | 'languages' | 'landing';
+    type SettingsTab = 'branding' | 'content' | 'faqs' | 'currencies' | 'languages' | 'landing' | 'featured_update';
     const [activeTab, setActiveTab] = useState<SettingsTab>('branding');
     const { brandConfig, pageContent, systemSettings, updateBrandConfig, updatePageContent, updateFaqs, updateSystemSettings, updateLandingPageMetrics, setNotification } = useAppContext();
 
@@ -51,11 +53,13 @@ const Settings: React.FC = () => {
     const [faqs, setFaqs] = useState<FaqItem[]>(pageContent.faqs);
     const [systemSettingsForm, setSystemSettingsForm] = useState<SystemSettings>(systemSettings);
     const [landingMetrics, setLandingMetrics] = useState(systemSettings.landingPageMetrics);
+    const [featuredUpdate, setFeaturedUpdate] = useState<FeaturedUpdateSettings>(systemSettings.featuredUpdate);
 
 
      useEffect(() => {
         setSystemSettingsForm(systemSettings);
         setLandingMetrics(systemSettings.landingPageMetrics);
+        setFeaturedUpdate(systemSettings.featuredUpdate);
     }, [systemSettings]);
 
     const handleBrandSave = () => {
@@ -152,6 +156,18 @@ const Settings: React.FC = () => {
         if(window.confirm("Are you sure you want to update landing page metrics?")){
             updateLandingPageMetrics(landingMetrics);
             setNotification({ message: 'Landing page metrics updated!', type: 'success'});
+        }
+    };
+    
+    const handleFeaturedUpdateChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        const { name, value } = e.target;
+        setFeaturedUpdate(prev => ({ ...prev, [name]: value }));
+    };
+    
+    const handleFeaturedUpdateSave = () => {
+         if(window.confirm("Are you sure you want to update the featured update banner?")){
+            updateSystemSettings({ ...systemSettings, featuredUpdate });
+            setNotification({ message: 'Featured update saved!', type: 'success'});
         }
     };
 
@@ -299,6 +315,27 @@ const Settings: React.FC = () => {
                         </div>
                     </div>
                 );
+            case 'featured_update':
+                return (
+                    <div className="space-y-6">
+                        <div className="flex items-center justify-between p-4 bg-slate-900/50 rounded-lg border border-slate-700">
+                            <div>
+                                <h4 className="font-semibold text-white">Activate Featured Update Banner</h4>
+                                <p className="text-sm text-slate-400">Display a banner at the top of tenant dashboards.</p>
+                            </div>
+                            <Toggle enabled={featuredUpdate.isActive} onChange={(val) => setFeaturedUpdate(p => ({...p, isActive: val}))} />
+                        </div>
+                         <div className={`space-y-4 ${!featuredUpdate.isActive && 'opacity-50'}`}>
+                            <input type="text" name="title" placeholder="Banner Title" value={featuredUpdate.title} onChange={handleFeaturedUpdateChange} className="w-full bg-slate-700 p-2 rounded-md" disabled={!featuredUpdate.isActive} />
+                            <textarea name="content" placeholder="Banner Content" value={featuredUpdate.content} onChange={handleFeaturedUpdateChange} rows={3} className="w-full bg-slate-700 p-2 rounded-md" disabled={!featuredUpdate.isActive} />
+                            <input type="text" name="link" placeholder="Optional Link (e.g., /blog/new-feature)" value={featuredUpdate.link || ''} onChange={handleFeaturedUpdateChange} className="w-full bg-slate-700 p-2 rounded-md" disabled={!featuredUpdate.isActive} />
+                            <input type="text" name="linkText" placeholder="Link Text (e.g., Learn More)" value={featuredUpdate.linkText || ''} onChange={handleFeaturedUpdateChange} className="w-full bg-slate-700 p-2 rounded-md" disabled={!featuredUpdate.isActive} />
+                         </div>
+                         <div className="text-right">
+                             <button onClick={handleFeaturedUpdateSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Featured Update</button>
+                        </div>
+                    </div>
+                );
         }
     };
     
@@ -313,6 +350,7 @@ const Settings: React.FC = () => {
             <h2 className="text-2xl font-bold text-white mb-6">System Settings</h2>
             <div className="flex flex-wrap gap-2 border-b border-slate-700 mb-6 pb-2">
                 <TabButton tab="branding" label="Branding" />
+                <TabButton tab="featured_update" label="Featured Update" />
                 <TabButton tab="landing" label="Landing Page" />
                 <TabButton tab="content" label="Page Content" />
                 <TabButton tab="faqs" label="FAQs" />
@@ -365,6 +403,8 @@ const SuperAdminPanel: React.FC = () => {
                 return hasPermission('manageNotificationSettings') ? <TemplateManagement /> : <AccessDenied />;
             case 'ANNOUNCEMENTS':
                 return hasPermission('manageAnnouncements') ? <Announcements /> : <AccessDenied />;
+            case 'BLOG_MANAGEMENT':
+                return hasPermission('manageBlog') ? <BlogManagement /> : <AccessDenied />;
             case 'MAINTENANCE':
                 return hasPermission('manageSystemSettings') ? <Maintenance /> : <AccessDenied />;
             case 'ACCESS_MANAGEMENT':
@@ -393,6 +433,7 @@ const SuperAdminPanel: React.FC = () => {
         NOTIFICATIONS: 'Notification Settings',
         TEMPLATE_MANAGEMENT: 'Template Management',
         ANNOUNCEMENTS: 'Global Announcements',
+        BLOG_MANAGEMENT: 'Blog Management',
         MAINTENANCE: 'Platform Maintenance',
         ACCESS_MANAGEMENT: 'Access Management',
         SETTINGS: 'System Settings',

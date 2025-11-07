@@ -1,7 +1,7 @@
 
 
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -55,7 +55,8 @@ export const allPermissions: Permission[] = [
     'manageNotificationSettings',
     'manageAnnouncements',
     'viewAuditLogs',
-    'manageSupport'
+    'manageSupport',
+    'manageBlog'
 ];
 
 const mockAdminRoles: AdminRole[] = [
@@ -458,6 +459,14 @@ const mockSystemSettings: SystemSettings = {
         businesses: { value: 2500, label: 'Businesses Powered' },
         users: { value: 15000, label: 'Active Users Daily' },
         revenue: { value: 50, label: 'Million in Revenue Secured' },
+    },
+    // FIX: Added missing 'featuredUpdate' property to satisfy the SystemSettings type.
+    featuredUpdate: {
+        isActive: false,
+        title: 'New Feature Available!',
+        content: 'Check out our latest feature that will revolutionize your workflow.',
+        link: '#',
+        linkText: 'Learn More'
     }
 };
 
@@ -500,6 +509,12 @@ const mockSmsTemplates: SmsTemplate[] = [
 const mockInAppNotifications: InAppNotification[] = [
     { id: 'notif-1', userId: 'tenant-1', message: 'Your stock for "Laptop" is running low in the Downtown branch.', read: false, createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) },
     { id: 'notif-2', userId: 'tenant-1', message: 'A new announcement has been posted by the platform admin.', read: true, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
+];
+
+const mockBlogPosts: BlogPost[] = [
+    { id: 'blog-1', title: '5 Tips to Improve Your Inventory Management', content: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.', authorId: 'admin-1', authorName: 'Super Admin', createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), status: 'PUBLISHED', featuredImage: 'https://picsum.photos/seed/blog1/800/400' },
+    { id: 'blog-2', title: 'Introducing Our New Logistics Dashboard', content: 'Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.', authorId: 'admin-3', authorName: 'Mike Johnson (Developer)', createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000), status: 'PUBLISHED', featuredImage: 'https://picsum.photos/seed/blog2/800/400' },
+    { id: 'blog-3', title: 'Q3 Product Updates (Draft)', content: 'Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.', authorId: 'admin-1', authorName: 'Super Admin', createdAt: new Date(), status: 'DRAFT' },
 ];
 
 const mockSupportTickets: SupportTicket[] = [
@@ -645,6 +660,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>(mockEmailTemplates);
     const [smsTemplates, setSmsTemplates] = useState<SmsTemplate[]>(mockSmsTemplates);
     const [inAppNotifications, setInAppNotifications] = useState<InAppNotification[]>(mockInAppNotifications);
+    const [blogPosts, setBlogPosts] = useState<BlogPost[]>(mockBlogPosts);
     const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(mockSupportTickets);
     const [notification, setNotification] = useState<NotificationType | null>(null);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
@@ -1165,6 +1181,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         ));
     }, []);
 
+    const deleteTruck = useCallback((truckId: string) => {
+        setTrucks(prev => prev.filter(truck => truck.id !== truckId));
+    }, []);
+
     const updateTruckVitals = useCallback((truckId: string) => {
         const truckToUpdate = trucks.find(t => t.id === truckId);
         if (!truckToUpdate) return;
@@ -1678,7 +1698,8 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         setInAppNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
     }, []);
     
-    const submitSupportTicket = useCallback((ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'status'>) => {
+    // FIX: Updated submitSupportTicket type to reflect that id and timestamp are added by the context provider.
+    const submitSupportTicket = useCallback((ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'status' | 'messages'> & { messages: Omit<TicketMessage, 'id' | 'timestamp'>[] }) => {
         if (!currentTenant) return;
         const newTicket: SupportTicket = {
             ...ticketData,
@@ -1720,6 +1741,27 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         setSupportTickets(prev => prev.map(ticket => ticket.id === ticketId ? { ...ticket, status, updatedAt: new Date() } : ticket));
     }, []);
 
+    const addBlogPost = useCallback((postData: Omit<BlogPost, 'id' | 'createdAt' | 'authorName'>) => {
+        if (!currentAdminUser) return;
+        const newPost: BlogPost = {
+            ...postData,
+            id: `blog-${Date.now()}`,
+            createdAt: new Date(),
+            authorName: currentAdminUser.name,
+        };
+        setBlogPosts(prev => [newPost, ...prev]);
+    }, [currentAdminUser]);
+
+    const updateBlogPost = useCallback((postId: string, postData: Partial<Omit<BlogPost, 'id' | 'authorId' | 'authorName' | 'createdAt'>>) => {
+        setBlogPosts(prev => prev.map(post =>
+            post.id === postId ? { ...post, ...postData } : post
+        ));
+    }, []);
+
+    const deleteBlogPost = useCallback((postId: string) => {
+        setBlogPosts(prev => prev.filter(post => post.id !== postId));
+    }, []);
+
     const updateLastLogin = useCallback((email: string, ip: string) => {
         const lowerEmail = email.toLowerCase();
         setAdminUsers(prev => prev.map(u => 
@@ -1736,7 +1778,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
 
     const value: AppContextType = {
         products, sales, branches, staff, staffRoles, currentStaffUser, allTenantPermissions, stockLogs, tenants, currentTenant,
-        subscriptionPlans, adminUsers, adminRoles, allPermissions, currentAdminUser, brandConfig, pageContent,
+        subscriptionPlans, adminUsers, adminRoles, allPermissions, currentAdminUser, brandConfig, pageContent, blogPosts,
         paymentSettings, notificationSettings, systemSettings, trucks, shipments, trackerProviders, suppliers,
         purchaseOrders, accounts, journalEntries, announcements, customers, consignments, deposits, categories,
         paymentTransactions, emailTemplates, smsTemplates, inAppNotifications, auditLogs, supportTickets, notification,
@@ -1745,7 +1787,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updateAdminUser, updateAdminRole, addAdminRole, deleteAdminRole, updateBrandConfig, updatePageContent,
         updateFaqs, updatePaymentSettings, updateNotificationSettings, updateSystemSettings, updateMaintenanceSettings,
         updateAccessControlSettings, updateLandingPageMetrics, updateCurrentTenantSettings, updateTenantAutomations,
-        addSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan, addTruck, updateTruck, addShipment,
+        addSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan, addTruck, updateTruck, deleteTruck, addShipment,
         updateShipmentStatus, updateTrackerProviders, addBranch, addStaff, sellShipment, receiveShipment,
         addPurchaseOrder, updatePurchaseOrderStatus, addStaffRole, updateStaffRole, deleteStaffRole, addAccount,
         addJournalEntry, addTenant, verifyTenant, updateTenantProfile, updateAdminProfile, addAnnouncement,
@@ -1755,6 +1797,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         processSubscriptionPayment, updatePaymentTransactionStatus, updateEmailTemplate, updateSmsTemplate,
         markInAppNotificationAsRead,
         submitSupportTicket, replyToSupportTicket, updateTicketStatus,
+        addBlogPost, updateBlogPost, deleteBlogPost,
         updateTruckVitals, updateTenantLogisticsConfig,
         updateLastLogin,
         logout: onLogout,

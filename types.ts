@@ -1,12 +1,29 @@
 
 
 // FIX: Add a global declaration for the Google Maps API to resolve TypeScript errors.
-declare var google: any;
-declare global {
-  interface Window {
-    google: any;
+declare namespace google {
+  namespace maps {
+    class Map {
+      constructor(mapDiv: Element | null, opts?: any);
+    }
+    class Marker {
+      constructor(opts?: any);
+      setMap(map: Map | null): void;
+      setPosition(latLng: any): void;
+      addListener(eventName: string, handler: (...args: any[]) => void): any;
+    }
+    class InfoWindow {
+      constructor(opts?: any);
+      setContent(content: string | Element | null): void;
+      open(map?: Map, anchor?: any): void;
+      close(): void;
+    }
+    class Point {
+      constructor(x: number, y: number);
+    }
   }
 }
+
 
 export interface Branch {
   id: string;
@@ -245,7 +262,8 @@ export type Permission =
   | 'manageNotificationSettings'
   | 'manageAnnouncements'
   | 'viewAuditLogs'
-  | 'manageSupport';
+  | 'manageSupport'
+  | 'manageBlog';
 
 export interface AdminRole {
     id: string;
@@ -280,6 +298,17 @@ export interface FaqItem {
   answer: string;
 }
 
+export interface BlogPost {
+    id: string;
+    title: string;
+    content: string;
+    authorId: string;
+    authorName: string;
+    createdAt: Date;
+    status: 'DRAFT' | 'PUBLISHED';
+    featuredImage?: string;
+}
+
 export interface PageContent {
   about: string;
   contact: string;
@@ -289,7 +318,7 @@ export interface PageContent {
   faqs: FaqItem[];
   helpCenter: string;
   apiDocs: string;
-  blog: string;
+  blog: string; // This will now be an intro text.
 }
 
 export interface StripeSettings {
@@ -464,6 +493,14 @@ export interface MaintenanceSettings {
   message: string;
 }
 
+export interface FeaturedUpdateSettings {
+    isActive: boolean;
+    title: string;
+    content: string;
+    link?: string;
+    linkText?: string;
+}
+
 export interface AccessControlSettings {
   mode: 'ALLOW_ALL' | 'BLOCK_LISTED' | 'ALLOW_LISTED';
   ipWhitelist: string[];
@@ -492,6 +529,7 @@ export interface SystemSettings {
   maintenanceSettings: MaintenanceSettings;
   accessControlSettings: AccessControlSettings;
   landingPageMetrics: LandingPageMetrics;
+  featuredUpdate: FeaturedUpdateSettings;
 }
 
 export type PaymentTransactionStatus = 'COMPLETED' | 'PENDING' | 'FAILED' | 'REJECTED';
@@ -594,6 +632,7 @@ export interface AppContextType {
   currentAdminUser: AdminUser | null;
   brandConfig: BrandConfig;
   pageContent: PageContent;
+  blogPosts: BlogPost[];
   paymentSettings: PaymentSettings;
   notificationSettings: NotificationSettings;
   systemSettings: SystemSettings;
@@ -653,7 +692,8 @@ export interface AppContextType {
   updateSubscriptionPlan: (planId: string, planData: Partial<Omit<SubscriptionPlan, 'id'>>) => void;
   deleteSubscriptionPlan: (planId: string) => void;
   addTruck: (truckData: Omit<Truck, 'id' | 'lastUpdate'>) => void;
-  updateTruck: (truckId: string, truckData: Partial<Omit<Truck, 'id'>>) => void;
+  updateTruck: (truckId: string, truckData: Partial<Omit<Truck, 'id' | 'lastUpdate'>>) => void;
+  deleteTruck: (truckId: string) => void;
   updateTruckVitals: (truckId: string) => void;
   addShipment: (shipmentData: Omit<Shipment, 'id'>) => void;
   updateShipmentStatus: (shipmentId: string, status: Shipment['status']) => void;
@@ -693,9 +733,13 @@ export interface AppContextType {
   updateEmailTemplate: (templateId: string, newSubject: string, newBody: string) => void;
   updateSmsTemplate: (templateId: string, newBody: string) => void;
   markInAppNotificationAsRead: (notificationId: string) => void;
-  submitSupportTicket: (ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'status'>) => void;
+  // FIX: Updated submitSupportTicket type to reflect that id and timestamp are added by the context provider.
+  submitSupportTicket: (ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'status' | 'messages'> & { messages: Omit<TicketMessage, 'id'| 'timestamp'>[] }) => void;
   replyToSupportTicket: (ticketId: string, message: Omit<TicketMessage, 'id' | 'timestamp'>) => void;
   updateTicketStatus: (ticketId: string, status: SupportTicket['status']) => void;
+  addBlogPost: (postData: Omit<BlogPost, 'id' | 'createdAt' | 'authorName'>) => void;
+  updateBlogPost: (postId: string, postData: Partial<Omit<BlogPost, 'id' | 'authorId' | 'authorName' | 'createdAt'>>) => void;
+  deleteBlogPost: (postId: string) => void;
   updateLastLogin: (email: string, ip: string) => void;
   logout: () => void;
 }

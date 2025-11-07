@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 import { SuperAdminPage } from '../../App';
 import Icon from '../icons/index.tsx';
@@ -66,6 +67,7 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
     { page: 'PAYMENT_TRANSACTIONS', icon: 'calculator', label: 'Transactions', permission: 'managePaymentGateways' },
     { page: 'ANNOUNCEMENTS', icon: 'chat-bubble-left-right', label: 'Announcements', permission: 'manageAnnouncements' },
     { page: 'SUPPORT_TICKETS', icon: 'chat-bubble-left-right', label: 'Support Tickets', permission: 'manageSupport' },
+    { page: 'BLOG_MANAGEMENT', icon: 'clipboard-document-list', label: 'Blog Management', permission: 'manageBlog' },
     { page: 'TEAM_MANAGEMENT', icon: 'users', label: 'Team', permission: 'manageTeam' },
     { page: 'ROLE_MANAGEMENT', icon: 'lock-closed', label: 'Roles', permission: 'manageRoles' },
     { page: 'AUDIT_LOGS', icon: 'shield-check', label: 'Audit Logs', permission: 'viewAuditLogs' },
