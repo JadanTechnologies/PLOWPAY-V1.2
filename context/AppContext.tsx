@@ -1,7 +1,7 @@
 
 
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -21,7 +21,7 @@ const mockCategories: Category[] = [
 
 const mockStaffRoles: StaffRole[] = [
     { id: 'staff-role-manager', name: 'Manager', permissions: [...allTenantPermissions] },
-    { id: 'staff-role-cashier', name: 'Cashier', permissions: ['accessPOS', 'viewReports'] },
+    { id: 'staff-role-cashier', name: 'Cashier', permissions: ['accessPOS', 'viewReports', 'makeDeposits'] },
     { id: 'staff-role-logistics', name: 'Logistics', permissions: ['manageLogistics', 'manageInventory'] },
 ];
 
@@ -111,6 +111,7 @@ const generateMockTenants = (): Tenant[] => {
             trialEndDate: trialEndDate,
             currency: isDemoTenant ? 'USD' : undefined,
             language: isDemoTenant ? 'en' : undefined,
+            logoutTimeout: isDemoTenant ? 30 : undefined,
             automations: {
                 generateEODReport: i % 2 === 0,
                 sendLowStockAlerts: true,
@@ -533,9 +534,12 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     useEffect(() => {
         try {
             window.localStorage.setItem(TENANTS_STORAGE_KEY, JSON.stringify(tenants));
-            setCurrentTenant(tenants.find(t => t.id === CURRENT_TENANT_ID) || null);
+            const updatedCurrentTenant = tenants.find(t => t.id === CURRENT_TENANT_ID) || null;
+            if (JSON.stringify(updatedCurrentTenant) !== JSON.stringify(currentTenant)) {
+                setCurrentTenant(updatedCurrentTenant);
+            }
         } catch (e) { console.error("Failed to save tenants to storage", e); }
-    }, [tenants]);
+    }, [tenants, currentTenant]);
 
     const [branches, setBranches] = useState<Branch[]>(mockBranches);
     const [categories, setCategories] = useState<Category[]>(mockCategories);
@@ -563,6 +567,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [announcements, setAnnouncements] = useState<Announcement[]>(mockAnnouncements);
     const [customers, setCustomers] = useState<Customer[]>(mockCustomers);
     const [consignments, setConsignments] = useState<Consignment[]>(mockConsignments);
+    const [deposits, setDeposits] = useState<Deposit[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [paymentTransactions, setPaymentTransactions] = useState<PaymentTransaction[]>(mockPaymentTransactions);
     const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>(mockEmailTemplates);
@@ -975,7 +980,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         }));
     }, []);
 
-    const updateCurrentTenantSettings = useCallback((newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => {
+    const updateCurrentTenantSettings = useCallback((newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout'>>) => {
         setTenants(prevTenants =>
             prevTenants.map(t =>
                 t.id === CURRENT_TENANT_ID ? { ...t, ...newSettings } : t
@@ -1297,6 +1302,21 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             return c;
         }));
     }, []);
+
+    const addDeposit = useCallback(async (depositData: Omit<Deposit, 'id' | 'date' | 'status'>): Promise<{success: boolean, message: string}> => {
+        const newDeposit: Deposit = {
+            ...depositData,
+            id: `dep-${Date.now()}`,
+            date: new Date(),
+            status: 'ACTIVE',
+        };
+        setDeposits(prev => [newDeposit, ...prev]);
+        return { success: true, message: 'Deposit recorded successfully.' };
+    }, []);
+
+    const updateDeposit = useCallback((depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes'>>) => {
+        setDeposits(prev => prev.map(dep => dep.id === depositId ? { ...dep, ...updates } : dep));
+    }, []);
     
     const addConsignment = useCallback((consignmentData: Omit<Consignment, 'id' | 'status'>) => {
         const newConsignment: Consignment = { ...consignmentData, id: `con-${Date.now()}`, status: 'ACTIVE' };
@@ -1432,7 +1452,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         products, sales, branches, staff, staffRoles, allTenantPermissions, stockLogs, tenants, currentTenant,
         subscriptionPlans, adminUsers, adminRoles, allPermissions, currentAdminUser, brandConfig, pageContent,
         paymentSettings, notificationSettings, systemSettings, trucks, shipments, trackerProviders, suppliers,
-        purchaseOrders, accounts, journalEntries, announcements, customers, consignments, categories,
+        purchaseOrders, accounts, journalEntries, announcements, customers, consignments, deposits, categories,
         paymentTransactions, emailTemplates, smsTemplates, inAppNotifications, auditLogs, notification,
         setNotification, searchTerm, setSearchTerm, currentLanguage, setCurrentLanguage, currentCurrency, setCurrentCurrency,
         getMetric, addSale, adjustStock, transferStock, addProduct, updateProductVariant, addAdminUser,
@@ -1443,7 +1463,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         updateShipmentStatus, updateTrackerProviders, addBranch, addStaff, sellShipment, receiveShipment,
         addPurchaseOrder, updatePurchaseOrderStatus, addStaffRole, updateStaffRole, deleteStaffRole, addAccount,
         addJournalEntry, addTenant, verifyTenant, updateTenantProfile, updateAdminProfile, addAnnouncement,
-        markAnnouncementAsRead, addCustomer, recordCreditPayment, addConsignment, addCategory, updateCategory,
+        markAnnouncementAsRead, addCustomer, recordCreditPayment, addDeposit, updateDeposit, addConsignment, addCategory, updateCategory,
         deleteCategory, extendTrial, activateSubscription, changeSubscriptionPlan, processExpiredTrials,
         processSubscriptionPayment, updatePaymentTransactionStatus, updateEmailTemplate, updateSmsTemplate,
         markInAppNotificationAsRead,

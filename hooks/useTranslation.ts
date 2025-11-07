@@ -24,6 +24,7 @@ const translations: Record<string, Record<string, string>> = {
     accessManagement: 'Access Management',
     profile: 'Profile',
     auditLogs: 'Audit Logs',
+    depositmanagement: 'Deposit Management',
   },
   es: {
     dashboard: 'Tablero',
@@ -46,6 +47,7 @@ const translations: Record<string, Record<string, string>> = {
     accessManagement: 'Gestión de Acceso',
     profile: 'Perfil',
     auditLogs: 'Registros de Auditoría',
+    depositmanagement: 'Gestión de Depósitos',
   },
   fr: {
     dashboard: 'Tableau de Bord',
@@ -68,6 +70,7 @@ const translations: Record<string, Record<string, string>> = {
     accessManagement: 'Gestion d\'accès',
     profile: 'Profil',
     auditLogs: 'Journaux d\'audit',
+    depositmanagement: 'Gestion des Dépôts',
   }
 };
 

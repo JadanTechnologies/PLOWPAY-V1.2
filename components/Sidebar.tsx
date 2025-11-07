@@ -67,6 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
     { page: 'CONSIGNMENT', icon: 'briefcase', label: t('consignment') },
     { page: 'LOGISTICS', icon: 'truck', label: t('logistics') },
     { page: 'CREDIT_MANAGEMENT', icon: 'users', label: t('creditManagement') },
+    { page: 'DEPOSIT_MANAGEMENT', icon: 'cash', label: t('depositmanagement') },
     { page: 'ACCOUNTING', icon: 'calculator', label: t('accounting') },
     { page: 'REPORTS', icon: 'chart-bar', label: t('reports') },
     { page: 'BILLING', icon: 'credit-card', label: t('billing') },

@@ -19,7 +19,9 @@ export type TenantPermission =
  | 'manageLogistics'
  | 'managePurchases'
  | 'accessAccounting'
- | 'viewAuditLogs';
+ | 'viewAuditLogs'
+ | 'makeDeposits'
+ | 'manageDeposits';
 
 export const allTenantPermissions: TenantPermission[] = [
     'accessPOS',
@@ -31,6 +33,8 @@ export const allTenantPermissions: TenantPermission[] = [
     'managePurchases',
     'accessAccounting',
     'viewAuditLogs',
+    'makeDeposits',
+    'manageDeposits',
 ];
 
 
@@ -205,6 +209,7 @@ export interface Tenant {
   automations?: TenantAutomations;
   isVerified: boolean;
   billingCycle: 'monthly' | 'yearly';
+  logoutTimeout?: number; // in minutes
 }
 
 export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED';
@@ -510,6 +515,18 @@ export interface NotificationType {
     type: 'success' | 'error' | 'info';
 }
 
+export interface Deposit {
+  id: string;
+  customerId: string;
+  amount: number;
+  date: Date;
+  staffId: string;
+  branchId: string;
+  notes?: string;
+  status: 'ACTIVE' | 'REFUNDED' | 'APPLIED';
+  appliedSaleId?: string;
+}
+
 export interface AppContextType {
   products: Product[];
   sales: Sale[];
@@ -540,6 +557,7 @@ export interface AppContextType {
   announcements: Announcement[];
   customers: Customer[];
   consignments: Consignment[];
+  deposits: Deposit[];
   categories: Category[];
   paymentTransactions: PaymentTransaction[];
   emailTemplates: EmailTemplate[];
@@ -575,7 +593,7 @@ export interface AppContextType {
   updateMaintenanceSettings: (settings: MaintenanceSettings) => void;
   updateAccessControlSettings: (settings: AccessControlSettings) => void;
   updateLandingPageMetrics: (metrics: LandingPageMetrics) => void;
-  updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language'>>) => void;
+  updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout'>>) => void;
   updateTenantAutomations: (newAutomations: Partial<TenantAutomations>) => void;
   addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => void;
   updateSubscriptionPlan: (planId: string, planData: Partial<Omit<SubscriptionPlan, 'id'>>) => void;
@@ -604,6 +622,8 @@ export interface AppContextType {
   markAnnouncementAsRead: (announcementId: string, userId: string) => void;
   addCustomer: (customerData: Omit<Customer, 'id' | 'creditBalance'>) => void;
   recordCreditPayment: (customerId: string, amount: number) => void;
+  addDeposit: (depositData: Omit<Deposit, 'id' | 'date' | 'status'>) => Promise<{success: boolean, message: string}>;
+  updateDeposit: (depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes'>>) => void;
   addConsignment: (consignmentData: Omit<Consignment, 'id' | 'status'>) => void;
   addCategory: (categoryName: string) => void;
   updateCategory: (categoryId: string, newName: string) => void;

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
@@ -5,6 +6,7 @@ import { StaffRole, TenantPermission, TenantAutomations } from '../types';
 
 type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations';
 
+// FIX: Add missing properties 'makeDeposits' and 'manageDeposits'.
 const permissionLabels: Record<TenantPermission, string> = {
     accessPOS: 'Access Point of Sale',
     manageInventory: 'Manage Inventory',
@@ -15,12 +17,14 @@ const permissionLabels: Record<TenantPermission, string> = {
     managePurchases: 'Manage Purchases',
     accessAccounting: 'Access Accounting',
     viewAuditLogs: 'View Audit Logs',
+    makeDeposits: 'Make Deposits',
+    manageDeposits: 'Manage Deposits',
 };
 
 const permissionGroups: Record<string, TenantPermission[]> = {
-    'Sales & Operations': ['accessPOS', 'managePurchases'],
+    'Sales & Operations': ['accessPOS', 'managePurchases', 'makeDeposits'],
     'Inventory & Logistics': ['manageInventory', 'manageLogistics'],
-    'Administration': ['viewReports', 'manageStaff', 'accessSettings', 'accessAccounting', 'viewAuditLogs'],
+    'Administration': ['viewReports', 'manageStaff', 'accessSettings', 'accessAccounting', 'viewAuditLogs', 'manageDeposits'],
 };
 
 const CollapsiblePermissionSection: React.FC<{

@@ -19,6 +19,7 @@ import { SubscriptionPlan } from '../types';
 import Checkout from './Checkout';
 import TenantProfile from './tenant/Profile';
 import TenantAuditLogs from './tenant/AuditLogs';
+import DepositManagement from './DepositManagement';
 
 
 const TenantApp: React.FC = () => {
@@ -61,6 +62,8 @@ const TenantApp: React.FC = () => {
         return <Settings />;
       case 'CREDIT_MANAGEMENT':
         return <CreditManagement />;
+      case 'DEPOSIT_MANAGEMENT':
+        return <DepositManagement />;
       case 'CONSIGNMENT':
         return <ConsignmentManagement />;
       case 'BILLING':

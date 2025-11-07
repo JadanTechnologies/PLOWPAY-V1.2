@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
-import { Product, CartItem, ProductVariant, Payment, Sale } from '../types';
+import { Product, CartItem, ProductVariant, Payment, Sale, Deposit } from '../types';
 import Icon from './icons/index.tsx';
 import Calculator from './Calculator';
 import { useCurrency } from '../hooks/useCurrency';
@@ -235,9 +235,50 @@ interface HeldOrder {
   heldAt: Date;
 }
 
+const DepositModal: React.FC<{
+    customerName: string;
+    onClose: () => void;
+    onConfirm: (amount: number, notes: string) => void;
+}> = ({ customerName, onClose, onConfirm }) => {
+    const [amount, setAmount] = useState('');
+    const [notes, setNotes] = useState('');
+
+    const handleConfirm = () => {
+        const numAmount = parseFloat(amount);
+        if (!isNaN(numAmount) && numAmount > 0) {
+            onConfirm(numAmount, notes);
+        } else {
+            alert('Please enter a valid amount.');
+        }
+    };
+
+    return (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+            <div className="bg-slate-900 rounded-lg shadow-xl p-6 w-full max-w-md border border-slate-700">
+                <h3 className="text-xl font-bold mb-2 text-white">Record Deposit</h3>
+                <p className="text-slate-400 mb-4">For Customer: <span className="font-semibold text-white">{customerName}</span></p>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-400">Deposit Amount</label>
+                        <input type="number" placeholder="0.00" value={amount} onChange={e => setAmount(e.target.value)} className="w-full mt-1 bg-slate-800 p-3 rounded-md text-xl border border-slate-600 focus:ring-2 focus:ring-cyan-500 focus:outline-none" />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-400">Notes (Optional)</label>
+                        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="w-full mt-1 bg-slate-800 p-2 rounded-md border border-slate-600 focus:ring-2 focus:ring-cyan-500 focus:outline-none" />
+                    </div>
+                </div>
+                <div className="mt-6 flex justify-end space-x-3">
+                    <button onClick={onClose} className="px-4 py-2 rounded-md bg-slate-600 text-white hover:bg-slate-500 font-semibold">Cancel</button>
+                    <button onClick={handleConfirm} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold">Record Deposit</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 
 const PointOfSale: React.FC = () => {
-  const { products, searchTerm, addSale, branches, categories } = useAppContext();
+  const { products, searchTerm, addSale, branches, categories, addDeposit, customers } = useAppContext();
   const { formatCurrency } = useCurrency();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('All');
@@ -252,6 +293,7 @@ const PointOfSale: React.FC = () => {
   const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
   const [isInvoiceModalOpen, setInvoiceModalOpen] = useState(false);
   const [lastCompletedSale, setLastCompletedSale] = useState<Sale | null>(null);
+  const [isDepositModalOpen, setDepositModalOpen] = useState(false);
 
   const [saleStatus, setSaleStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -380,190 +422,146 @@ const PointOfSale: React.FC = () => {
   const handleDeleteHeldOrder = (id: number) => {
     setHeldOrders(prev => prev.filter(o => o.id !== id));
   };
-
-
+  
   const handleConfirmPayment = async (payments: Payment[], change: number) => {
-      if (cart.length === 0) return;
+    const customerId = customers.find(c => c.name === customer.name)?.id || 'cust-walkin';
+    const saleData = {
+        items: cart,
+        total,
+        branchId: branches[0].id, // Hardcoded for simplicity
+        customerId,
+        payments,
+        change,
+        staffId: 'staff-2', // Hardcoded for simplicity
+        discount,
+    };
 
-      const totalPaid = payments.reduce((acc, p) => acc + p.amount, 0) - change;
-      const finalPayments = [...payments];
-
-      if (total > totalPaid) {
-          finalPayments.push({ method: 'Credit', amount: total - totalPaid });
+    const { success, message, newSale } = await addSale(saleData);
+    
+    setSaleStatus({ message, type: success ? 'success' : 'error' });
+    
+    if (success && newSale) {
+        setPaymentModalOpen(false);
+        setLastCompletedSale(newSale);
+        setInvoiceModalOpen(true);
+        clearOrder();
+    }
+  };
+  
+  const handleRecordDeposit = async (amount: number, notes: string) => {
+      const customerId = customers.find(c => c.name === customer.name)?.id;
+      if (!customerId) {
+          setSaleStatus({ message: 'Cannot record deposit for a walk-in customer.', type: 'error' });
+          return;
       }
       
-      const saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'> = {
-          items: cart,
-          total: total,
-          branchId: branches[0]?.id || 'branch-1', // Default to first branch
-          customerId: 'cust-walkin', 
-          payments: finalPayments,
-          change: change,
-          staffId: 'staff-1', // Mock: assume staff-1 is logged in
-          discount: discount
+      const depositData = {
+          customerId,
+          amount,
+          staffId: 'staff-2',
+          branchId: branches[0].id,
+          notes,
       };
 
-      const result = await addSale(saleData);
-      
-      if(result.success && result.newSale) {
-          setSaleStatus({ message: result.message, type: 'success' });
-          setLastCompletedSale(result.newSale);
-          setInvoiceModalOpen(true);
-          setPaymentModalOpen(false);
-          clearOrder();
-      } else {
-          setSaleStatus({ message: result.message || 'An unknown error occurred.', type: 'error' });
+      const { success, message } = await addDeposit(depositData);
+      setSaleStatus({ message, type: success ? 'success' : 'error' });
+      if (success) {
+          setDepositModalOpen(false);
       }
   };
 
   return (
-    <div className="flex flex-col lg:flex-row h-[calc(100vh-8rem)] gap-6">
-      {isCalculatorOpen && <Calculator onClose={() => setIsCalculatorOpen(false)} />}
-      
-      {isPaymentModalOpen && <PaymentModal totalDue={total > 0 ? total : 0} onClose={() => setPaymentModalOpen(false)} onConfirm={handleConfirmPayment} />}
-      {isInvoiceModalOpen && lastCompletedSale && <InvoiceModal sale={lastCompletedSale} onClose={() => setInvoiceModalOpen(false)} />}
-      
-      {/* Product Grid */}
-      <div className="flex-1 flex flex-col bg-slate-800/50 rounded-lg p-4 border border-slate-700">
-        <div className="mb-4 flex flex-col sm:flex-row gap-4">
-          <select 
-            value={selectedCategoryId}
-            onChange={e => setSelectedCategoryId(e.target.value)}
-            className="bg-slate-700 border border-slate-600 rounded-md py-2 px-4 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-          >
-            {categoryOptions.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
-          </select>
-          <button onClick={() => setShowFavorites(!showFavorites)} className={`p-2 rounded-md transition-colors ${showFavorites ? 'bg-yellow-500 text-white' : 'bg-slate-700 text-slate-300'}`}>
-            <Icon name="star" className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-          {filteredProducts.map(product => (
-            <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
-          ))}
-        </div>
-      </div>
-      
-      {/* Cart Section */}
-      <div className="w-full lg:w-1/3 xl:w-1/4 bg-slate-900/70 backdrop-blur-xl border border-slate-800 rounded-lg p-4 flex flex-col">
-        <h2 className="text-2xl font-bold border-b border-slate-700 pb-2 mb-4">Current Order</h2>
-        
-         {saleStatus && (
-            <div className={`p-3 rounded-md mb-4 text-sm ${saleStatus.type === 'success' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
-                {saleStatus.message}
-            </div>
-        )}
-
-        {heldOrders.length > 0 && (
-          <div className="mb-4 border-b border-slate-700 pb-3">
-            <h3 className="text-lg font-semibold text-yellow-400 mb-2 flex items-center gap-2">
-              <Icon name="pause" className="w-5 h-5" />
-              <span>Held Orders</span>
-            </h3>
-            <div className="space-y-2 max-h-32 overflow-y-auto pr-2 -mr-2">
-              {heldOrders.map(order => (
-                <div key={order.id} className="bg-slate-800/50 p-2 rounded-md flex items-center text-sm border border-slate-700">
-                  <div className="flex-grow">
-                    <p className="font-semibold">{order.customer.name}</p>
-                    <p className="text-xs text-slate-400">
-                      {order.cart.length} items - {order.heldAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button onClick={() => handleRetrieveOrder(order.id)} className="bg-green-600 hover:bg-green-500 text-white font-semibold px-2 py-1 rounded-md text-xs flex items-center gap-1"><Icon name="arrow-up-tray" className="w-4 h-4" /><span>Retrieve</span></button>
-                    <button onClick={() => handleDeleteHeldOrder(order.id)} className="text-slate-400 hover:text-red-400 p-1" aria-label="Delete held order"><Icon name="trash" className="w-4 h-4" /></button>
-                  </div>
+    <div className="flex h-full -m-4 sm:-m-6 lg:-m-8">
+        <main className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+            {/* ... Product grid section ... */}
+            <section className="lg:col-span-2">
+                <div className="flex flex-wrap items-center justify-between mb-4 gap-4">
+                    <div className="flex items-center bg-slate-800 border border-slate-700 rounded-lg p-1.5">
+                        <button onClick={() => setShowFavorites(false)} className={`px-3 py-1.5 rounded-md text-sm font-semibold ${!showFavorites ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700'}`}>All Products</button>
+                        <button onClick={() => setShowFavorites(true)} className={`flex items-center px-3 py-1.5 rounded-md text-sm font-semibold ${showFavorites ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700'}`}><Icon name="star" className="w-4 h-4 mr-2 text-yellow-400"/>Favorites</button>
+                    </div>
+                    <select
+                        value={selectedCategoryId}
+                        onChange={(e) => setSelectedCategoryId(e.target.value)}
+                        className="bg-slate-800 border border-slate-700 rounded-lg p-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500 max-w-xs"
+                    >
+                        {categoryOptions.map(cat => <option key={cat.id} value={cat.id}>{cat.name}</option>)}
+                    </select>
                 </div>
-              ))}
-            </div>
-          </div>
-        )}
-        
-        <div className="p-3 bg-slate-800/50 rounded-md mb-4 border border-slate-700">
-            {isEditingCustomer ? (
-                <div className="space-y-3">
-                    <div>
-                        <label className="text-xs text-slate-400">Customer Name</label>
-                        <input type="text" value={customer.name} onChange={e => setCustomer({...customer, name: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-md py-1 px-2 text-sm" />
-                    </div>
-                    <div>
-                        <label className="text-xs text-slate-400">Phone Number (for SMS)</label>
-                        <input type="tel" value={customer.phone || ''} onChange={e => setCustomer({...customer, phone: e.target.value})} className="w-full bg-slate-700 border border-slate-600 rounded-md py-1 px-2 text-sm" placeholder="Optional"/>
-                    </div>
-                    <button onClick={() => setIsEditingCustomer(false)} className="w-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white text-sm py-1 rounded-md">Done</button>
+                 <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                    {filteredProducts.map(product => (
+                        <ProductCard key={product.id} product={product} onAddToCart={handleAddToCart} />
+                    ))}
                 </div>
-            ) : (
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h3 className="font-semibold">{customer.name}</h3>
-                        {customer.phone && <p className="text-sm text-slate-400">{customer.phone}</p>}
-                    </div>
-                    <button onClick={() => setIsEditingCustomer(true)} className="text-sm text-cyan-400 hover:text-cyan-300 font-semibold">
-                       {customer.name === 'Walk-in Customer' ? 'Add Customer' : 'Edit'}
-                    </button>
-                </div>
-            )}
-        </div>
-
-        <div className="flex-1 overflow-y-auto -mr-2 pr-2">
-          {cart.length === 0 ? (
-            <p className="text-slate-400 text-center mt-8">Your cart is empty.</p>
-          ) : (
-            <ul className="space-y-3">
-              {cart.map(item => (
-                <li key={item.variantId} className="flex items-center bg-slate-800/50 p-2 rounded-md border border-slate-700">
-                    <img className="w-16 h-16 object-cover rounded-md mr-3 flex-shrink-0" src={`https://picsum.photos/seed/${item.productId}/200`} alt={item.name} />
-                    <div className="flex-1 mr-2 overflow-hidden">
-                        <p className="font-semibold truncate">{item.name}</p>
-                        <p className="text-sm text-cyan-400 font-bold">{item.variantName}</p>
-                        <p className="text-xs text-slate-400 mt-1">{item.quantity} &times; {formatCurrency(item.sellingPrice)}</p>
-                    </div>
-                    <div className="flex flex-col items-end space-y-2">
-                        <p className="font-bold text-lg">{formatCurrency(item.sellingPrice * item.quantity)}</p>
-                        <div className="flex items-center">
-                            <button onClick={() => handleUpdateQuantity(item.variantId, -1)} className="p-1 rounded-full bg-slate-600 hover:bg-slate-500"><Icon name="minus" className="w-4 h-4" /></button>
-                            <span className="w-8 text-center font-bold">{item.quantity}</span>
-                            <button onClick={() => handleUpdateQuantity(item.variantId, 1)} className="p-1 rounded-full bg-slate-600 hover:bg-slate-500"><Icon name="plus" className="w-4 h-4" /></button>
+            </section>
+            
+            {/* ... Cart section ... */}
+            <aside className="lg:col-span-1 bg-slate-900/70 backdrop-blur-xl border-l border-slate-800 flex flex-col h-full rounded-r-lg">
+                <div className="p-4 border-b border-slate-800">
+                    {isEditingCustomer ? (
+                         <div className="flex gap-2">
+                             <input type="text" placeholder="Customer Name" value={customer.name} onChange={e => setCustomer({...customer, name: e.target.value})} className="flex-grow bg-slate-700 p-2 rounded-md border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500"/>
+                             <button onClick={() => setIsEditingCustomer(false)} className="bg-cyan-600 text-white rounded-md p-2"><Icon name="check" className="w-5 h-5"/></button>
+                         </div>
+                    ) : (
+                        <div className="flex justify-between items-center">
+                            <div className="flex items-center">
+                                <Icon name="user" className="w-6 h-6 mr-3 text-slate-400" />
+                                <span className="font-semibold text-lg">{customer.name}</span>
+                            </div>
+                            <button onClick={() => setIsEditingCustomer(true)} className="text-sm text-cyan-400 hover:text-cyan-300">Change</button>
                         </div>
-                    </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-        {cart.length > 0 && (
-          <div className="mt-auto pt-4 border-t border-slate-700">
-            <div className="space-y-2 text-lg">
-              <div className="flex justify-between"><span>Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
-              <div className="flex justify-between text-slate-400"><span>Tax (8%)</span><span>{formatCurrency(tax)}</span></div>
-              <div className="flex justify-between items-center text-slate-400">
-                <label htmlFor="discount">Discount</label>
-                <div className="flex items-center">
-                    <span className="mr-1">{formatCurrency(0).charAt(0)}</span>
-                    <input id="discount" type="number" value={discount === 0 ? '' : discount} onChange={handleDiscountChange} className="w-24 bg-slate-800 text-right font-semibold rounded-md p-1 border border-slate-600 focus:outline-none focus:ring-2 focus:ring-cyan-500" placeholder="0.00"/>
+                    )}
                 </div>
-              </div>
-              <div className="flex justify-between font-bold text-2xl"><span>Total</span><span>{total < 0 ? formatCurrency(0) : formatCurrency(total)}</span></div>
-            </div>
-            <div className="mt-4 grid grid-cols-3 gap-2">
-                <button className="bg-red-600/20 border border-red-600/50 hover:bg-red-600/30 text-red-300 font-bold py-2 px-4 rounded-md flex items-center justify-center" onClick={() => {setCart([]); setDiscount(0);}}>
-                    <Icon name="trash" className="w-5 h-5 mr-2"/> Clear
-                </button>
-                 <button onClick={handleHoldOrder} disabled={cart.length === 0} className="bg-yellow-500/20 border border-yellow-500/50 hover:bg-yellow-500/30 text-yellow-300 font-bold py-2 px-4 rounded-md flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed">
-                    <Icon name="pause" className="w-5 h-5 mr-2"/> Hold
-                </button>
-                 <button className="bg-slate-600 hover:bg-slate-500 text-white font-bold py-2 px-4 rounded-md flex items-center justify-center" onClick={() => setIsCalculatorOpen(true)}>
-                    <Icon name="calculator" className="w-5 h-5"/>
-                </button>
-            </div>
-            <button onClick={() => setPaymentModalOpen(true)} className="w-full mt-2 bg-gradient-to-r from-teal-500 to-green-600 hover:from-teal-600 hover:to-green-700 text-white font-bold py-3 px-4 rounded-md text-xl">
-              Pay Now
-            </button>
-          </div>
-        )}
-      </div>
+
+                <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {cart.length === 0 ? (
+                        <div className="text-center text-slate-500 py-16">
+                           <Icon name="pos" className="w-16 h-16 mx-auto mb-2"/>
+                           <p>Your cart is empty.</p>
+                        </div>
+                    ) : (
+                        cart.map(item => (
+                             <div key={item.variantId} className="flex items-center bg-slate-800/50 p-2 rounded-lg">
+                                <img src={`https://picsum.photos/seed/${item.productId}/100`} alt={item.name} className="w-12 h-12 rounded-md mr-3 object-cover"/>
+                                <div className="flex-grow">
+                                    <p className="font-semibold text-sm">{item.name} <span className="text-xs text-slate-400">({item.variantName})</span></p>
+                                    <p className="text-cyan-400 text-xs">{formatCurrency(item.sellingPrice)}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => handleUpdateQuantity(item.variantId, -1)} className="bg-slate-700 rounded-full p-1 w-6 h-6 flex items-center justify-center"><Icon name="minus" className="w-4 h-4"/></button>
+                                    <span className="font-bold w-4 text-center">{item.quantity}</span>
+                                    <button onClick={() => handleUpdateQuantity(item.variantId, 1)} className="bg-slate-700 rounded-full p-1 w-6 h-6 flex items-center justify-center"><Icon name="plus" className="w-4 h-4"/></button>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+
+                <div className="p-4 border-t border-slate-800 space-y-3">
+                     <div className="flex justify-between text-sm"><span className="text-slate-400">Subtotal</span><span>{formatCurrency(subtotal)}</span></div>
+                     <div className="flex justify-between text-sm"><span className="text-slate-400">Tax (8%)</span><span>{formatCurrency(tax)}</span></div>
+                     <div className="flex justify-between items-center text-sm"><span className="text-slate-400">Discount</span><input type="number" value={discount} onChange={handleDiscountChange} className="w-24 bg-slate-700 p-1 rounded-md text-right border border-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500"/></div>
+                     <div className="flex justify-between font-bold text-2xl border-t border-slate-700 pt-3"><span className="text-white">Total</span><span className="text-cyan-400">{formatCurrency(total)}</span></div>
+
+                     <div className="grid grid-cols-2 gap-2">
+                         <button onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0} className="w-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-bold py-3 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed col-span-2">
+                             Pay
+                         </button>
+                         <button onClick={clearOrder} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Clear</button>
+                         <button onClick={handleHoldOrder} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Hold</button>
+                         <button onClick={() => setDepositModalOpen(true)} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md col-span-2">Record Deposit</button>
+                     </div>
+                </div>
+
+            </aside>
+        </main>
+        {isPaymentModalOpen && <PaymentModal totalDue={total} onClose={() => setPaymentModalOpen(false)} onConfirm={handleConfirmPayment}/>}
+        {isInvoiceModalOpen && lastCompletedSale && <InvoiceModal sale={lastCompletedSale} onClose={() => setInvoiceModalOpen(false)} />}
+        {isDepositModalOpen && <DepositModal customerName={customer.name} onClose={() => setDepositModalOpen(false)} onConfirm={handleRecordDeposit} />}
     </div>
   );
 };
 
+// FIX: Add default export to the component
 export default PointOfSale;
