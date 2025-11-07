@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
+import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Sale, Customer, PurchaseOrder, Consignment, Supplier } from '../types';
-import { useCurrency } from '../hooks/useCurrency';
+import { useCurrency } from '../../hooks/useCurrency';
 
 type ReportTab = 'profit_loss' | 'sales' | 'credit' | 'purchases' | 'consignment';
 
@@ -150,6 +150,7 @@ const Reports: React.FC = () => {
   });
   const [activeFilter, setActiveFilter] = useState('Last Month');
   const [activeReport, setActiveReport] = useState<ReportTab>('profit_loss');
+  const [branchFilter, setBranchFilter] = useState('ALL');
 
   const setDateFilter = (filter: string) => {
     setActiveFilter(filter);
@@ -171,8 +172,10 @@ const Reports: React.FC = () => {
     startOfDay.setHours(0,0,0,0);
     const endOfDay = new Date(dateRange.end);
     endOfDay.setHours(23,59,59,999);
-    return saleDate >= startOfDay && saleDate <= endOfDay;
-  }), [sales, dateRange]);
+    const inDateRange = saleDate >= startOfDay && saleDate <= endOfDay;
+    const inBranch = branchFilter === 'ALL' || sale.branchId === branchFilter;
+    return inDateRange && inBranch;
+  }), [sales, dateRange, branchFilter]);
 
   const salesMetrics = useMemo(() => {
     const totalRevenue = filteredSales.reduce((acc, sale) => acc + sale.total, 0);
@@ -206,21 +209,32 @@ const Reports: React.FC = () => {
 
   const consignmentReportData = useMemo(() => {
     const report = suppliers.map(supplier => {
-        const supplierConsignments = consignments.filter(c => c.supplierId === supplier.id);
+        const supplierConsignments = consignments.filter(c => {
+            const inBranch = branchFilter === 'ALL' || c.branchId === branchFilter;
+            const consignmentDate = new Date(c.receivedDate);
+            const startOfDay = new Date(dateRange.start);
+            startOfDay.setHours(0,0,0,0);
+            const endOfDay = new Date(dateRange.end);
+            endOfDay.setHours(23,59,59,999);
+            const inDateRange = consignmentDate >= startOfDay && consignmentDate <= endOfDay;
+            return c.supplierId === supplier.id && inBranch && inDateRange;
+        });
         if (supplierConsignments.length === 0) return null;
         const items = supplierConsignments.flatMap(c => c.items.map(item => ({ ...item, branchName: branchMap.get(c.branchId) || 'N/A' })));
         const totalOwed = items.reduce((acc, item) => acc + (item.quantitySold * item.costPrice), 0);
         return { supplierName: supplier.name, items, totalOwed };
     }).filter((s): s is { supplierName: string; items: any[]; totalOwed: number } => s !== null);
     return report;
-  }, [consignments, suppliers, branchMap]);
+  }, [consignments, suppliers, branchMap, branchFilter, dateRange]);
 
   const purchaseData = useMemo(() => purchaseOrders.filter(po => {
     const poDate = new Date(po.createdAt);
     const startOfDay = new Date(dateRange.start); startOfDay.setHours(0,0,0,0);
     const endOfDay = new Date(dateRange.end); endOfDay.setHours(23,59,59,999);
-    return poDate >= startOfDay && poDate <= endOfDay;
-  }), [purchaseOrders, dateRange]);
+    const inDateRange = poDate >= startOfDay && poDate <= endOfDay;
+    const inBranch = branchFilter === 'ALL' || po.destinationBranchId === branchFilter;
+    return inDateRange && inBranch;
+  }), [purchaseOrders, dateRange, branchFilter]);
 
   const supplierMap = useMemo(() => new Map(suppliers.map(s => [s.id, s.name])), [suppliers]);
 
@@ -241,9 +255,29 @@ const Reports: React.FC = () => {
         <div className="space-y-6">
             <div className="p-4 bg-gray-800 rounded-lg shadow-md no-print">
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                        {dateFilters.map(filter => (<button key={filter} onClick={() => setDateFilter(filter)} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${activeFilter === filter ? 'bg-indigo-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}>{filter}</button>))}
-                        <div className="flex items-center gap-2 text-sm"><input type="date" value={dateRange.start.toISOString().split('T')[0]} onChange={e => { setDateRange(prev => ({...prev, start: new Date(e.target.value)})); setActiveFilter('Custom'); }} className="bg-gray-700 border border-gray-600 rounded-md p-1"/><span className="text-gray-400">to</span><input type="date" value={dateRange.end.toISOString().split('T')[0]} onChange={e => { setDateRange(prev => ({...prev, end: new Date(e.target.value)})); setActiveFilter('Custom'); }} className="bg-gray-700 border border-gray-600 rounded-md p-1"/></div>
+                    <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex flex-wrap items-center gap-2">
+                            {dateFilters.map(filter => (<button key={filter} onClick={() => setDateFilter(filter)} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${activeFilter === filter ? 'bg-indigo-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}>{filter}</button>))}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                            <input type="date" value={dateRange.start.toISOString().split('T')[0]} onChange={e => { setDateRange(prev => ({...prev, start: new Date(e.target.value)})); setActiveFilter('Custom'); }} className="bg-gray-700 border border-gray-600 rounded-md p-1"/>
+                            <span className="text-gray-400">to</span>
+                            <input type="date" value={dateRange.end.toISOString().split('T')[0]} onChange={e => { setDateRange(prev => ({...prev, end: new Date(e.target.value)})); setActiveFilter('Custom'); }} className="bg-gray-700 border border-gray-600 rounded-md p-1"/>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                            <label htmlFor="branch-filter" className="text-gray-400">Branch:</label>
+                            <select
+                                id="branch-filter"
+                                value={branchFilter}
+                                onChange={e => setBranchFilter(e.target.value)}
+                                className="bg-gray-700 border border-gray-600 rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            >
+                                <option value="ALL">All Branches</option>
+                                {branches.map(branch => (
+                                    <option key={branch.id} value={branch.id}>{branch.name}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
                     <button onClick={handlePrint} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="printer" className="w-5 h-5 mr-2"/>Print Report</button>
                 </div>
