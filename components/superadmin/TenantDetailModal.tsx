@@ -1,3 +1,5 @@
+
+
 import React from 'react';
 import { Tenant } from '../../types';
 import Icon from '../icons/index.tsx';
@@ -78,7 +80,7 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({ tenant, planName,
                     
                     {/* Subscription & Config */}
                     <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
-                         <h4 className="font-semibold text-lg text-white mb-3">Subscription & Configuration</h4>
+                         <h4 className="font-semibold text-lg text-white mb-3">Subscription & Security</h4>
                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <DetailItem icon="credit-card" label="Plan" value={planName} />
                             <DetailItem icon="calendar" label="Join Date" value={tenant.joinDate.toLocaleDateString()} />
@@ -87,15 +89,17 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({ tenant, planName,
                                 label="Trial End Date" 
                                 value={tenant.trialEndDate ? new Date(tenant.trialEndDate).toLocaleDateString() : 'N/A'} 
                             />
-                            <DetailItem icon="cash" label="Currency" value={tenant.currency} />
-                            <DetailItem icon="globe" label="Language" value={tenant.language} />
+                            <DetailItem icon="at-symbol" label="Last Login IP" value={<span className="font-mono">{tenant.lastLoginIp || 'N/A'}</span>} />
+                            <DetailItem icon="calendar" label="Last Login Date" value={tenant.lastLoginDate ? new Date(tenant.lastLoginDate).toLocaleString() : 'N/A'} />
                          </div>
                     </div>
 
                     {/* Automations */}
                     <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
-                         <h4 className="font-semibold text-lg text-white mb-3">Automations</h4>
+                         <h4 className="font-semibold text-lg text-white mb-3">Configuration</h4>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <DetailItem icon="cash" label="Currency" value={tenant.currency} />
+                            <DetailItem icon="globe" label="Language" value={tenant.language} />
                             <DetailItem 
                                 icon="settings" 
                                 label="EOD Reports" 

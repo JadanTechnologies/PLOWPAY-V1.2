@@ -43,7 +43,7 @@ const PasswordStrengthMeter: React.FC<{ password?: string }> = ({ password = '' 
 
 
 const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
-    const { addTenant, subscriptionPlans, brandConfig, setNotification } = useAppContext();
+    const { addTenant, subscriptionPlans, brandConfig, setNotification, updateLastLogin } = useAppContext();
     const [formState, setFormState] = useState({
         businessName: '',
         fullName: '',
@@ -97,6 +97,8 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
         });
         
         if (result.success) {
+            const simulatedIp = '203.0.113.58';
+            updateLastLogin(formState.email, simulatedIp);
             setNotification({ message: 'Sign up successful! Please check your email to verify your account.', type: 'success' });
             onNavigate('verification', { email: formState.email });
         } else {

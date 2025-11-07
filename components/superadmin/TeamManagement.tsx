@@ -1,12 +1,10 @@
-
-
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminUser, AdminUserStatus, Permission } from '../../types';
 import Icon from '../icons/index.tsx';
 import { usePermissions } from '../../hooks/usePermissions';
 
-// FIX: Add 'manageSupport' permission label to match the Permission type.
+// FIX: Added 'manageSupport' to permissionLabels to include all possible permissions.
 const permissionLabels: Record<Permission, string> = {
     viewPlatformDashboard: 'View Platform Dashboard',
     manageTenants: 'Manage Tenants',
@@ -100,6 +98,7 @@ const TeamManagement: React.FC = () => {
                             <th className="p-3 text-sm font-semibold tracking-wide">Role</th>
                             <th className="p-3 text-sm font-semibold tracking-wide text-center">Status</th>
                             <th className="p-3 text-sm font-semibold tracking-wide">Join Date</th>
+                            <th className="p-3 text-sm font-semibold tracking-wide">Last Login IP</th>
                             {canManage && <th className="p-3 text-sm font-semibold tracking-wide text-center">Actions</th>}
                         </tr>
                     </thead>
@@ -111,6 +110,7 @@ const TeamManagement: React.FC = () => {
                                 <td className="p-3 whitespace-nowrap">{roleMap.get(user.roleId) || 'Unknown Role'}</td>
                                 <td className="p-3 whitespace-nowrap text-center">{getStatusBadge(user.status)}</td>
                                 <td className="p-3 whitespace-nowrap text-gray-400">{user.joinDate.toLocaleDateString()}</td>
+                                <td className="p-3 whitespace-nowrap text-gray-400 font-mono">{user.lastLoginIp || 'N/A'}</td>
                                 {canManage && (
                                     <td className="p-3 text-center whitespace-nowrap space-x-2">
                                          <button onClick={() => openModal(user)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Edit</button>

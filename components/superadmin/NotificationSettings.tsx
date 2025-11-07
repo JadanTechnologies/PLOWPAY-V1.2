@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
-// FIX: Alias the NotificationSettings type to avoid a name collision with the component.
+// FIX: Aliased the NotificationSettings type to NotificationSettingsType to avoid a name collision with the component.
 import { NotificationSettings as NotificationSettingsType } from '../../types';
 import Icon from '../icons/index.tsx';
 
@@ -21,10 +21,9 @@ const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void 
     );
 };
 
-// FIX: Renamed component from NotificationSettingsComponent to NotificationSettings to match the import in SuperAdminPanel.
 const NotificationSettings: React.FC = () => {
     const { notificationSettings, updateNotificationSettings } = useAppContext();
-    // FIX: Use the aliased type here.
+    // FIX: Used the aliased NotificationSettingsType for the component's state.
     const [formState, setFormState] = useState<NotificationSettingsType>(notificationSettings);
 
     const handleSave = () => {

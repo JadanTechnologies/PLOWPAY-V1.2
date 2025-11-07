@@ -1,11 +1,9 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminRole, Permission } from '../../types';
 import Icon from '../icons/index.tsx';
 
-// FIX: Add 'manageSupport' permission label to match the Permission type.
+// FIX: Added 'manageSupport' to permissionLabels to include all possible permissions.
 const permissionLabels: Record<Permission, string> = {
     viewPlatformDashboard: 'View Platform Dashboard',
     manageTenants: 'Manage Tenants',
@@ -20,7 +18,7 @@ const permissionLabels: Record<Permission, string> = {
     manageSupport: 'Manage Support Tickets',
 };
 
-// FIX: Add 'manageSupport' to a permission group to make it configurable in the UI.
+// FIX: Added 'manageSupport' to the 'User & Tenant Management' permission group.
 const permissionGroups: Record<string, Permission[]> = {
     'Platform Management': ['viewPlatformDashboard', 'manageSystemSettings', 'viewAuditLogs'],
     'User & Tenant Management': ['manageTenants', 'manageSubscriptions', 'manageTeam', 'manageRoles', 'manageSupport'],

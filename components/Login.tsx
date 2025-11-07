@@ -15,7 +15,7 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { brandConfig } = useAppContext();
+  const { brandConfig, updateLastLogin } = useAppContext();
 
 
   const handleLogin = (e: React.FormEvent) => {
@@ -23,14 +23,18 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
     setError('');
 
     const lowerCaseInput = email.toLowerCase();
+    // In a real app, this would be the request IP. We simulate it here.
+    const simulatedIp = '203.0.113.42'; 
 
     // Find a tenant that matches either the username or email
-    const tenant = mockTenants.find(t => t.username === lowerCaseInput || t.email === lowerCaseInput);
+    const tenant = mockTenants.find(t => t.username.toLowerCase() === lowerCaseInput || t.email.toLowerCase() === lowerCaseInput);
 
     // Mock authentication with specific credentials for each role
-    if (lowerCaseInput === 'super' && password === 'super') {
+    if ((lowerCaseInput === 'super' || lowerCaseInput === 'super@flowpay.com') && password === 'super') {
+      updateLastLogin(lowerCaseInput, simulatedIp);
       onLoginSuccess('SUPER_ADMIN');
     } else if (tenant && tenant.password === password) {
+       updateLastLogin(lowerCaseInput, simulatedIp);
        onLoginSuccess('TENANT');
     } else {
       setError('Invalid credentials. Please try again.');

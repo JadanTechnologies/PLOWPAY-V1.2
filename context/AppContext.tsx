@@ -66,13 +66,18 @@ const mockAdminRoles: AdminRole[] = [
 
 
 const generateMockAdminUsers = (): AdminUser[] => {
-    const users: Omit<AdminUser, 'phone'>[] = [
+    const users: Omit<AdminUser, 'phone' | 'lastLoginIp' | 'lastLoginDate'>[] = [
         { id: 'admin-1', name: 'Super Admin', email: 'super@flowpay.com', username: 'super', password: 'super', roleId: 'role-admin', status: 'ACTIVE', joinDate: new Date('2023-01-15'), avatarUrl: 'https://i.pravatar.cc/150?u=admin-1' },
         { id: 'admin-2', name: 'Jane Smith (Support)', email: 'jane.s@flowpay.com', username: 'jane', password: 'password', roleId: 'role-support', status: 'ACTIVE', joinDate: new Date('2023-05-20'), avatarUrl: 'https://i.pravatar.cc/150?u=admin-2' },
         { id: 'admin-3', name: 'Mike Johnson (Developer)', email: 'mike.j@flowpay.com', username: 'mike', password: 'password', roleId: 'role-developer', status: 'ACTIVE', joinDate: new Date('2023-08-01'), avatarUrl: 'https://i.pravatar.cc/150?u=admin-3' },
         { id: 'admin-4', name: 'Emily Davis (Support)', email: 'emily.d@flowpay.com', username: 'emily', password: 'password', roleId: 'role-support', status: 'SUSPENDED', joinDate: new Date('2023-10-11'), avatarUrl: 'https://i.pravatar.cc/150?u=admin-4' },
     ];
-    return users.map(u => ({...u, phone: `555-123-${String(Math.floor(Math.random() * 9000) + 1000)}`}));
+    return users.map((u, i) => ({
+        ...u, 
+        phone: `555-123-${String(Math.floor(Math.random() * 9000) + 1000)}`,
+        lastLoginIp: `198.51.100.${i + 1}`,
+        lastLoginDate: new Date(Date.now() - (i + 1) * 2 * 60 * 60 * 1000) // 2, 4, 6... hours ago
+    }));
 };
 
 const generateMockTenants = (): Tenant[] => {
@@ -120,6 +125,8 @@ const generateMockTenants = (): Tenant[] => {
             isVerified: status !== 'UNVERIFIED',
             billingCycle: i % 2 === 0 ? 'monthly' : 'yearly',
             logisticsConfig: isDemoTenant ? { activeTrackerProviderId: 'teltonika' } : undefined,
+            lastLoginIp: `192.0.2.${i + 10}`,
+            lastLoginDate: new Date(Date.now() - (i + 1) * 24 * 60 * 60 * 1000), // 1, 2, 3... days ago
         });
     }
     return tenants.sort((a,b) => b.joinDate.getTime() - a.joinDate.getTime());
@@ -991,14 +998,16 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         );
     }, []);
 
-    const addAdminUser = useCallback((userData: Omit<AdminUser, 'id' | 'joinDate' | 'status'>) => {
+    const addAdminUser = useCallback((userData: Omit<AdminUser, 'id' | 'joinDate' | 'status' | 'lastLoginIp' | 'lastLoginDate'>) => {
         setAdminUsers(prev => [
             ...prev,
             {
                 ...userData,
                 id: `admin-${Date.now()}`,
                 joinDate: new Date(),
-                status: 'ACTIVE'
+                status: 'ACTIVE',
+                lastLoginIp: '127.0.0.1',
+                lastLoginDate: new Date()
             }
         ]);
     }, []);
@@ -1370,7 +1379,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         });
     }, []);
 
-    const addTenant = useCallback(async (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle'>): Promise<{ success: boolean; message: string }> => {
+    const addTenant = useCallback(async (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'>): Promise<{ success: boolean; message: string }> => {
         const existingTenant = tenants.find(t => t.email.toLowerCase() === tenantData.email.toLowerCase() || t.username.toLowerCase() === tenantData.username.toLowerCase());
         if (existingTenant) {
             return { success: false, message: 'An account with that email or username already exists.' };
@@ -1666,6 +1675,20 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         setSupportTickets(prev => prev.map(ticket => ticket.id === ticketId ? { ...ticket, status, updatedAt: new Date() } : ticket));
     }, []);
 
+    const updateLastLogin = useCallback((email: string, ip: string) => {
+        const lowerEmail = email.toLowerCase();
+        setAdminUsers(prev => prev.map(u => 
+            (u.email.toLowerCase() === lowerEmail || u.username?.toLowerCase() === lowerEmail)
+            ? { ...u, lastLoginIp: ip, lastLoginDate: new Date() }
+            : u
+        ));
+        setTenants(prev => prev.map(t =>
+            (t.email.toLowerCase() === lowerEmail || t.username.toLowerCase() === lowerEmail)
+            ? { ...t, lastLoginIp: ip, lastLoginDate: new Date() }
+            : t
+        ));
+    }, []);
+
     const value: AppContextType = {
         products, sales, branches, staff, staffRoles, currentStaffUser, allTenantPermissions, stockLogs, tenants, currentTenant,
         subscriptionPlans, adminUsers, adminRoles, allPermissions, currentAdminUser, brandConfig, pageContent,
@@ -1688,6 +1711,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         markInAppNotificationAsRead,
         submitSupportTicket, replyToSupportTicket, updateTicketStatus,
         updateTruckVitals, updateTenantLogisticsConfig,
+        updateLastLogin,
         logout: onLogout,
         logAction
     };

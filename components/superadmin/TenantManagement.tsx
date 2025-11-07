@@ -11,7 +11,7 @@ const TenantManagement: React.FC = () => {
     const [modal, setModal] = useState<'NONE' | 'ADD_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE'>('NONE');
     const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
 
-    const initialFormState: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle'> = {
+    const initialFormState: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'> = {
         businessName: '', ownerName: '', email: '', username: '', password: '', 
         companyAddress: '', companyPhone: '', companyLogoUrl: '',
         planId: subscriptionPlans[0]?.id || ''
@@ -101,6 +101,7 @@ const TenantManagement: React.FC = () => {
                             <th className="p-3">Plan</th>
                             <th className="p-3">Join Date</th>
                             <th className="p-3">Trial Ends</th>
+                            <th className="p-3">Last Login IP</th>
                             <th className="p-3 text-center">Actions</th>
                         </tr>
                     </thead>
@@ -118,6 +119,7 @@ const TenantManagement: React.FC = () => {
                                         new Date(tenant.trialEndDate).toLocaleDateString()
                                     ) : 'N/A'}
                                 </td>
+                                <td className="p-3 whitespace-nowrap text-slate-400 font-mono">{tenant.lastLoginIp || 'N/A'}</td>
                                 <td className="p-3 text-center whitespace-nowrap space-x-2">
                                      <button onClick={() => openModal('VIEW_TENANT', tenant)} className="text-sky-400 hover:text-sky-300 font-semibold px-2 py-1 rounded-md text-xs">View</button>
                                      <button className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-xs">Edit</button>

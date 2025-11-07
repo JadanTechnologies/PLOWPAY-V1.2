@@ -1,7 +1,10 @@
+
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Truck, Shipment, TrackerProvider, Customer } from '../../types';
 import Icon from './icons/index.tsx';
+import GoogleMap from './GoogleMap.tsx';
 
 type ModalState = 'NONE' | 'TRUCK' | 'SHIPMENT' | 'SELL_SHIPMENT';
 
@@ -47,7 +50,6 @@ const LogisticsManagement: React.FC = () => {
     const [modal, setModal] = useState<ModalState>('NONE');
     const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
     const [isMapModalOpen, setMapModalOpen] = useState(false);
-    const [hoveredTruck, setHoveredTruck] = useState<Truck | null>(null);
 
     // Form states
     const [truckForm, setTruckForm] = useState({ licensePlate: '', driverName: '', status: 'IDLE' as Truck['status'], maxLoad: 20000 });
@@ -110,14 +112,6 @@ const LogisticsManagement: React.FC = () => {
     
     const branchMap = useMemo(() => new Map(branches.map(b => [b.id, b.name])), [branches]);
     const truckMap = useMemo(() => new Map(trucks.map(t => [t.id, t.licensePlate])), [trucks]);
-    
-    const latlongToPercent = (lat: number, lng: number) => {
-        const minLat = 24, maxLat = 50;
-        const minLng = -125, maxLng = -66;
-        const y = 100 - ((lat - minLat) / (maxLat - minLat)) * 100;
-        const x = ((lng - minLng) / (maxLng - minLng)) * 100;
-        return { x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)) };
-    };
 
     const renderContent = () => {
         switch (activeTab) {
@@ -343,28 +337,18 @@ const LogisticsManagement: React.FC = () => {
                             <Icon name="x-mark" className="w-6 h-6" />
                         </button>
                     </div>
-                    <div className="relative flex-grow bg-gray-800 rounded-lg overflow-hidden bg-[url('https://www.openstreetmap.org/assets/map-background-628a50c8b26f16d8085a218204f8b958e08d54637f37452d3f2c58e1a062484f.png')] bg-cover bg-center">
-                         <div className="absolute top-2 left-2 text-white bg-black/50 p-2 rounded-md text-sm font-semibold">
-                           <p>MAP PLACEHOLDER</p>
-                           <p className="text-xs font-normal">This is a simulated map for demonstration purposes.</p>
-                         </div>
-                        {trucks.map(truck => {
-                            const pos = latlongToPercent(truck.currentLocation.lat, truck.currentLocation.lng);
-                            return (
-                                <div key={truck.id} style={{ left: `${pos.x}%`, top: `${pos.y}%` }} className="absolute -translate-x-1/2 -translate-y-1/2" onMouseEnter={() => setHoveredTruck(truck)} onMouseLeave={() => setHoveredTruck(null)}>
-                                    <Icon name="truck" className={`w-8 h-8 ${truck.status === 'IN_TRANSIT' ? 'text-cyan-400' : 'text-gray-500'} transition-transform hover:scale-125 drop-shadow-lg`}/>
-                                    {hoveredTruck?.id === truck.id && (
-                                        <div className="absolute bottom-full mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded-md border border-gray-700 shadow-lg -translate-x-1/2 left-1/2">
-                                            <p className="font-bold">{truck.licensePlate}</p>
-                                            <p>{truck.driverName}</p>
-                                            <p>Load: {(truck.currentLoad / 1000).toFixed(1)}t / {(truck.maxLoad / 1000).toFixed(1)}t</p>
-                                            <p>Status: {truck.status}</p>
-                                            <p className="text-gray-400 mt-1">Last Update: {truck.lastUpdate.toLocaleTimeString()}</p>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
+                    <div className="relative flex-grow bg-gray-800 rounded-lg overflow-hidden">
+                        {typeof window.google === 'undefined' ? (
+                            <div className="flex flex-col items-center justify-center h-full text-center">
+                                <Icon name="x-mark" className="w-12 h-12 text-red-500 mb-4" />
+                                <h3 className="text-xl font-bold text-white">Google Maps Failed to Load</h3>
+                                <p className="text-gray-400 mt-2 max-w-md">
+                                    Please ensure you have a valid Google Maps API key in your <code>index.html</code> file and a working internet connection.
+                                </p>
+                            </div>
+                        ) : (
+                            <GoogleMap trucks={trucks} />
+                        )}
                     </div>
                 </div>
              )}

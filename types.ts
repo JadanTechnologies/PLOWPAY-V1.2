@@ -1,5 +1,12 @@
 
 
+// FIX: Add a global declaration for the Google Maps API to resolve TypeScript errors.
+declare global {
+  interface Window {
+    google: any;
+  }
+}
+
 export interface Branch {
   id: string;
   name: string;
@@ -220,6 +227,8 @@ export interface Tenant {
   logisticsConfig?: {
     activeTrackerProviderId: string;
   };
+  lastLoginIp?: string;
+  lastLoginDate?: Date;
 }
 
 export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED';
@@ -254,6 +263,8 @@ export interface AdminUser {
   joinDate: Date;
   phone?: string;
   avatarUrl?: string;
+  lastLoginIp?: string;
+  lastLoginDate?: Date;
 }
 
 export interface BrandConfig {
@@ -613,7 +624,7 @@ export interface AppContextType {
   transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;
   addProduct: (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => void;
   updateProductVariant: (productId: string, variantId: string, variantData: Partial<Omit<ProductVariant, 'id' | 'stockByBranch'>>) => void;
-  addAdminUser: (userData: Omit<AdminUser, 'id' | 'joinDate' | 'status'>) => void;
+  addAdminUser: (userData: Omit<AdminUser, 'id' | 'joinDate' | 'status' | 'lastLoginIp' | 'lastLoginDate'>) => void;
   updateAdminUser: (userId: string, userData: Partial<Omit<AdminUser, 'id' | 'joinDate'>>) => void;
   updateAdminRole: (roleId: string, permissions: Permission[]) => void;
   addAdminRole: (roleData: Omit<AdminRole, 'id'>) => void;
@@ -650,7 +661,7 @@ export interface AppContextType {
   deleteStaffRole: (roleId: string) => void;
   addAccount: (accountData: Omit<Account, 'id' | 'balance'>) => void;
   addJournalEntry: (entryData: Omit<JournalEntry, 'id' | 'date'>) => void;
-  addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle'>) => Promise<{ success: boolean; message: string }>;
+  addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'>) => Promise<{ success: boolean; message: string }>;
   verifyTenant: (email: string) => void;
   updateTenantProfile: (tenantData: Partial<Omit<Tenant, 'id'>>) => void;
   updateAdminProfile: (adminData: Partial<Omit<AdminUser, 'id'>>) => void;
@@ -677,5 +688,6 @@ export interface AppContextType {
   submitSupportTicket: (ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'status'>) => void;
   replyToSupportTicket: (ticketId: string, message: Omit<TicketMessage, 'id' | 'timestamp'>) => void;
   updateTicketStatus: (ticketId: string, status: SupportTicket['status']) => void;
+  updateLastLogin: (email: string, ip: string) => void;
   logout: () => void;
 }
