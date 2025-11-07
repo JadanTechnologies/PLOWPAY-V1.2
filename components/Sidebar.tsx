@@ -67,34 +67,30 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
     const role = staffRoles.find(r => r.id === currentStaffUser.roleId);
     return new Set(role?.permissions || []);
   }, [currentStaffUser, staffRoles]);
-
-  const navItems = [
+  
+  const navItemConfig: { page: Page; icon: string; label: string; permission?: TenantPermission }[] = [
     { page: 'DASHBOARD', icon: 'layout-grid', label: t('dashboard') },
-    { page: 'POS', icon: 'pos', label: t('pos') },
-    { page: 'INVENTORY', icon: 'inventory', label: t('inventory') },
-    { page: 'PURCHASES', icon: 'clipboard-document-list', label: t('purchases') },
+    { page: 'POS', icon: 'pos', label: t('pos'), permission: 'accessPOS' },
+    { page: 'INVENTORY', icon: 'inventory', label: t('inventory'), permission: 'manageInventory' },
+    { page: 'PURCHASES', icon: 'clipboard-document-list', label: t('purchases'), permission: 'managePurchases' },
     { page: 'CONSIGNMENT', icon: 'briefcase', label: t('consignment') },
-    { page: 'LOGISTICS', icon: 'truck', label: t('logistics') },
+    { page: 'LOGISTICS', icon: 'truck', label: t('logistics'), permission: 'manageLogistics' },
     { page: 'CREDIT_MANAGEMENT', icon: 'users', label: t('creditManagement') },
-    { page: 'DEPOSIT_MANAGEMENT', icon: 'cash', label: t('depositmanagement') },
-    { page: 'ACCOUNTING', icon: 'calculator', label: t('accounting') },
-    { page: 'REPORTS', icon: 'chart-bar', label: t('reports') },
+    { page: 'DEPOSIT_MANAGEMENT', icon: 'cash', label: t('depositmanagement'), permission: 'manageDeposits' },
+    { page: 'ACCOUNTING', icon: 'calculator', label: t('accounting'), permission: 'accessAccounting' },
+    { page: 'REPORTS', icon: 'chart-bar', label: t('reports'), permission: 'viewReports' },
+    { page: 'SUPPORT', icon: 'chat-bubble-left-right', label: 'Support', permission: 'accessSupport' },
     { page: 'BILLING', icon: 'credit-card', label: t('billing') },
   ];
   
   const bottomNavItems = [
-      { page: 'AUDIT_LOGS', icon: 'shield-check', label: t('auditLogs') },
+      { page: 'AUDIT_LOGS', icon: 'shield-check', label: t('auditLogs'), permission: 'viewAuditLogs' },
       { page: 'PROFILE', icon: 'user', label: t('profile') },
-      { page: 'SETTINGS', icon: 'settings', label: t('settings') },
+      { page: 'SETTINGS', icon: 'settings', label: t('settings'), permission: 'accessSettings' },
   ]
 
-  const visibleNavItems = navItems.filter(item => {
-    if (item.page === 'DEPOSIT_MANAGEMENT') {
-        return userPermissions.has('manageDeposits');
-    }
-    // Add other permission checks here in the future
-    return true;
-  });
+  const visibleNavItems = navItemConfig.filter(item => !item.permission || userPermissions.has(item.permission));
+  const visibleBottomNavItems = bottomNavItems.filter(item => !item.permission || userPermissions.has(item.permission));
 
   return (
     <aside
@@ -129,7 +125,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
       
        <div className="mt-auto p-2 border-t border-slate-800">
         <ul>
-            {bottomNavItems.map(item => (
+            {visibleBottomNavItems.map(item => (
                 <NavItem 
                     key={item.page}
                     page={item.page as Page}

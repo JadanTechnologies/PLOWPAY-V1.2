@@ -1,7 +1,7 @@
 
 
 import React, { createContext, useState, ReactNode, useCallback, useEffect } from 'react';
-import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit } from '../types';
+import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage } from '../types';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -54,12 +54,13 @@ export const allPermissions: Permission[] = [
     'managePaymentGateways',
     'manageNotificationSettings',
     'manageAnnouncements',
-    'viewAuditLogs'
+    'viewAuditLogs',
+    'manageSupport'
 ];
 
 const mockAdminRoles: AdminRole[] = [
     { id: 'role-admin', name: 'Admin', permissions: [...allPermissions] },
-    { id: 'role-support', name: 'Support', permissions: ['viewPlatformDashboard', 'manageTenants'] },
+    { id: 'role-support', name: 'Support', permissions: ['viewPlatformDashboard', 'manageTenants', 'manageSupport'] },
     { id: 'role-developer', name: 'Developer', permissions: ['viewPlatformDashboard', 'manageSystemSettings'] }
 ];
 
@@ -479,6 +480,38 @@ const mockInAppNotifications: InAppNotification[] = [
     { id: 'notif-2', userId: 'tenant-1', message: 'A new announcement has been posted by the platform admin.', read: true, createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
 ];
 
+const mockSupportTickets: SupportTicket[] = [
+    {
+        id: 'ticket-1', tenantId: 'tenant-1', subject: 'Cannot log in to POS on tablet',
+        department: 'Technical', priority: 'High', status: 'Open',
+        createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+        messages: [
+            { id: 'msg-1', sender: 'TENANT', message: 'Hi, I am unable to log into the POS system on our store tablet. It keeps saying "invalid credentials" but they are correct.', timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) }
+        ]
+    },
+    {
+        id: 'ticket-2', tenantId: 'tenant-1', subject: 'Question about billing cycle',
+        department: 'Billing', priority: 'Low', status: 'In Progress',
+        createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+        messages: [
+            { id: 'msg-2', sender: 'TENANT', message: 'How do I change from monthly to yearly billing?', timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
+            { id: 'msg-3', sender: 'ADMIN', message: 'Hi there, you can change your billing cycle from the "Billing" page in your dashboard. Let me know if you need further assistance.', timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000) }
+        ]
+    },
+    {
+        id: 'ticket-3', tenantId: 'tenant-2', subject: 'Product import failed',
+        department: 'Technical', priority: 'Medium', status: 'Closed',
+        createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+        updatedAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000),
+        messages: [
+            { id: 'msg-4', sender: 'TENANT', message: 'The CSV import for new products is failing.', timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
+            { id: 'msg-5', sender: 'ADMIN', message: 'We have identified and resolved the issue with the importer. Please try again.', timestamp: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000) }
+        ]
+    }
+];
+
 
 interface AppContextProviderProps {
     children: ReactNode;
@@ -573,11 +606,12 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>(mockEmailTemplates);
     const [smsTemplates, setSmsTemplates] = useState<SmsTemplate[]>(mockSmsTemplates);
     const [inAppNotifications, setInAppNotifications] = useState<InAppNotification[]>(mockInAppNotifications);
+    const [supportTickets, setSupportTickets] = useState<SupportTicket[]>(mockSupportTickets);
     const [notification, setNotification] = useState<NotificationType | null>(null);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
     // To test permissions, change the index: 0=Manager (all perms), 1=Cashier (limited), 2=Logistics (limited)
-    const [currentStaffUser, setCurrentStaffUser] = useState<Staff | null>(mockStaff[1]);
+    const [currentStaffUser, setCurrentStaffUser] = useState<Staff | null>(mockStaff[0]);
 
     const logAction = useCallback((action: string, details: string, user?: { id: string; name: string; type: 'STAFF' | 'TENANT' | 'SUPER_ADMIN' }) => {
         const userToLog = user || (currentAdminUser ? { id: currentAdminUser.id, name: currentAdminUser.name, type: 'SUPER_ADMIN' } : (currentTenant ? { id: currentTenant.id, name: currentTenant.ownerName, type: 'TENANT' } : null));
@@ -1459,7 +1493,6 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         return { processed, suspended };
     }, []);
 
-    // FIX: Implement `sendExpiryReminders` function.
     const sendExpiryReminders = useCallback(() => {
         let sent = 0;
         const today = new Date();
@@ -1529,13 +1562,55 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const markInAppNotificationAsRead = useCallback((notificationId: string) => {
         setInAppNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n));
     }, []);
+    
+    const submitSupportTicket = useCallback((ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'status'>) => {
+        if (!currentTenant) return;
+        const newTicket: SupportTicket = {
+            ...ticketData,
+            id: `ticket-${Date.now()}`,
+            tenantId: currentTenant.id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            status: 'Open',
+            messages: ticketData.messages.map(msg => ({
+                ...msg,
+                id: `msg-${Date.now()}`,
+                timestamp: new Date()
+            }))
+        };
+        setSupportTickets(prev => [newTicket, ...prev]);
+    }, [currentTenant]);
+
+    const replyToSupportTicket = useCallback((ticketId: string, message: Omit<TicketMessage, 'id' | 'timestamp'>) => {
+        setSupportTickets(prev => prev.map(ticket => {
+            if (ticket.id === ticketId) {
+                const newTicket = {
+                    ...ticket,
+                    updatedAt: new Date(),
+                    messages: [
+                        ...ticket.messages,
+                        { ...message, id: `msg-${Date.now()}`, timestamp: new Date() }
+                    ]
+                };
+                if (message.sender === 'ADMIN') {
+                    newTicket.status = 'In Progress';
+                }
+                return newTicket;
+            }
+            return ticket;
+        }));
+    }, []);
+
+    const updateTicketStatus = useCallback((ticketId: string, status: SupportTicket['status']) => {
+        setSupportTickets(prev => prev.map(ticket => ticket.id === ticketId ? { ...ticket, status, updatedAt: new Date() } : ticket));
+    }, []);
 
     const value: AppContextType = {
         products, sales, branches, staff, staffRoles, currentStaffUser, allTenantPermissions, stockLogs, tenants, currentTenant,
         subscriptionPlans, adminUsers, adminRoles, allPermissions, currentAdminUser, brandConfig, pageContent,
         paymentSettings, notificationSettings, systemSettings, trucks, shipments, trackerProviders, suppliers,
         purchaseOrders, accounts, journalEntries, announcements, customers, consignments, deposits, categories,
-        paymentTransactions, emailTemplates, smsTemplates, inAppNotifications, auditLogs, notification,
+        paymentTransactions, emailTemplates, smsTemplates, inAppNotifications, auditLogs, supportTickets, notification,
         setNotification, searchTerm, setSearchTerm, currentLanguage, setCurrentLanguage, currentCurrency, setCurrentCurrency,
         getMetric, addSale, adjustStock, transferStock, addProduct, updateProductVariant, addAdminUser,
         updateAdminUser, updateAdminRole, addAdminRole, deleteAdminRole, updateBrandConfig, updatePageContent,
@@ -1547,10 +1622,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
         addJournalEntry, addTenant, verifyTenant, updateTenantProfile, updateAdminProfile, addAnnouncement,
         markAnnouncementAsRead, addCustomer, recordCreditPayment, addDeposit, updateDeposit, addConsignment, addCategory, updateCategory,
         deleteCategory, extendTrial, activateSubscription, changeSubscriptionPlan, processExpiredTrials,
-        // FIX: Add `sendExpiryReminders` to the context value.
         sendExpiryReminders,
         processSubscriptionPayment, updatePaymentTransactionStatus, updateEmailTemplate, updateSmsTemplate,
         markInAppNotificationAsRead,
+        submitSupportTicket, replyToSupportTicket, updateTicketStatus,
         logout: onLogout,
         logAction
     };

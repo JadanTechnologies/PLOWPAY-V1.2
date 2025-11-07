@@ -6,6 +6,7 @@ import { AdminUser, AdminUserStatus, Permission } from '../../types';
 import Icon from '../icons/index.tsx';
 import { usePermissions } from '../../hooks/usePermissions';
 
+// FIX: Add 'manageSupport' permission label to match the Permission type.
 const permissionLabels: Record<Permission, string> = {
     viewPlatformDashboard: 'View Platform Dashboard',
     manageTenants: 'Manage Tenants',
@@ -17,6 +18,7 @@ const permissionLabels: Record<Permission, string> = {
     manageNotificationSettings: 'Manage Notification Settings',
     manageAnnouncements: 'Manage Announcements',
     viewAuditLogs: 'View Audit Logs',
+    manageSupport: 'Manage Support Tickets',
 };
 
 const TeamManagement: React.FC = () => {

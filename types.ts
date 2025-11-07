@@ -23,7 +23,8 @@ export type TenantPermission =
  | 'viewAuditLogs'
  | 'makeDeposits'
  | 'manageDeposits'
- | 'accessReturns';
+ | 'accessReturns'
+ | 'accessSupport';
 
 export const allTenantPermissions: TenantPermission[] = [
     'accessPOS',
@@ -38,6 +39,7 @@ export const allTenantPermissions: TenantPermission[] = [
     'makeDeposits',
     'manageDeposits',
     'accessReturns',
+    'accessSupport',
 ];
 
 
@@ -227,7 +229,8 @@ export type Permission =
   | 'managePaymentGateways'
   | 'manageNotificationSettings'
   | 'manageAnnouncements'
-  | 'viewAuditLogs';
+  | 'viewAuditLogs'
+  | 'manageSupport';
 
 export interface AdminRole {
     id: string;
@@ -530,6 +533,25 @@ export interface Deposit {
   appliedSaleId?: string;
 }
 
+export interface TicketMessage {
+    id: string;
+    sender: 'TENANT' | 'ADMIN';
+    message: string;
+    timestamp: Date;
+}
+
+export interface SupportTicket {
+    id: string;
+    tenantId: string;
+    subject: string;
+    department: 'Technical' | 'Billing' | 'General';
+    priority: 'Low' | 'Medium' | 'High';
+    status: 'Open' | 'In Progress' | 'Closed';
+    createdAt: Date;
+    updatedAt: Date;
+    messages: TicketMessage[];
+}
+
 export interface AppContextType {
   products: Product[];
   sales: Sale[];
@@ -568,6 +590,7 @@ export interface AppContextType {
   smsTemplates: SmsTemplate[];
   inAppNotifications: InAppNotification[];
   auditLogs: AuditLog[];
+  supportTickets: SupportTicket[];
   notification: NotificationType | null;
   setNotification: (notification: NotificationType | null) => void;
   logAction: (action: string, details: string, user?: { id: string; name: string; type: 'STAFF' | 'TENANT' | 'SUPER_ADMIN' }) => void;
@@ -635,12 +658,15 @@ export interface AppContextType {
   extendTrial: (tenantId: string, days: number) => void;
   activateSubscription: (tenantId: string, planId: string, billingCycle: 'monthly' | 'yearly') => void;
   changeSubscriptionPlan: (tenantId: string, newPlanId: string, billingCycle: 'monthly' | 'yearly') => void;
-  processExpiredTrials: () => { processed: number; suspended: number };
+  processExpiredTrials: () => { processed: number, suspended: number };
   sendExpiryReminders: () => { sent: number };
   processSubscriptionPayment: (tenantId: string, planId: string, method: string, amount: number, billingCycle: 'monthly' | 'yearly', success: boolean, proofOfPaymentUrl?: string) => Promise<{success: boolean, message: string}>;
   updatePaymentTransactionStatus: (transactionId: string, newStatus: 'COMPLETED' | 'REJECTED') => void;
   updateEmailTemplate: (templateId: string, newSubject: string, newBody: string) => void;
   updateSmsTemplate: (templateId: string, newBody: string) => void;
   markInAppNotificationAsRead: (notificationId: string) => void;
-  logout?: () => void;
+  submitSupportTicket: (ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'status'>) => void;
+  replyToSupportTicket: (ticketId: string, message: Omit<TicketMessage, 'id' | 'timestamp'>) => void;
+  updateTicketStatus: (ticketId: string, status: SupportTicket['status']) => void;
+  logout: () => void;
 }

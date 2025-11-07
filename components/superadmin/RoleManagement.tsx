@@ -5,6 +5,7 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { AdminRole, Permission } from '../../types';
 import Icon from '../icons/index.tsx';
 
+// FIX: Add 'manageSupport' permission label to match the Permission type.
 const permissionLabels: Record<Permission, string> = {
     viewPlatformDashboard: 'View Platform Dashboard',
     manageTenants: 'Manage Tenants',
@@ -16,11 +17,13 @@ const permissionLabels: Record<Permission, string> = {
     manageNotificationSettings: 'Manage Notification Settings',
     manageAnnouncements: 'Manage Announcements',
     viewAuditLogs: 'View Audit Logs',
+    manageSupport: 'Manage Support Tickets',
 };
 
+// FIX: Add 'manageSupport' to a permission group to make it configurable in the UI.
 const permissionGroups: Record<string, Permission[]> = {
     'Platform Management': ['viewPlatformDashboard', 'manageSystemSettings', 'viewAuditLogs'],
-    'User & Tenant Management': ['manageTenants', 'manageSubscriptions', 'manageTeam', 'manageRoles'],
+    'User & Tenant Management': ['manageTenants', 'manageSubscriptions', 'manageTeam', 'manageRoles', 'manageSupport'],
     'Financial & Communications': ['managePaymentGateways', 'manageNotificationSettings', 'manageAnnouncements']
 };
 

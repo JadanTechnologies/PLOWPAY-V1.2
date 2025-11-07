@@ -22,6 +22,7 @@ import TenantAuditLogs from './tenant/AuditLogs';
 import DepositManagement from './DepositManagement';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons';
+import TenantSupport from './tenant/Support';
 
 
 const TenantApp: React.FC = () => {
@@ -96,6 +97,8 @@ const TenantApp: React.FC = () => {
         return <TenantProfile />;
       case 'AUDIT_LOGS':
         return <TenantAuditLogs />;
+      case 'SUPPORT':
+        return <TenantSupport />;
       default:
         return <Dashboard />;
     }

@@ -22,6 +22,7 @@ import Maintenance from './Maintenance';
 import AccessManagement from './AccessManagement';
 import SuperAdminProfile from './Profile';
 import SuperAdminAuditLogs from './AuditLogs';
+import SupportManagement from './SupportManagement';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
     return (
@@ -374,6 +375,8 @@ const SuperAdminPanel: React.FC = () => {
                 return hasPermission('viewAuditLogs') ? <SuperAdminAuditLogs /> : <AccessDenied />;
             case 'PROFILE':
                 return <SuperAdminProfile />; // All admins should be able to see their profile
+            case 'SUPPORT_TICKETS':
+                return hasPermission('manageSupport') ? <SupportManagement /> : <AccessDenied />;
             default:
                 return hasPermission('viewPlatformDashboard') ? <PlatformDashboard /> : <AccessDenied />;
         }
@@ -395,6 +398,7 @@ const SuperAdminPanel: React.FC = () => {
         SETTINGS: 'System Settings',
         AUDIT_LOGS: 'Audit Logs',
         PROFILE: 'My Profile',
+        SUPPORT_TICKETS: 'Support Tickets',
     };
 
     return (
