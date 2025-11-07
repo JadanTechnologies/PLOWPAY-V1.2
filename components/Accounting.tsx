@@ -129,33 +129,42 @@ const Accounting: React.FC = () => {
             case 'reports':
                 return (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="bg-gray-900/50 p-4 rounded-lg">
-                            <h3 className="font-bold text-lg mb-2 text-center">Income Statement</h3>
-                            <div className="space-y-1">
-                                <div className="flex justify-between"><span className="font-semibold">Revenue</span><span>{formatCurrency(financials.totalRevenue)}</span></div>
-                                <div className="flex justify-between border-b border-gray-700 pb-1"><span className="pl-4">Total Revenue</span><span>{formatCurrency(financials.totalRevenue)}</span></div>
-                                <div className="flex justify-between pt-2"><span className="font-semibold">Expenses</span></div>
-                                {accounts.filter(a => a.type === 'EXPENSE').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>{formatCurrency(a.balance)}</span></div>)}
-                                <div className="flex justify-between border-b border-gray-700 pb-1"><span className="pl-4">Total Expenses</span><span>{formatCurrency(financials.totalExpenses)}</span></div>
-                                <div className="flex justify-between pt-2 font-bold text-xl"><span className="font-semibold">Net Income</span><span>{formatCurrency(financials.netIncome)}</span></div>
+                        <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                            <h3 className="font-bold text-lg mb-4 text-center text-white">Income Statement</h3>
+                            <div className="space-y-2">
+                                <div className="font-semibold text-white">Revenue</div>
+                                {accounts.filter(a => a.type === 'REVENUE').map(a => <div key={a.id} className="flex justify-between pl-4 text-sm"><span className="text-gray-300">{a.name}</span><span className="font-mono">{formatCurrency(-a.balance)}</span></div>)}
+                                <div className="flex justify-between border-t border-gray-600 pt-2 mt-2 font-semibold"><span className="text-white">Total Revenue</span><span className="font-mono text-white">{formatCurrency(financials.totalRevenue)}</span></div>
+                                
+                                <div className="font-semibold text-white pt-4">Expenses</div>
+                                {accounts.filter(a => a.type === 'EXPENSE').map(a => <div key={a.id} className="flex justify-between pl-4 text-sm"><span className="text-gray-300">{a.name}</span><span className="font-mono">({formatCurrency(a.balance)})</span></div>)}
+                                <div className="flex justify-between border-t border-gray-600 pt-2 mt-2 font-semibold"><span className="text-white">Total Expenses</span><span className="font-mono text-white">({formatCurrency(financials.totalExpenses)})</span></div>
+
+                                <div className={`flex justify-between pt-4 font-bold text-xl border-t-2 border-gray-500 mt-4 ${financials.netIncome >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                    <span>Net Income</span>
+                                    <span className="font-mono">{formatCurrency(financials.netIncome)}</span>
+                                </div>
                             </div>
                         </div>
-                         <div className="bg-gray-900/50 p-4 rounded-lg">
-                            <h3 className="font-bold text-lg mb-2 text-center">Balance Sheet</h3>
-                             <div className="space-y-1">
-                                <div className="flex justify-between font-semibold"><span>Assets</span></div>
-                                {accounts.filter(a => a.type === 'ASSET').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>{formatCurrency(a.balance)}</span></div>)}
-                                <div className="flex justify-between border-b border-gray-700 pb-1 font-bold"><span>Total Assets</span><span>{formatCurrency(financials.totalAssets)}</span></div>
+                         <div className="bg-gray-900/50 p-4 rounded-lg border border-gray-700">
+                            <h3 className="font-bold text-lg mb-4 text-center text-white">Balance Sheet</h3>
+                             <div className="space-y-2">
+                                <div className="font-semibold text-white">Assets</div>
+                                {accounts.filter(a => a.type === 'ASSET').map(a => <div key={a.id} className="flex justify-between pl-4 text-sm"><span className="text-gray-300">{a.name}</span><span className="font-mono">{formatCurrency(a.balance)}</span></div>)}
+                                <div className="flex justify-between border-t border-gray-600 pt-2 mt-2 font-semibold"><span className="text-white">Total Assets</span><span className="font-mono text-white">{formatCurrency(financials.totalAssets)}</span></div>
                                 
-                                <div className="flex justify-between pt-2 font-semibold"><span>Liabilities</span></div>
-                                {accounts.filter(a => a.type === 'LIABILITY').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>{formatCurrency(-a.balance)}</span></div>)}
-                                <div className="flex justify-between font-bold"><span>Total Liabilities</span><span>{formatCurrency(financials.totalLiabilities)}</span></div>
+                                <div className="font-semibold text-white pt-4">Liabilities</div>
+                                {accounts.filter(a => a.type === 'LIABILITY').map(a => <div key={a.id} className="flex justify-between pl-4 text-sm"><span className="text-gray-300">{a.name}</span><span className="font-mono">{formatCurrency(-a.balance)}</span></div>)}
+                                <div className="flex justify-between font-semibold pt-2"><span className="text-white">Total Liabilities</span><span className="font-mono text-white">{formatCurrency(financials.totalLiabilities)}</span></div>
 
-                                <div className="flex justify-between pt-2 font-semibold"><span>Equity</span></div>
-                                {accounts.filter(a => a.type === 'EQUITY').map(a => <div key={a.id} className="flex justify-between pl-4"><span className="text-gray-400">{a.name}</span><span>{formatCurrency(-a.balance)}</span></div>)}
-                                <div className="flex justify-between font-bold"><span>Total Equity</span><span>{formatCurrency(financials.totalEquity)}</span></div>
+                                <div className="font-semibold text-white pt-4">Equity</div>
+                                {accounts.filter(a => a.type === 'EQUITY').map(a => <div key={a.id} className="flex justify-between pl-4 text-sm"><span className="text-gray-300">{a.name}</span><span className="font-mono">{formatCurrency(-a.balance)}</span></div>)}
+                                <div className="flex justify-between font-semibold pt-2"><span className="text-white">Total Equity</span><span className="font-mono text-white">{formatCurrency(financials.totalEquity)}</span></div>
                                 
-                                <div className="flex justify-between pt-2 font-bold text-xl border-t border-gray-700"><span>Total Liabilities + Equity</span><span>{formatCurrency(financials.totalLiabilities + financials.totalEquity)}</span></div>
+                                <div className="flex justify-between pt-4 font-bold text-xl border-t-2 border-gray-500 mt-4">
+                                    <span>Total Liabilities + Equity</span>
+                                    <span className="font-mono">{formatCurrency(financials.totalLiabilities + financials.totalEquity)}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
