@@ -1,9 +1,11 @@
 
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Page } from '../App';
 import Icon from './icons/index.tsx';
 import { useTranslation } from '../hooks/useTranslation';
+import { useAppContext } from '../hooks/useAppContext';
+import { TenantPermission } from '../types';
 
 interface SidebarProps {
   currentPage: Page;
@@ -58,6 +60,13 @@ const NavItem: React.FC<{
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOpen }) => {
   const { t } = useTranslation();
+  const { currentStaffUser, staffRoles } = useAppContext();
+
+  const userPermissions = useMemo(() => {
+    if (!currentStaffUser) return new Set<TenantPermission>();
+    const role = staffRoles.find(r => r.id === currentStaffUser.roleId);
+    return new Set(role?.permissions || []);
+  }, [currentStaffUser, staffRoles]);
 
   const navItems = [
     { page: 'DASHBOARD', icon: 'layout-grid', label: t('dashboard') },
@@ -79,6 +88,14 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
       { page: 'SETTINGS', icon: 'settings', label: t('settings') },
   ]
 
+  const visibleNavItems = navItems.filter(item => {
+    if (item.page === 'DEPOSIT_MANAGEMENT') {
+        return userPermissions.has('manageDeposits');
+    }
+    // Add other permission checks here in the future
+    return true;
+  });
+
   return (
     <aside
       className={`relative flex flex-col bg-slate-900/70 backdrop-blur-xl border-r border-slate-800 text-white transition-all duration-300 ease-in-out z-20 ${
@@ -96,7 +113,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
 
       <nav className="flex-1 py-4 space-y-1 overflow-y-auto">
         <ul>
-            {navItems.map(item => (
+            {visibleNavItems.map(item => (
                 <NavItem 
                     key={item.page}
                     page={item.page as Page}

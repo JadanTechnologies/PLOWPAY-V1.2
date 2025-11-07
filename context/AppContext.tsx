@@ -576,6 +576,9 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     const [notification, setNotification] = useState<NotificationType | null>(null);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
 
+    // To test permissions, change the index: 0=Manager (all perms), 1=Cashier (limited), 2=Logistics (limited)
+    const [currentStaffUser, setCurrentStaffUser] = useState<Staff | null>(mockStaff[1]);
+
     const logAction = useCallback((action: string, details: string, user?: { id: string; name: string; type: 'STAFF' | 'TENANT' | 'SUPER_ADMIN' }) => {
         const userToLog = user || (currentAdminUser ? { id: currentAdminUser.id, name: currentAdminUser.name, type: 'SUPER_ADMIN' } : (currentTenant ? { id: currentTenant.id, name: currentTenant.ownerName, type: 'TENANT' } : null));
     
@@ -1449,7 +1452,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     }, []);
 
     const value: AppContextType = {
-        products, sales, branches, staff, staffRoles, allTenantPermissions, stockLogs, tenants, currentTenant,
+        products, sales, branches, staff, staffRoles, currentStaffUser, allTenantPermissions, stockLogs, tenants, currentTenant,
         subscriptionPlans, adminUsers, adminRoles, allPermissions, currentAdminUser, brandConfig, pageContent,
         paymentSettings, notificationSettings, systemSettings, trucks, shipments, trackerProviders, suppliers,
         purchaseOrders, accounts, journalEntries, announcements, customers, consignments, deposits, categories,

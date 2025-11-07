@@ -533,6 +533,7 @@ export interface AppContextType {
   branches: Branch[];
   staff: Staff[];
   staffRoles: StaffRole[];
+  currentStaffUser: Staff | null;
   allTenantPermissions: TenantPermission[];
   stockLogs: StockLog[];
   tenants: Tenant[];
