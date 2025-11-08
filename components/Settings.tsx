@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
+import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { StaffRole, TenantPermission, TenantAutomations, Branch } from '../types';
 import { allCurrencies, allLanguages } from '../utils/data';
@@ -182,46 +182,9 @@ const Security: React.FC = () => {
     );
 };
 
-const mapStyles = [ { elementType: "geometry", stylers: [{ color: "#242f3e" }] }, { elementType: "labels.text.stroke", stylers: [{ color: "#242f3e" }] }, { elementType: "labels.text.fill", stylers: [{ color: "#746855" }] }, { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }], }, { featureType: "poi", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }], }, { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#263c3f" }], }, { featureType: "poi.park", elementType: "labels.text.fill", stylers: [{ color: "#6b9a76" }], }, { featureType: "road", elementType: "geometry", stylers: [{ color: "#38414e" }], }, { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#212a37" }], }, { featureType: "road", elementType: "labels.text.fill", stylers: [{ color: "#9ca5b3" }], }, { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#746855" }], }, { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#1f2835" }], }, { featureType: "road.highway", elementType: "labels.text.fill", stylers: [{ color: "#f3d19c" }], }, { featureType: "transit", elementType: "geometry", stylers: [{ color: "#2f3948" }], }, { featureType: "transit.station", elementType: "labels.text.fill", stylers: [{ color: "#d59563" }], }, { featureType: "water", elementType: "geometry", stylers: [{ color: "#17263c" }], }, { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#515c6d" }], }, { featureType: "water", elementType: "labels.text.stroke", stylers: [{ color: "#17263c" }], }, ];
-
 const LocationEditModal: React.FC<{ branch: Branch; onClose: () => void; onSave: (location: { lat: number, lng: number }) => void; }> = ({ branch, onClose, onSave }) => {
-    const mapRef = useRef<HTMLDivElement>(null);
-    const markerRef = useRef<google.maps.Marker | null>(null);
     const [selectedLocation, setSelectedLocation] = useState(branch.location);
-
-    useEffect(() => {
-        if (mapRef.current && window.google) {
-            const map = new window.google.maps.Map(mapRef.current, {
-                center: selectedLocation.lat === 0 && selectedLocation.lng === 0 ? { lat: 39.8283, lng: -98.5795 } : selectedLocation,
-                zoom: selectedLocation.lat === 0 && selectedLocation.lng === 0 ? 4 : 15,
-                styles: mapStyles,
-                disableDefaultUI: true,
-                zoomControl: true,
-            });
-
-            markerRef.current = new window.google.maps.Marker({
-                position: selectedLocation,
-                map: map,
-                draggable: true,
-            });
-
-            map.addListener('click', (e: google.maps.MapMouseEvent) => {
-                if (e.latLng) {
-                    const newLoc = { lat: e.latLng.lat(), lng: e.latLng.lng() };
-                    setSelectedLocation(newLoc);
-                    markerRef.current?.setPosition(newLoc);
-                }
-            });
-
-            markerRef.current.addListener('dragend', (e: google.maps.MapMouseEvent) => {
-                 if (e.latLng) {
-                    const newLoc = { lat: e.latLng.lat(), lng: e.latLng.lng() };
-                    setSelectedLocation(newLoc);
-                }
-            });
-        }
-    }, []); // Run only once
-
+    
     return (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
             <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-3xl h-[80vh] flex flex-col border border-slate-700">
@@ -229,8 +192,16 @@ const LocationEditModal: React.FC<{ branch: Branch; onClose: () => void; onSave:
                     <h3 className="text-xl font-bold text-white">Set Location for {branch.name}</h3>
                     <p className="text-sm text-slate-400">Click on the map or drag the pin to set the location.</p>
                 </div>
-                <div className="flex-grow bg-slate-900" ref={mapRef}>
-                     {!window.google && <p className="p-4 text-center text-red-400">Map could not be loaded. Please check your API key and internet connection.</p>}
+                <div className="flex-grow bg-slate-900">
+                     {typeof window.L === 'undefined' ? <p className="p-4 text-center text-red-400">Map could not be loaded.</p> : (
+                        <GoogleMap 
+                            onClick={(latlng) => setSelectedLocation(latlng)}
+                            editableBranch={{
+                                branch: { ...branch, location: selectedLocation },
+                                onPositionChange: (latlng) => setSelectedLocation(latlng)
+                            }}
+                        />
+                     )}
                 </div>
                 <div className="p-4 flex justify-end gap-3 border-t border-slate-700">
                     <button onClick={onClose} className="px-4 py-2 rounded-md bg-slate-600 text-white hover:bg-slate-500 font-semibold">Cancel</button>
@@ -288,7 +259,15 @@ const Branches: React.FC = () => {
                     </div>
                 </div>
                 <div className="bg-slate-900 rounded-lg overflow-hidden h-96 border border-slate-700">
-                    <GoogleMap branches={branches} />
+                    {typeof window.L === 'undefined' ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                            <Icon name="x-mark" className="w-12 h-12 text-red-500 mb-2" />
+                            <h4 className="font-bold text-white">Map Failed to Load</h4>
+                            <p className="text-slate-400 text-sm">Please check your internet connection.</p>
+                        </div>
+                    ) : (
+                        <GoogleMap branches={branches} />
+                    )}
                 </div>
             </div>
 

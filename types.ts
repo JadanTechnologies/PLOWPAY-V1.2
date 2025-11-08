@@ -1,51 +1,11 @@
 
 
-// FIX: Move the 'google' namespace declaration inside the 'declare global' block to make the types available globally.
+
+
+// FIX: The 'L' variable from Leaflet.js needs to be declared in the global scope for TypeScript to recognize it on the 'window' object across all files.
 declare global {
-  interface Window {
-    google: any;
-  }
-
-  namespace google {
-    namespace maps {
-      class Map {
-        constructor(mapDiv: Element | null, opts?: any);
-        addListener(eventName: string, handler: (...args: any[]) => void): any;
-        fitBounds(bounds: LatLngBounds): void;
-      }
-      class Marker {
-        constructor(opts?: any);
-        setMap(map: Map | null): void;
-        setPosition(latLng: any): void;
-        addListener(eventName: string, handler: (...args: any[]) => void): any;
-      }
-      class InfoWindow {
-        constructor(opts?: any);
-        setContent(content: string | Element | null): void;
-        open(map?: Map, anchor?: any): void;
-        close(): void;
-      }
-      class Point {
-        constructor(x: number, y: number);
-      }
-      class Polyline {
-        constructor(opts?: any);
-        setMap(map: Map | null): void;
-        // FIX: Add setPath method to Polyline
-        setPath(path: any): void;
-      }
-      class LatLngBounds {
-          constructor(sw?: any, ne?: any);
-          extend(point: any): void;
-          isEmpty(): boolean;
-      }
-      interface MapMouseEvent {
-          latLng: { lat: () => number, lng: () => number };
-      }
-    }
-  }
+  var L: any;
 }
-
 
 export interface Branch {
   id: string;

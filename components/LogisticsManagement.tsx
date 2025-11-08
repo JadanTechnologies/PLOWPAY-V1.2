@@ -337,12 +337,12 @@ const LogisticsManagement: React.FC = () => {
                         </button>
                     </div>
                     <div className="relative flex-grow bg-gray-800 rounded-lg overflow-hidden">
-                        {typeof window.google === 'undefined' ? (
+                        {typeof window.L === 'undefined' ? (
                             <div className="flex flex-col items-center justify-center h-full text-center p-8">
                                 <Icon name="x-mark" className="w-16 h-16 text-red-500 mb-4" />
-                                <h3 className="text-2xl font-bold text-white">Google Maps API Failed to Load</h3>
+                                <h3 className="text-2xl font-bold text-white">Map Library Failed to Load</h3>
                                 <p className="text-slate-400 mt-2 max-w-md">
-                                    Please ensure the super admin has configured a valid Google Maps API key in the system settings and that your internet connection is working. The map cannot be displayed without it.
+                                    Please check your internet connection and ensure LeafletJS is correctly loaded. The map cannot be displayed without it.
                                 </p>
                             </div>
                         ) : (
