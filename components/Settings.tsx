@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
+import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { Staff, StaffRole, TenantPermission, TenantAutomations, Branch } from '../types';
 import { allCurrencies, allLanguages, allTimezones } from '../utils/data';
@@ -298,22 +298,60 @@ const Branches: React.FC = () => {
 }
 
 const Staff: React.FC = () => {
-    const { staff, staffRoles, addStaff, deleteStaff } = useAppContext();
+    const { staff, staffRoles, branches, addStaff, deleteStaff } = useAppContext();
     const [isModalOpen, setModalOpen] = useState(false);
     const [deletingStaff, setDeletingStaff] = useState<Staff | null>(null);
-    const [formState, setFormState] = useState({ name: '', email: '', username: '', password: '', roleId: staffRoles[0]?.id || '', branchId: '' });
+    const [formState, setFormState] = useState({ name: '', email: '', username: '', password: '', roleId: staffRoles[0]?.id || '', branchId: branches[0]?.id || '' });
+    const [errors, setErrors] = useState<Partial<Record<keyof typeof formState, string>>>({});
     
     const roleMap = new Map(staffRoles.map(r => [r.id, r.name]));
 
+    const openModal = () => {
+        setFormState({ name: '', email: '', username: '', password: '', roleId: staffRoles[0]?.id || '', branchId: branches[0]?.id || '' });
+        setErrors({});
+        setModalOpen(true);
+    };
+
+    const validateStaffForm = () => {
+        const newErrors: Partial<Record<keyof typeof formState, string>> = {};
+        if (!formState.name.trim()) newErrors.name = 'Name is required.';
+        
+        if (!formState.email.trim()) {
+            newErrors.email = 'Email is required.';
+        } else if (!/\S+@\S+\.\S+/.test(formState.email)) {
+            newErrors.email = 'Email format is invalid.';
+        } else if (staff.some(s => s.email.toLowerCase() === formState.email.toLowerCase())) {
+            newErrors.email = 'An account with this email already exists.';
+        }
+
+        if (!formState.username.trim()) {
+            newErrors.username = 'Username is required.';
+        } else if (staff.some(s => s.username.toLowerCase() === formState.username.toLowerCase())) {
+            newErrors.username = 'This username is already taken.';
+        }
+
+        if (!formState.password || formState.password.length < 8) {
+            newErrors.password = 'Password must be at least 8 characters long.';
+        }
+        
+        if (!formState.roleId) newErrors.roleId = 'A role must be selected.';
+        if (!formState.branchId) newErrors.branchId = 'A branch must be assigned.';
+
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleAddStaff = () => {
-        addStaff(formState);
-        setModalOpen(false);
-    }
+        if (validateStaffForm()) {
+            addStaff(formState);
+            setModalOpen(false);
+        }
+    };
     
     return (
         <SettingCard title="Staff" icon="users" description="Manage staff members and their access.">
             <div className="flex justify-end mb-4">
-                <button onClick={() => setModalOpen(true)} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="plus" className="w-5 h-5 mr-2" />Add Staff</button>
+                <button onClick={openModal} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="plus" className="w-5 h-5 mr-2" />Add Staff</button>
             </div>
              <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -338,11 +376,38 @@ const Staff: React.FC = () => {
                     <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
                         <h3 className="text-xl font-bold mb-4">Add Staff Member</h3>
                          <div className="space-y-4">
-                            <input type="text" placeholder="Full Name" onChange={e => setFormState({...formState, name: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md"/>
-                            <input type="email" placeholder="Email" onChange={e => setFormState({...formState, email: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md"/>
-                            <input type="text" placeholder="Username" onChange={e => setFormState({...formState, username: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md"/>
-                            <input type="password" placeholder="Password" onChange={e => setFormState({...formState, password: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md"/>
-                            <select onChange={e => setFormState({...formState, roleId: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md">{staffRoles.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select>
+                            <div>
+                                <label className="text-xs text-slate-400">Full Name</label>
+                                <input type="text" placeholder="Full Name" onChange={e => setFormState({...formState, name: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1"/>
+                                {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-400">Email</label>
+                                <input type="email" placeholder="Email" onChange={e => setFormState({...formState, email: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1"/>
+                                {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-400">Username</label>
+                                <input type="text" placeholder="Username" onChange={e => setFormState({...formState, username: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1"/>
+                                {errors.username && <p className="text-red-400 text-xs mt-1">{errors.username}</p>}
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-400">Password</label>
+                                <input type="password" placeholder="Password" onChange={e => setFormState({...formState, password: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1"/>
+                                {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-400">Role</label>
+                                <select onChange={e => setFormState({...formState, roleId: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1">{staffRoles.map(r=><option key={r.id} value={r.id}>{r.name}</option>)}</select>
+                                {errors.roleId && <p className="text-red-400 text-xs mt-1">{errors.roleId}</p>}
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-400">Branch</label>
+                                <select onChange={e => setFormState({...formState, branchId: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1" value={formState.branchId}>
+                                    {branches.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}
+                                </select>
+                                {errors.branchId && <p className="text-red-400 text-xs mt-1">{errors.branchId}</p>}
+                            </div>
                         </div>
                         <div className="flex justify-end gap-3 mt-6">
                             <button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-md bg-slate-600">Cancel</button>
@@ -369,7 +434,7 @@ const Staff: React.FC = () => {
 };
 
 const Roles: React.FC = () => {
-    const { staffRoles, addStaffRole, updateStaffRole, deleteStaffRole } = useAppContext();
+    const { staffRoles, addStaffRole, updateStaffRole, deleteStaffRole, setNotification } = useAppContext();
     const [isModalOpen, setModalOpen] = useState(false);
     const [editingRole, setEditingRole] = useState<StaffRole | null>(null);
     const [formName, setFormName] = useState('');
@@ -397,12 +462,23 @@ const Roles: React.FC = () => {
     };
 
     const handleSubmit = () => {
-        if (formName.trim()) {
-            if (editingRole) {
-                updateStaffRole(editingRole.id, Array.from(formPermissions));
-            } else {
-                addStaffRole({ name: formName, permissions: Array.from(formPermissions) });
+        const trimmedName = formName.trim();
+        if (!trimmedName) {
+            setNotification({ type: 'error', message: 'Role name cannot be empty.' });
+            return;
+        }
+
+        if (editingRole) {
+            // Name editing is disabled in the UI, so we only update permissions
+            updateStaffRole(editingRole.id, Array.from(formPermissions));
+            setModalOpen(false);
+        } else {
+            // Validate for new roles
+            if (staffRoles.some(role => role.name.toLowerCase() === trimmedName.toLowerCase())) {
+                setNotification({ type: 'error', message: 'A role with this name already exists.' });
+                return;
             }
+            addStaffRole({ name: trimmedName, permissions: Array.from(formPermissions) });
             setModalOpen(false);
         }
     };
@@ -429,7 +505,13 @@ const Roles: React.FC = () => {
                         <h3 className="text-xl font-bold mb-4">{editingRole ? 'Edit Role' : 'Add New Role'}</h3>
                         <div className="mb-4">
                             <label className="text-sm">Role Name</label>
-                            <input type="text" value={formName} onChange={e => setFormName(e.target.value)} className="w-full bg-slate-700 p-2 rounded-md mt-1"/>
+                            <input
+                                type="text"
+                                value={formName}
+                                onChange={e => setFormName(e.target.value)}
+                                className="w-full bg-slate-700 p-2 rounded-md mt-1 read-only:bg-slate-800 read-only:cursor-not-allowed"
+                                readOnly={!!editingRole}
+                            />
                         </div>
                          <div className="flex-grow overflow-y-auto pr-2 space-y-4">
                             {Object.entries(permissionGroups).map(([groupTitle, groupPermissions]) => (
