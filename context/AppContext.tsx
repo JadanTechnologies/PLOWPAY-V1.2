@@ -57,15 +57,63 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     const [adminRoles, setAdminRoles] = useState<AdminRole[]>([]);
     const [brandConfig, setBrandConfig] = useState<BrandConfig>({ name: "FlowPay", logoUrl: "", faviconUrl: "/vite.svg" });
     const [pageContent, setPageContent] = useState<PageContent>({ about: '', contact: '', terms: '', privacy: '', refund: '', faqs: [], helpCenter: '', apiDocs: '', blog: '' });
-    const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({} as PaymentSettings);
-    const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({} as NotificationSettings);
+    const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
+        stripe: { enabled: false, publicKey: '', secretKey: '' },
+        flutterwave: { enabled: false, publicKey: '', secretKey: '' },
+        paystack: { enabled: false, publicKey: '', secretKey: '' },
+        manual: { enabled: false, details: '' }
+    });
+    const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
+        email: {
+            provider: 'resend',
+            resend: { apiKey: '' },
+            smtp: { host: 0, port: 0, user: '', pass: '' }
+        },
+        sms: {
+            twilio: { enabled: false, accountSid: '', apiKey: '', fromNumber: '' }
+        },
+        push: {
+            firebase: { enabled: false, serverKey: '', vapidKey: '' },
+            oneSignal: { enabled: false, appId: '', apiKey: '' }
+        }
+    });
     const [systemSettings, setSystemSettings] = useState<SystemSettings>({
-        currencies: [], defaultCurrency: 'USD', languages: [], defaultLanguage: 'en', defaultTimezone: 'UTC',
-        maintenanceSettings: { isActive: false, message: '' },
-        accessControlSettings: {} as AccessControlSettings,
-        landingPageMetrics: {} as LandingPageMetrics,
-        featuredUpdate: {} as FeaturedUpdateSettings,
-        mapProviders: [], activeMapProviderId: '', aiSettings: {} as any
+        currencies: allCurrencies.map(c => ({...c, enabled: true})),
+        defaultCurrency: 'USD',
+        languages: allLanguages.map(l => ({...l, enabled: true})),
+        defaultLanguage: 'en',
+        defaultTimezone: 'UTC',
+        maintenanceSettings: { isActive: false, message: 'We are currently down for maintenance. Please check back soon.' },
+        accessControlSettings: {
+            mode: 'ALLOW_ALL',
+            ipWhitelist: [],
+            ipBlacklist: [],
+            countryWhitelist: [],
+            countryBlacklist: [],
+            regionWhitelist: [],
+            regionBlacklist: [],
+            browserWhitelist: [],
+            browserBlacklist: [],
+            deviceWhitelist: [],
+            deviceBlacklist: [],
+        },
+        landingPageMetrics: {
+            businesses: { value: 150, label: 'Businesses Trust Us' },
+            users: { value: 2500, label: 'Active Users Daily' },
+            revenue: { value: 5, label: 'Million in Revenue Processed' },
+        },
+        featuredUpdate: {
+            isActive: false,
+            title: '',
+            content: '',
+        },
+        mapProviders: [{id: 'google', name: 'Google Maps', apiKey: ''}],
+        activeMapProviderId: 'google',
+        aiSettings: {
+            provider: 'gemini',
+            gemini: { apiKey: '' },
+            openai: { apiKey: '' }
+        }
     });
     const [trucks, setTrucks] = useState<Truck[]>([]);
     const [shipments, setShipments] = useState<Shipment[]>([]);
