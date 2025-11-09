@@ -114,10 +114,10 @@ const Settings: React.FC = () => {
     const handleCurrencyToggle = (code: string) => {
         const newCurrencies = currencies.map(c => c.code === code ? { ...c, enabled: !c.enabled } : c);
         setCurrencies(newCurrencies);
-
-        // If the current default currency was just disabled, pick a new one.
-        const isDefaultDisabled = !newCurrencies.find(c => c.code === defaultCurrency)?.enabled;
-        if (isDefaultDisabled) {
+    
+        // If the currency that was just disabled IS the currently selected default currency...
+        if (code === defaultCurrency && !newCurrencies.find(c => c.code === code)?.enabled) {
+            // ...find a new default from the remaining enabled currencies.
             const newDefault = newCurrencies.find(c => c.enabled);
             if (newDefault) {
                 setDefaultCurrency(newDefault.code);
@@ -125,14 +125,13 @@ const Settings: React.FC = () => {
         }
     };
     
-    // FIX: Corrected a typo ('c' instead of 'l') and improved logic to prevent errors when disabling the default language.
     const handleLanguageToggle = (code: string) => {
         const newLanguages = languages.map(l => l.code === code ? { ...l, enabled: !l.enabled } : l);
         setLanguages(newLanguages);
         
-        // If the current default language was just disabled, pick a new one.
-        const isDefaultDisabled = !newLanguages.find(l => l.code === defaultLanguage)?.enabled;
-        if (isDefaultDisabled) {
+        // If the language that was just disabled IS the currently selected default language...
+        if (code === defaultLanguage && !newLanguages.find(l => l.code === code)?.enabled) {
+            // ...find a new default from the remaining enabled languages.
             const newDefault = newLanguages.find(l => l.enabled);
             if (newDefault) {
                 setDefaultLanguage(newDefault.code);

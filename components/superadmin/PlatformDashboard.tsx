@@ -1,6 +1,5 @@
 
 
-
 import React, { useMemo, useState } from 'react';
 import {
     ResponsiveContainer,
@@ -167,8 +166,8 @@ const PlatformDashboard: React.FC = () => {
                                 fill="#8884d8"
                                 dataKey="value"
                                 nameKey="name"
-                                // The 'percent' property from recharts can be undefined or NaN. Using || 0 handles both cases.
-                                label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                                // FIX: The 'percent' property from recharts can be undefined or NaN. Using a ternary operator provides a more robust type check for the arithmetic operation.
+                                label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
                             >
                                 {revenueByPlanData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

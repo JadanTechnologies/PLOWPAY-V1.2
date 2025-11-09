@@ -4,6 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { View } from '../App';
 import Icon from './icons/index.tsx';
 import { useAppContext } from '../hooks/useAppContext';
+import { countries, phoneCodes } from '../utils/data';
 
 interface SignUpProps {
   onNavigate: (view: View, data?: any) => void;
@@ -49,12 +50,15 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
         fullName: '',
         email: '',
         password: '',
+        country: 'US',
+        phoneCountryCode: '+1',
+        companyPhone: '',
     });
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [error, setError] = useState('');
 
-    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormState(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
@@ -96,6 +100,9 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
             password: formState.password,
             planId: premiumPlan?.id || subscriptionPlans[0]?.id || '', // Default to premium plan for trial
             companyLogoUrl: logoPreview || '',
+            country: formState.country,
+            phoneCountryCode: formState.phoneCountryCode,
+            companyPhone: formState.companyPhone,
         });
         
         if (result.success) {
@@ -143,6 +150,15 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
                                 <input id="logo-upload" name="logo" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} required/>
                             </label>
                         </div>
+                    </div>
+                    <select name="country" value={formState.country} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm">
+                        {countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+                    </select>
+                     <div className="flex">
+                        <select name="phoneCountryCode" value={formState.phoneCountryCode} onChange={handleFormChange} className="appearance-none relative block w-1/3 px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-l-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm">
+                            {phoneCodes.map(pc => <option key={pc.code} value={pc.code}>{pc.name} ({pc.code})</option>)}
+                        </select>
+                        <input name="companyPhone" type="tel" required placeholder="Company Phone" value={formState.companyPhone} onChange={handleFormChange} className="appearance-none relative block w-2/3 px-3 py-3 border-r border-t border-b border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-r-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
                     </div>
                     <input name="email" type="email" required placeholder="Email Address" value={formState.email} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
                     <div>
