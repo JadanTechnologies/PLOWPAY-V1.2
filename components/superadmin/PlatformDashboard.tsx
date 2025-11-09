@@ -165,7 +165,7 @@ const PlatformDashboard: React.FC = () => {
                                 dataKey="value"
                                 nameKey="name"
                                 // The 'percent' property from recharts can be undefined. Coalescing to 0 before multiplication prevents a runtime error.
-                                label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                                label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
                             >
                                 {revenueByPlanData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
