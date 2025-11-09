@@ -10,7 +10,7 @@ import PaymentGateways from './PaymentSettings';
 import NotificationSettings from './NotificationSettings';
 import SubscriptionManagement from './SubscriptionManagement';
 import { useAppContext } from '../../hooks/useAppContext';
-import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language, LandingPageMetrics, FeaturedUpdateSettings, Tenant } from '../../types';
+import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language, LandingPageMetrics, FeaturedUpdateSettings, Tenant, AISettings } from '../../types';
 import Icon from '../icons/index.tsx';
 import { usePermissions } from '../../hooks/usePermissions';
 import Announcements from './Announcements';
@@ -46,19 +46,34 @@ const Settings: React.FC = () => {
     const [activeTab, setActiveTab] = useState<SettingsTab>('branding');
     const { brandConfig, pageContent, systemSettings, updateBrandConfig, updatePageContent, updateFaqs, updateSystemSettings, updateLandingPageMetrics, setNotification } = useAppContext();
 
+    // State for each settings tab
     const [brandForm, setBrandForm] = useState<BrandConfig>(brandConfig);
     const [contentForm, setContentForm] = useState<Omit<PageContent, 'faqs'>>(pageContent);
     const [faqs, setFaqs] = useState<FaqItem[]>(pageContent.faqs);
-    const [systemSettingsForm, setSystemSettingsForm] = useState<SystemSettings>(systemSettings);
     const [landingMetrics, setLandingMetrics] = useState(systemSettings.landingPageMetrics);
     const [featuredUpdate, setFeaturedUpdate] = useState<FeaturedUpdateSettings>(systemSettings.featuredUpdate);
+    const [aiSettings, setAiSettings] = useState<AISettings>(systemSettings.aiSettings);
+    
+    // State for localization
+    const [currencies, setCurrencies] = useState<Currency[]>(systemSettings.currencies);
+    const [defaultCurrency, setDefaultCurrency] = useState<string>(systemSettings.defaultCurrency);
+    const [languages, setLanguages] = useState<Language[]>(systemSettings.languages);
+    const [defaultLanguage, setDefaultLanguage] = useState<string>(systemSettings.defaultLanguage);
+    const [defaultTimezone, setDefaultTimezone] = useState<string>(systemSettings.defaultTimezone);
 
-
-     useEffect(() => {
-        setSystemSettingsForm(systemSettings);
+    useEffect(() => {
+        setBrandForm(brandConfig);
+        setContentForm(pageContent);
+        setFaqs(pageContent.faqs);
         setLandingMetrics(systemSettings.landingPageMetrics);
         setFeaturedUpdate(systemSettings.featuredUpdate);
-    }, [systemSettings]);
+        setAiSettings(systemSettings.aiSettings);
+        setCurrencies(systemSettings.currencies);
+        setDefaultCurrency(systemSettings.defaultCurrency);
+        setLanguages(systemSettings.languages);
+        setDefaultLanguage(systemSettings.defaultLanguage);
+        setDefaultTimezone(systemSettings.defaultTimezone);
+    }, [brandConfig, pageContent, systemSettings]);
 
     const handleBrandSave = () => {
         if(window.confirm("Are you sure you want to save branding settings?")){
@@ -95,64 +110,43 @@ const Settings: React.FC = () => {
         }
     };
 
-    const pageContentKeys: (keyof Omit<PageContent, 'faqs'>)[] = [
-        'about', 'contact', 'terms', 'privacy', 'refund', 'helpCenter', 'apiDocs', 'blog'
-    ];
+    const pageContentKeys: (keyof Omit<PageContent, 'faqs'>)[] = [ 'about', 'contact', 'terms', 'privacy', 'refund', 'helpCenter', 'apiDocs', 'blog' ];
 
-    const handleCurrencyToggle = (code: string) => {
-        setSystemSettingsForm(prev => ({
-            ...prev,
-            currencies: prev.currencies.map(c => c.code === code ? { ...c, enabled: !c.enabled } : c)
-        }));
-    };
+    const handleCurrencyToggle = (code: string) => setCurrencies(prev => prev.map(c => c.code === code ? { ...c, enabled: !c.enabled } : c));
+    const handleLanguageToggle = (code: string) => setLanguages(prev => prev.map(l => l.code === code ? { ...l, enabled: !l.enabled } : l));
 
-    const handleDefaultCurrencyChange = (code: string) => {
-        setSystemSettingsForm(prev => ({ ...prev, defaultCurrency: code }));
-    };
-
-    const handleLanguageToggle = (code: string) => {
-        setSystemSettingsForm(prev => ({
-            ...prev,
-            languages: prev.languages.map(l => l.code === code ? { ...l, enabled: !l.enabled } : l)
-        }));
-    };
-
-    const handleDefaultLanguageChange = (code: string) => {
-        setSystemSettingsForm(prev => ({ ...prev, defaultLanguage: code }));
-    };
-    
-    const handleDefaultTimezoneChange = (value: string) => {
-        setSystemSettingsForm(prev => ({ ...prev, defaultTimezone: value }));
-    };
-
-    const handleSystemSettingsSave = () => {
-        // Validation for localization tab
-        const defaultCurrencyIsEnabled = systemSettingsForm.currencies.find(c => c.code === systemSettingsForm.defaultCurrency)?.enabled;
-        if (!defaultCurrencyIsEnabled) {
-            setNotification({ message: 'The selected default currency is disabled. Please enable it before saving.', type: 'error' });
+    const handleCurrencySave = () => {
+        if (!currencies.find(c => c.code === defaultCurrency)?.enabled) {
+            setNotification({ message: 'The selected default currency must be enabled.', type: 'error' });
             return;
         }
-        const defaultLanguageIsEnabled = systemSettingsForm.languages.find(l => l.code === systemSettingsForm.defaultLanguage)?.enabled;
-        if (!defaultLanguageIsEnabled) {
-            setNotification({ message: 'The selected default language is disabled. Please enable it before saving.', type: 'error' });
+        if (window.confirm("Are you sure you want to save currency settings?")) {
+            updateSystemSettings({ currencies, defaultCurrency });
+            setNotification({ message: 'Currency settings saved successfully!', type: 'success' });
+        }
+    };
+
+    const handleLanguageSave = () => {
+        if (!languages.find(l => l.code === defaultLanguage)?.enabled) {
+            setNotification({ message: 'The selected default language must be enabled.', type: 'error' });
             return;
         }
-        
-        if(window.confirm("Are you sure you want to save these system settings?")){
-            updateSystemSettings(systemSettingsForm);
-            setNotification({ message: 'System settings saved!', type: 'success' });
+        if (window.confirm("Are you sure you want to save language settings?")) {
+            updateSystemSettings({ languages, defaultLanguage });
+            setNotification({ message: 'Language settings saved successfully!', type: 'success' });
         }
     };
     
+    const handleTimezoneSave = () => {
+        if (window.confirm("Are you sure you want to save the default timezone?")) {
+            updateSystemSettings({ defaultTimezone });
+            setNotification({ message: 'Default timezone saved successfully!', type: 'success' });
+        }
+    };
+
     const handleMetricsChange = (metric: keyof LandingPageMetrics, field: 'value' | 'label', value: string) => {
         const isValue = field === 'value';
-        setLandingMetrics(prev => ({
-            ...prev,
-            [metric]: {
-                ...prev[metric],
-                [field]: isValue ? Number(value) : value,
-            }
-        }));
+        setLandingMetrics(prev => ({ ...prev, [metric]: { ...prev[metric], [field]: isValue ? Number(value) : value, } }));
     };
 
     const handleMetricsSave = () => {
@@ -163,8 +157,7 @@ const Settings: React.FC = () => {
     };
     
     const handleFeaturedUpdateChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFeaturedUpdate(prev => ({ ...prev, [name]: value }));
+        setFeaturedUpdate(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
     
     const handleFeaturedUpdateSave = () => {
@@ -175,26 +168,18 @@ const Settings: React.FC = () => {
     };
 
     const handleAiSettingsChange = (provider: 'gemini' | 'openai', field: 'apiKey', value: string) => {
-        setSystemSettingsForm(prev => ({
-            ...prev,
-            aiSettings: {
-                ...prev.aiSettings,
-                [provider]: {
-                    ...prev.aiSettings[provider],
-                    [field]: value,
-                }
-            }
-        }));
+        setAiSettings(prev => ({ ...prev, [provider]: { ...prev[provider], [field]: value, } }));
     };
     
     const handleAiProviderChange = (provider: 'gemini' | 'openai') => {
-        setSystemSettingsForm(prev => ({
-            ...prev,
-            aiSettings: {
-                ...prev.aiSettings,
-                provider: provider
-            }
-        }));
+        setAiSettings(prev => ({ ...prev, provider: provider }));
+    };
+
+    const handleAiSettingsSave = () => {
+        if (window.confirm("Are you sure you want to save AI settings?")) {
+            updateSystemSettings({ aiSettings });
+            setNotification({ message: 'AI settings saved successfully!', type: 'success' });
+        }
     };
 
     const renderTabContent = () => {
@@ -259,60 +244,56 @@ const Settings: React.FC = () => {
             case 'localization':
                  return (
                     <div className="space-y-8">
-                        <div>
-                            <h3 className="text-lg font-semibold text-white mb-2">Enabled Currencies</h3>
-                            <div className="space-y-2 bg-slate-900/50 p-4 rounded-md border border-slate-700">
-                                {systemSettingsForm.currencies.map(currency => (
+                        {/* Currency Settings */}
+                        <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
+                            <h3 className="text-lg font-semibold text-white">Currency Settings</h3>
+                            <div className="space-y-2">
+                                {currencies.map(currency => (
                                     <div key={currency.code} className="flex justify-between items-center p-2 rounded-md hover:bg-slate-700/50">
-                                        <div>
-                                            <span className="font-semibold">{currency.name}</span>
-                                            <span className="text-slate-400 ml-2">({currency.code} - {currency.symbol})</span>
-                                        </div>
+                                        <div><span className="font-semibold">{currency.name}</span><span className="text-slate-400 ml-2">({currency.code} - {currency.symbol})</span></div>
                                         <Toggle enabled={currency.enabled} onChange={() => handleCurrencyToggle(currency.code)} />
                                     </div>
                                 ))}
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400">Default Currency</label>
+                                <select value={defaultCurrency} onChange={e => setDefaultCurrency(e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3">
+                                    {currencies.filter(c => c.enabled).map(c => <option key={c.code} value={c.code}>{c.name} ({c.code})</option>)}
+                                </select>
+                            </div>
+                            <div className="text-right"><button onClick={handleCurrencySave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Currency Settings</button></div>
                         </div>
-                        <div>
-                            <label htmlFor="defaultCurrency" className="block text-sm font-medium text-slate-400">Default Currency</label>
-                            <select id="defaultCurrency" value={systemSettingsForm.defaultCurrency} onChange={e => handleDefaultCurrencyChange(e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500">
-                                {systemSettingsForm.currencies.filter(c => c.enabled).map(c => (
-                                    <option key={c.code} value={c.code}>{c.name} ({c.code})</option>
-                                ))}
-                            </select>
-                        </div>
-                        <hr className="border-slate-700" />
-                        <div>
-                            <h3 className="text-lg font-semibold text-white mb-2">Enabled Languages</h3>
-                            <div className="space-y-2 bg-slate-900/50 p-4 rounded-md border border-slate-700">
-                                {systemSettingsForm.languages.map(lang => (
+
+                        {/* Language Settings */}
+                        <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
+                            <h3 className="text-lg font-semibold text-white">Language Settings</h3>
+                            <div className="space-y-2">
+                                {languages.map(lang => (
                                     <div key={lang.code} className="flex justify-between items-center p-2 rounded-md hover:bg-slate-700/50">
-                                        <div>
-                                            <span className="font-semibold">{lang.name}</span>
-                                            <span className="text-slate-400 ml-2">({lang.code})</span>
-                                        </div>
+                                        <div><span className="font-semibold">{lang.name}</span><span className="text-slate-400 ml-2">({lang.code})</span></div>
                                         <Toggle enabled={lang.enabled} onChange={() => handleLanguageToggle(lang.code)} />
                                     </div>
                                 ))}
                             </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400">Default Language</label>
+                                <select value={defaultLanguage} onChange={e => setDefaultLanguage(e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3">
+                                    {languages.filter(l => l.enabled).map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
+                                </select>
+                            </div>
+                            <div className="text-right"><button onClick={handleLanguageSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Language Settings</button></div>
                         </div>
-                        <div>
-                            <label htmlFor="defaultLanguage" className="block text-sm font-medium text-slate-400">Default Language</label>
-                            <select id="defaultLanguage" value={systemSettingsForm.defaultLanguage} onChange={e => handleDefaultLanguageChange(e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500">
-                                {systemSettingsForm.languages.filter(l => l.enabled).map(l => (
-                                    <option key={l.code} value={l.code}>{l.name}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <hr className="border-slate-700" />
-                        <div>
-                             <label htmlFor="defaultTimezone" className="block text-sm font-medium text-slate-400">Default Platform Timezone</label>
-                             <select id="defaultTimezone" value={systemSettingsForm.defaultTimezone} onChange={e => handleDefaultTimezoneChange(e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500">
-                                 {allTimezones.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-                             </select>
-                        </div>
-                        <div className="text-right">
-                            <button onClick={handleSystemSettingsSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Localization Settings</button>
+                        
+                        {/* Timezone Settings */}
+                        <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
+                             <h3 className="text-lg font-semibold text-white">Timezone Settings</h3>
+                             <div>
+                                 <label className="block text-sm font-medium text-slate-400">Default Platform Timezone</label>
+                                 <select value={defaultTimezone} onChange={e => setDefaultTimezone(e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3">
+                                     {allTimezones.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                                 </select>
+                            </div>
+                             <div className="text-right"><button onClick={handleTimezoneSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Timezone</button></div>
                         </div>
                     </div>
                 );
@@ -322,22 +303,22 @@ const Settings: React.FC = () => {
                         <div>
                             <label className="block text-sm font-medium text-slate-400 mb-2">Default AI Provider</label>
                             <div className="flex items-center bg-slate-900/50 border border-slate-700 rounded-lg p-1.5 max-w-xs">
-                                <button onClick={() => handleAiProviderChange('gemini')} className={`flex-1 px-3 py-1.5 rounded-md text-sm font-semibold ${systemSettingsForm.aiSettings.provider === 'gemini' ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700'}`}>Gemini</button>
-                                <button onClick={() => handleAiProviderChange('openai')} className={`flex-1 px-3 py-1.5 rounded-md text-sm font-semibold ${systemSettingsForm.aiSettings.provider === 'openai' ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700'}`}>OpenAI</button>
+                                <button onClick={() => handleAiProviderChange('gemini')} className={`flex-1 px-3 py-1.5 rounded-md text-sm font-semibold ${aiSettings.provider === 'gemini' ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700'}`}>Gemini</button>
+                                <button onClick={() => handleAiProviderChange('openai')} className={`flex-1 px-3 py-1.5 rounded-md text-sm font-semibold ${aiSettings.provider === 'openai' ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700'}`}>OpenAI</button>
                             </div>
                         </div>
                          <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
                             <h4 className="font-semibold text-white">Google Gemini Settings</h4>
                             <label className="block text-sm font-medium text-slate-400">API Key</label>
-                            <input type="password" value={systemSettingsForm.aiSettings.gemini.apiKey} onChange={e => handleAiSettingsChange('gemini', 'apiKey', e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
+                            <input type="password" value={aiSettings.gemini.apiKey} onChange={e => handleAiSettingsChange('gemini', 'apiKey', e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
                         </div>
                         <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
                             <h4 className="font-semibold text-white">OpenAI Settings</h4>
                             <label className="block text-sm font-medium text-slate-400">API Key</label>
-                             <input type="password" value={systemSettingsForm.aiSettings.openai.apiKey} onChange={e => handleAiSettingsChange('openai', 'apiKey', e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
+                             <input type="password" value={aiSettings.openai.apiKey} onChange={e => handleAiSettingsChange('openai', 'apiKey', e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
                         </div>
                         <div className="text-right">
-                            <button onClick={handleSystemSettingsSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save AI Settings</button>
+                            <button onClick={handleAiSettingsSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save AI Settings</button>
                         </div>
                     </div>
                 );
@@ -412,7 +393,6 @@ const Settings: React.FC = () => {
     );
 };
 
-// FIX: Moved SuperAdminPanelProps interface definition before its use.
 interface SuperAdminPanelProps {
   onImpersonate: (tenant: Tenant) => void;
 }
@@ -492,5 +472,4 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onImpersonate }) => {
   );
 };
 
-// FIX: Added default export for the SuperAdminPanel component.
 export default SuperAdminPanel;

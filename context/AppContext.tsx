@@ -239,7 +239,7 @@ const mockAdminUsers = generateMockAdminUsers();
 const mockTrackerProviders: TrackerProvider[] = [
     { id: 'teltonika', name: 'Teltonika', apiKey: '', apiEndpoint: 'https://teltonika-api.com/v1' },
     { id: 'samsara', name: 'Samsara', apiKey: '', apiEndpoint: 'https://api.samsara.com' },
-    { id: 'geotab', name: 'Geotab', apiKey: '', apiEndpoint: 'https://my.geotab.com/api' },
+    { id: 'geotab', name: 'Geotab', apiKey: '', apiEndpoint: 'https://my.geotab.com' },
     { id: 'keeptruckin', name: 'KeepTruckin (Motive)', apiKey: '', apiEndpoint: 'https://api.keeptruckin.com' },
     { id: 'other', name: 'Other Provider', apiKey: '', apiEndpoint: '' },
 ];
@@ -451,7 +451,6 @@ const mockSystemSettings: SystemSettings = {
         { code: 'fr', name: 'Français', enabled: false },
     ],
     defaultLanguage: 'en',
-    // FIX: Added missing defaultTimezone property to satisfy the SystemSettings type.
     defaultTimezone: 'US/Eastern',
     maintenanceSettings: {
         isActive: false,
@@ -487,7 +486,6 @@ const mockSystemSettings: SystemSettings = {
         { id: 'mapbox', name: 'Mapbox', apiKey: '' },
     ],
     activeMapProviderId: 'google-maps',
-    // FIX: Added missing aiSettings property to satisfy the SystemSettings type.
     aiSettings: {
         provider: 'gemini',
         gemini: { apiKey: '' },
@@ -1011,6 +1009,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
     // FIX: Define activateSubscription as a standalone function to resolve scoping issues.
     const activateSubscription = (tenantId: string, planId: string, billingCycle: 'monthly' | 'yearly') => {
          setTenants(prev => prev.map(t => t.id === tenantId ? {...t, status: 'ACTIVE', planId, billingCycle, trialEndDate: undefined } : t));
+         setNotification({ message: 'Subscription activated successfully!', type: 'success'});
     };
 
     const updateTenant = (tenantId: string, tenantData: Partial<Omit<Tenant, 'id' | 'joinDate'>>) => {
@@ -1077,26 +1076,33 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                 } : p));
             },
             addAdminUser: (userData: Omit<AdminUser, 'id' | 'joinDate' | 'status' | 'lastLoginIp' | 'lastLoginDate'>) => {
-                const newUser: AdminUser = {
-                    ...userData,
-                    id: `admin-${Date.now()}`,
-                    joinDate: new Date(),
-                    status: 'ACTIVE'
-                };
+                const newUser: AdminUser = { ...userData, id: `admin-${Date.now()}`, joinDate: new Date(), status: 'ACTIVE' };
                 setAdminUsers(prev => [...prev, newUser]);
+                setNotification({ message: 'Team member added successfully.', type: 'success' });
             },
             updateAdminUser: (userId: string, userData: Partial<Omit<AdminUser, 'id' | 'joinDate'>>) => {
                 setAdminUsers(prev => prev.map(u => u.id === userId ? { ...u, ...userData } : u));
+                setNotification({ message: 'Team member updated successfully.', type: 'success' });
             },
             updateAdminRole: (roleId: string, permissions: Permission[]) => {
                 setAdminRoles(prev => prev.map(r => r.id === roleId ? { ...r, permissions } : r));
+                setNotification({ message: 'Admin role updated successfully.', type: 'success' });
             },
             addAdminRole: (roleData: Omit<AdminRole, 'id'>) => {
                 const newRole: AdminRole = { ...roleData, id: `role-${Date.now()}`};
                 setAdminRoles(prev => [...prev, newRole]);
+                setNotification({ message: `Admin role "${newRole.name}" created successfully.`, type: 'success' });
             },
             deleteAdminRole: (roleId: string) => {
+                const roleToDelete = adminRoles.find(r => r.id === roleId);
+                if (!roleToDelete) return setNotification({ message: 'Role not found.', type: 'error' });
+                const isDefault = ['Admin', 'Support', 'Developer'].includes(roleToDelete.name);
+                if (isDefault) return setNotification({ message: 'Cannot delete a default role.', type: 'error' });
+                const isUsed = adminUsers.some(u => u.roleId === roleId);
+                if (isUsed) return setNotification({ message: 'Cannot delete role as it is assigned to users.', type: 'error' });
+                
                 setAdminRoles(prev => prev.filter(r => r.id !== roleId));
+                setNotification({ message: `Role "${roleToDelete.name}" deleted successfully.`, type: 'success' });
             },
             updateBrandConfig: (newConfig: Partial<BrandConfig>) => setBrandConfig(prev => ({...prev, ...newConfig})),
             updatePageContent: (newPageContent: Partial<Omit<PageContent, 'faqs'>>) => setPageContent(prev => ({...prev, ...newPageContent})),
@@ -1109,6 +1115,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             updateLandingPageMetrics: (metrics: LandingPageMetrics) => setSystemSettings(prev => ({...prev, landingPageMetrics: metrics})),
             updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout' | 'timezone'>>) => {
                  setTenants(prev => prev.map(t => t.id === currentTenant?.id ? { ...t, ...newSettings } : t));
+                 setNotification({ message: 'Settings saved.', type: 'success' });
             },
             updateTenantLogisticsConfig: (config: { activeTrackerProviderId: string; }) => {
                 setTenants(prev => prev.map(t => t.id === currentTenant?.id ? { ...t, logisticsConfig: config } : t));
@@ -1116,11 +1123,18 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             updateTenantAutomations: (newAutomations: Partial<TenantAutomations>) => {
                  setTenants(prev => prev.map(t => t.id === currentTenant?.id ? { ...t, automations: {...t.automations, ...newAutomations} } : t));
             },
-            addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => setSubscriptionPlans(prev => [...prev, {...planData, id: `plan-${Date.now()}`}]),
+            addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => {
+                setSubscriptionPlans(prev => [...prev, {...planData, id: `plan-${Date.now()}`}]);
+                setNotification({ message: 'Subscription plan added.', type: 'success' });
+            },
             updateSubscriptionPlan: (planId: string, planData: Partial<Omit<SubscriptionPlan, 'id'>>) => {
                 setSubscriptionPlans(prev => prev.map(p => p.id === planId ? {...p, ...planData} : p));
+                setNotification({ message: 'Subscription plan updated.', type: 'success' });
             },
-            deleteSubscriptionPlan: (planId: string) => setSubscriptionPlans(prev => prev.filter(p => p.id !== planId)),
+            deleteSubscriptionPlan: (planId: string) => {
+                setSubscriptionPlans(prev => prev.filter(p => p.id !== planId));
+                setNotification({ message: 'Subscription plan deleted.', type: 'success' });
+            },
             addTruck: (truckData: Omit<Truck, 'id' | 'lastUpdate'>) => setTrucks(prev => [...prev, {...truckData, id: `truck-${Date.now()}`, lastUpdate: new Date()}]),
             updateTruck: (truckId: string, truckData: Partial<Omit<Truck, 'id' | 'lastUpdate'>>) => {
                 setTrucks(prev => prev.map(t => t.id === truckId ? { ...t, ...truckData } : t));
@@ -1166,6 +1180,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             addTenant: async (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'>): Promise<{ success: boolean; message: string }> => {
                 const newTenant: Tenant = { ...tenantData, id: `tenant-${Date.now()}`, joinDate: new Date(), status: 'UNVERIFIED', isVerified: false, billingCycle: 'monthly' };
                 setTenants(prev => [newTenant, ...prev]);
+                setNotification({ message: 'Tenant created successfully! They will need to verify their email.', type: 'success'});
                 return { success: true, message: 'Tenant created!' };
             },
             updateTenant,
@@ -1205,9 +1220,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             },
             extendTrial: (tenantId: string, days: number) => {
                 setTenants(prev => prev.map(t => {
-                    if (t.id === tenantId && t.trialEndDate) {
-                        const newEndDate = new Date(t.trialEndDate);
+                    if (t.id === tenantId && (t.trialEndDate || t.status === 'TRIAL')) {
+                        const newEndDate = new Date(t.trialEndDate || Date.now());
                         newEndDate.setDate(newEndDate.getDate() + days);
+                        setNotification({ message: 'Tenant trial extended successfully.', type: 'success'});
                         return { ...t, trialEndDate: newEndDate };
                     }
                     return t;
