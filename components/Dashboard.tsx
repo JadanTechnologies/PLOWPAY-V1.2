@@ -7,6 +7,7 @@ import Icon from './icons/index.tsx';
 import { Sale } from '../types';
 import { useCurrency } from '../hooks/useCurrency';
 import { useTranslation } from '../hooks/useTranslation';
+import AIInsights from './AIInsights';
 
 const MetricCard: React.FC<{ title: string; value: string; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-200 dark:border-slate-700">
@@ -53,6 +54,8 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      <AIInsights />
+      
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <MetricCard title={t('totalRevenue')} value={formatCurrency(totalRevenue)} iconName="cash" iconBgColor="bg-gradient-to-br from-teal-500 to-cyan-600" />
         <MetricCard title="Sales Volume" value={salesVolume.toLocaleString()} iconName="pos" iconBgColor="bg-gradient-to-br from-green-500 to-emerald-600" />

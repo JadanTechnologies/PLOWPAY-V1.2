@@ -1,8 +1,10 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Truck, Shipment, TrackerProvider, Customer } from '../../types';
 import Icon from './icons/index.tsx';
 import GoogleMap from './GoogleMap.tsx';
+import ConfirmationModal from './ConfirmationModal';
 
 type ModalState = 'NONE' | 'TRUCK' | 'SHIPMENT' | 'SELL_SHIPMENT';
 
@@ -39,7 +41,7 @@ const getStatusBadge = (status: Truck['status'] | Shipment['status']) => {
 const LogisticsManagement: React.FC = () => {
     const { 
       trucks, shipments, trackerProviders, branches, currentTenant,
-      addTruck, 
+      addTruck, deleteTruck,
       updateTrackerProviders, sellShipment, receiveShipment,
       updateTruckVitals, updateTenantLogisticsConfig
     } = useAppContext();
@@ -48,6 +50,8 @@ const LogisticsManagement: React.FC = () => {
     const [modal, setModal] = useState<ModalState>('NONE');
     const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
     const [isMapModalOpen, setMapModalOpen] = useState(false);
+    const [deletingTruck, setDeletingTruck] = useState<Truck | null>(null);
+
 
     // Form states
     const [truckForm, setTruckForm] = useState({ licensePlate: '', driverName: '', status: 'IDLE' as Truck['status'], maxLoad: 20000 });
@@ -192,8 +196,9 @@ const LogisticsManagement: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="p-3">{truck.currentLocation.address}</td><td className="p-3 text-gray-400">{truck.lastUpdate.toLocaleString()}</td><td className="p-3 text-center">{getStatusBadge(truck.status)}</td>
-                                        <td className="p-3 text-center">
+                                        <td className="p-3 text-center space-x-3">
                                             <button onClick={() => updateTruckVitals(truck.id)} className="text-cyan-400 hover:text-cyan-300 font-semibold text-xs">Simulate Update</button>
+                                            <button onClick={() => setDeletingTruck(truck)} className="text-rose-400 hover:text-rose-300 font-semibold text-xs">Delete</button>
                                         </td>
                                     </tr>
                                 ))}
@@ -351,6 +356,19 @@ const LogisticsManagement: React.FC = () => {
                     </div>
                 </div>
              )}
+            <ConfirmationModal
+                isOpen={!!deletingTruck}
+                onClose={() => setDeletingTruck(null)}
+                onConfirm={() => {
+                    if (deletingTruck) {
+                        deleteTruck(deletingTruck.id);
+                    }
+                }}
+                title={`Delete Truck: ${deletingTruck?.licensePlate}`}
+                confirmText="Delete"
+            >
+                Are you sure you want to delete this truck? This action cannot be undone.
+            </ConfirmationModal>
         </div>
     );
 };

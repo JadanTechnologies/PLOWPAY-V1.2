@@ -1,5 +1,6 @@
+
 import React from 'react';
-import Icon from './icons';
+import Icon from './icons/index.tsx';
 
 interface ConfirmationModalProps {
     isOpen: boolean;

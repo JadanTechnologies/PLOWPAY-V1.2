@@ -118,27 +118,26 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, billingCycle, onComplete }) =
                             <p className="ml-4 text-lg">Processing payment for {selectedMethod}...</p>
                         </div>
                     )}
-                    {status === 'IDLE' && (
-                        <div className="space-y-4">
-                            {paymentSettings.stripe.enabled && <PaymentMethodButton name="Stripe" icon="credit-card" />}
-                            {paymentSettings.flutterwave.enabled && <PaymentMethodButton name="Flutterwave" icon="credit-card" />}
-                            {paymentSettings.paystack.enabled && <PaymentMethodButton name="Paystack" icon="credit-card" />}
-                            {paymentSettings.manual.enabled && (
-                                <div className="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
-                                    <h4 className="font-semibold mb-2">Manual Bank Transfer</h4>
-                                    <p className="text-sm text-gray-400 whitespace-pre-wrap mb-4">{paymentSettings.manual.details}</p>
-                                    <div>
-                                        <label className="text-sm font-medium text-gray-300">Upload Proof of Payment</label>
-                                        <input type="file" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-indigo-300 hover:file:bg-gray-600"/>
-                                        {proofOfPayment && <p className="text-xs text-green-400 mt-1">File selected: {proofOfPayment.name}</p>}
-                                    </div>
-                                    <button onClick={() => handlePayment('Manual')} disabled={status === 'PROCESSING'} className="w-full mt-4 p-3 bg-indigo-600 rounded-lg hover:bg-indigo-500 font-semibold transition-colors disabled:opacity-50">
-                                        I have paid, Submit for Review
-                                    </button>
+                    {/* FIX: Replaced conditional rendering with a conditional class to avoid TS type narrowing error. */}
+                    <div className={`space-y-4 ${status !== 'IDLE' ? 'hidden' : ''}`}>
+                        {paymentSettings.stripe.enabled && <PaymentMethodButton name="Stripe" icon="credit-card" />}
+                        {paymentSettings.flutterwave.enabled && <PaymentMethodButton name="Flutterwave" icon="credit-card" />}
+                        {paymentSettings.paystack.enabled && <PaymentMethodButton name="Paystack" icon="credit-card" />}
+                        {paymentSettings.manual.enabled && (
+                            <div className="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+                                <h4 className="font-semibold mb-2">Manual Bank Transfer</h4>
+                                <p className="text-sm text-gray-400 whitespace-pre-wrap mb-4">{paymentSettings.manual.details}</p>
+                                <div>
+                                    <label className="text-sm font-medium text-gray-300">Upload Proof of Payment</label>
+                                    <input type="file" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-indigo-300 hover:file:bg-gray-600"/>
+                                    {proofOfPayment && <p className="text-xs text-green-400 mt-1">File selected: {proofOfPayment.name}</p>}
                                 </div>
-                            )}
-                        </div>
-                    )}
+                                <button onClick={() => handlePayment('Manual')} disabled={status === 'PROCESSING'} className="w-full mt-4 p-3 bg-indigo-600 rounded-lg hover:bg-indigo-500 font-semibold transition-colors disabled:opacity-50">
+                                    I have paid, Submit for Review
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

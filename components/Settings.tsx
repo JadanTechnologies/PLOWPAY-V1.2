@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
-import { StaffRole, TenantPermission, TenantAutomations, Branch } from '../types';
+import { Staff, StaffRole, TenantPermission, TenantAutomations, Branch } from '../types';
 import { allCurrencies, allLanguages } from '../utils/data';
 import ConfirmationModal from './ConfirmationModal';
 import GoogleMap from './GoogleMap';
@@ -287,8 +288,9 @@ const Branches: React.FC = () => {
 }
 
 const Staff: React.FC = () => {
-    const { staff, staffRoles, addStaff } = useAppContext();
+    const { staff, staffRoles, addStaff, deleteStaff } = useAppContext();
     const [isModalOpen, setModalOpen] = useState(false);
+    const [deletingStaff, setDeletingStaff] = useState<Staff | null>(null);
     const [formState, setFormState] = useState({ name: '', email: '', username: '', password: '', roleId: staffRoles[0]?.id || '', branchId: '' });
     
     const roleMap = new Map(staffRoles.map(r => [r.id, r.name]));
@@ -312,7 +314,10 @@ const Staff: React.FC = () => {
                         {staff.map(s => (
                             <tr key={s.id} className="border-b border-slate-700 hover:bg-slate-700/50">
                                 <td className="p-3">{s.name}</td><td className="p-3">{s.email}</td><td className="p-3">{roleMap.get(s.roleId)}</td>
-                                <td className="p-3 text-center"><button className="text-yellow-400 font-semibold text-sm">Edit</button></td>
+                                <td className="p-3 text-center space-x-3">
+                                    <button className="text-yellow-400 font-semibold text-sm">Edit</button>
+                                    <button onClick={() => setDeletingStaff(s)} className="text-rose-400 font-semibold text-sm">Delete</button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
@@ -336,6 +341,19 @@ const Staff: React.FC = () => {
                     </div>
                 </div>
             )}
+             <ConfirmationModal
+                isOpen={!!deletingStaff}
+                onClose={() => setDeletingStaff(null)}
+                onConfirm={() => {
+                    if (deletingStaff) {
+                        deleteStaff(deletingStaff.id);
+                    }
+                }}
+                title={`Delete Staff Member: ${deletingStaff?.name}`}
+                confirmText="Delete"
+            >
+                Are you sure you want to delete this staff member? This action cannot be undone.
+            </ConfirmationModal>
         </SettingCard>
     );
 };
@@ -432,7 +450,7 @@ const Roles: React.FC = () => {
                 title={`Delete Role: ${roleToDelete?.name}`}
                 confirmText="Delete"
             >
-                Are you sure you want to delete this role? This cannot be undone.
+                Are you sure you want to delete this role? This action cannot be undone.
             </ConfirmationModal>
          </SettingCard>
     );

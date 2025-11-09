@@ -696,6 +696,7 @@ export interface AppContextType {
   addBranch: (branchName: string) => void;
   updateBranchLocation: (branchId: string, location: { lat: number; lng: number; }) => void;
   addStaff: (staffData: Omit<Staff, 'id'>) => void;
+  deleteStaff: (staffId: string) => void;
   sellShipment: (shipmentId: string, customer: Pick<Customer, 'name' | 'phone'>) => Promise<{success: boolean; message: string;}>;
   receiveShipment: (shipmentId: string) => void;
   addPurchaseOrder: (poData: Omit<PurchaseOrder, 'id' | 'poNumber' | 'total' | 'createdAt'>) => void;
@@ -712,6 +713,7 @@ export interface AppContextType {
   addAnnouncement: (announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => void;
   markAnnouncementAsRead: (announcementId: string, userId: string) => void;
   addCustomer: (customerData: Omit<Customer, 'id' | 'creditBalance'>) => void;
+  deleteCustomer: (customerId: string) => void;
   recordCreditPayment: (customerId: string, amount: number) => void;
   addDeposit: (depositData: Omit<Deposit, 'id' | 'date' | 'status'>) => Promise<{success: boolean, message: string}>;
   updateDeposit: (depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes' | 'appliedSaleId'>>) => void;
@@ -737,6 +739,7 @@ export interface AppContextType {
   updateBlogPost: (postId: string, postData: Partial<Omit<BlogPost, 'id' | 'authorId' | 'authorName' | 'createdAt'>>) => void;
   deleteBlogPost: (postId: string) => void;
   updateLastLogin: (email: string, ip: string) => void;
+  generateInsights: () => Promise<string>;
   impersonatedUser: Tenant | null;
   stopImpersonating: () => void;
   logout: () => void;

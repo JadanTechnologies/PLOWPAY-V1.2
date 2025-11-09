@@ -274,7 +274,8 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
 interface HeldOrder {
   id: number;
   cart: CartItem[];
-  customer: { name: string; phone?: string; };
+  // FIX: Added 'id' to the customer object in HeldOrder to match the customer state type.
+  customer: { id: string; name: string; phone?: string; };
   discount: number;
   heldAt: Date;
 }
@@ -673,7 +674,8 @@ const PointOfSale: React.FC = () => {
     const orderToRetrieve = heldOrders.find(o => o.id === id);
     if (orderToRetrieve) {
       setCart(orderToRetrieve.cart);
-      setCustomer(orderToRetrieve.customer);
+      // FIX: Ensure customer object matches state type by providing a fallback for optional phone property.
+      setCustomer({ ...orderToRetrieve.customer, phone: orderToRetrieve.customer.phone || '' });
       setDiscount(orderToRetrieve.discount);
       if (orderToRetrieve.cart.length > 0 && orderToRetrieve.cart[0].quantity < 0) {
         setIsReturnMode(true);
@@ -736,7 +738,8 @@ const PointOfSale: React.FC = () => {
   };
 
   const handleSelectCustomer = (selected: {id: string; name: string, phone?: string}) => {
-    setCustomer(selected);
+    // FIX: Ensure customer object matches state type by providing a fallback for optional phone property.
+    setCustomer({ ...selected, phone: selected.phone || '' });
     setIsCustomerSearchOpen(false);
   };
 

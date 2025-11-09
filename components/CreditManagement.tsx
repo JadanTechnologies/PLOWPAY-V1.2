@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Customer } from '../types';
 import Icon from './icons/index.tsx';
 import { useCurrency } from '../hooks/useCurrency';
+import ConfirmationModal from './ConfirmationModal';
 
 const CreditManagement: React.FC = () => {
-    const { customers, recordCreditPayment, addCustomer } = useAppContext();
+    const { customers, recordCreditPayment, addCustomer, deleteCustomer } = useAppContext();
     const { formatCurrency } = useCurrency();
 
     const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
     const [isCustomerModalOpen, setCustomerModalOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+    const [deletingCustomer, setDeletingCustomer] = useState<Customer | null>(null);
     const [paymentAmount, setPaymentAmount] = useState('');
     const [customerForm, setCustomerForm] = useState({ name: '', phone: '', email: '', address: '', creditLimit: 0 });
 
@@ -37,6 +40,8 @@ const CreditManagement: React.FC = () => {
             setCustomerForm({ name: '', phone: '', email: '', address: '', creditLimit: 0 });
         }
     };
+    
+    const customerToDelete = useMemo(() => customers.find(c => c.id === deletingCustomer?.id), [deletingCustomer, customers]);
 
     return (
         <div className="space-y-6">
@@ -66,9 +71,12 @@ const CreditManagement: React.FC = () => {
                                     <td className="p-3 text-gray-400">{customer.phone || 'N/A'}</td>
                                     <td className={`p-3 text-right font-mono ${customer.creditBalance > 0 ? 'text-red-400' : 'text-green-400'}`}>{formatCurrency(customer.creditBalance)}</td>
                                     <td className="p-3 text-right font-mono">{customer.creditLimit ? formatCurrency(customer.creditLimit) : 'N/A'}</td>
-                                    <td className="p-3 text-center">
+                                    <td className="p-3 text-center space-x-3">
                                         <button onClick={() => openPaymentModal(customer)} className="text-green-400 hover:text-green-300 font-semibold px-2 py-1 rounded-md text-sm" disabled={customer.creditBalance <= 0}>
                                             Record Payment
+                                        </button>
+                                        <button onClick={() => setDeletingCustomer(customer)} className="text-rose-400 hover:text-rose-300 font-semibold px-2 py-1 rounded-md text-sm">
+                                            Delete
                                         </button>
                                     </td>
                                 </tr>
@@ -111,6 +119,20 @@ const CreditManagement: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <ConfirmationModal
+                isOpen={!!deletingCustomer}
+                onClose={() => setDeletingCustomer(null)}
+                onConfirm={() => {
+                    if (deletingCustomer) {
+                        deleteCustomer(deletingCustomer.id);
+                    }
+                }}
+                title={`Delete Customer: ${deletingCustomer?.name}`}
+                confirmText="Delete"
+            >
+                Are you sure you want to delete this customer? This action cannot be undone.
+            </ConfirmationModal>
         </div>
     );
 };

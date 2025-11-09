@@ -83,7 +83,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
     { page: 'BILLING', icon: 'credit-card', label: t('billing') },
   ];
   
-  const bottomNavItems = [
+  // FIX: Added explicit type annotation to ensure permission property is typed as TenantPermission.
+  const bottomNavItems: { page: Page; icon: string; label: string; permission?: TenantPermission }[] = [
       { page: 'AUDIT_LOGS', icon: 'shield-check', label: t('auditLogs'), permission: 'viewAuditLogs' },
       { page: 'PROFILE', icon: 'user', label: t('profile') },
       { page: 'SETTINGS', icon: 'settings', label: t('settings'), permission: 'accessSettings' },
