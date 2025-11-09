@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
+import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
-import { Staff, StaffRole, TenantPermission, TenantAutomations, Branch } from '../types';
+import { Staff as StaffType, StaffRole, TenantPermission, TenantAutomations, Branch } from '../types';
 import { allCurrencies, allLanguages, allTimezones } from '../utils/data';
 import ConfirmationModal from './ConfirmationModal';
 import GoogleMap from './GoogleMap';
@@ -343,7 +344,7 @@ const Branches: React.FC = () => {
 const Staff: React.FC = () => {
     const { staff, staffRoles, branches, addStaff, deleteStaff } = useAppContext();
     const [isModalOpen, setModalOpen] = useState(false);
-    const [deletingStaff, setDeletingStaff] = useState<Staff | null>(null);
+    const [deletingStaff, setDeletingStaff] = useState<StaffType | null>(null);
     const [formState, setFormState] = useState({ name: '', email: '', username: '', password: '', roleId: staffRoles[0]?.id || '', branchId: branches[0]?.id || '' });
     const [errors, setErrors] = useState<Partial<Record<keyof typeof formState, string>>>({});
     

@@ -1,3 +1,6 @@
+// FIX: Import React to provide type definitions for React.Dispatch and React.SetStateAction.
+import React from 'react';
+
 // FIX: The 'L' variable from Leaflet.js needs to be declared in the global scope for TypeScript to recognize it on the 'window' object across all files.
 declare global {
   var L: any;
