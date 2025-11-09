@@ -1,8 +1,10 @@
+
+
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
+import { useAppContext } from '../../hooks/useAppContext';
 import { PurchaseOrder, PurchaseOrderItem } from '../types';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../hooks/useCurrency';
+import { useCurrency } from '../../hooks/useCurrency';
 
 const PurchaseOrderManagement: React.FC = () => {
     const { purchaseOrders, suppliers, branches, products, addPurchaseOrder, updatePurchaseOrderStatus } = useAppContext();
@@ -79,28 +81,28 @@ const PurchaseOrderManagement: React.FC = () => {
     };
 
     return (
-        <div className="p-6 bg-gray-800 rounded-lg shadow-md">
+        <div className="p-6 bg-slate-800 rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Purchase Orders</h2>
-                <button onClick={handleOpenModal} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
+                <button onClick={handleOpenModal} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
                     <Icon name="plus" className="w-5 h-5 mr-2" />
                     New Purchase Order
                 </button>
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="border-b border-gray-700">
+                    <thead className="border-b border-slate-700">
                         <tr>
                             <th className="p-3">PO Number</th><th className="p-3">Supplier</th><th className="p-3">Destination</th><th className="p-3">Date</th><th className="p-3 text-right">Total</th><th className="p-3 text-center">Status</th><th className="p-3 text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {purchaseOrders.map(po => (
-                            <tr key={po.id} className="border-b border-gray-700 hover:bg-gray-700/50">
+                            <tr key={po.id} className="border-b border-slate-700 hover:bg-slate-700/50">
                                 <td className="p-3 font-mono">{po.poNumber}</td>
                                 <td className="p-3">{supplierMap.get(po.supplierId)}</td>
                                 <td className="p-3">{branchMap.get(po.destinationBranchId)}</td>
-                                <td className="p-3 text-sm text-gray-400">{po.createdAt.toLocaleDateString()}</td>
+                                <td className="p-3 text-sm text-slate-400">{po.createdAt.toLocaleDateString()}</td>
                                 <td className="p-3 text-right font-mono">{formatCurrency(po.total)}</td>
                                 <td className="p-3 text-center">{getStatusBadge(po.status)}</td>
                                 <td className="p-3 text-center">
@@ -114,29 +116,29 @@ const PurchaseOrderManagement: React.FC = () => {
             </div>
              {isModalOpen && (
                  <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-                    <div className="bg-gray-800 rounded-lg p-6 w-full max-w-3xl max-h-[90vh] flex flex-col">
+                    <div className="bg-slate-800 rounded-lg p-6 w-full max-w-3xl max-h-[90vh] flex flex-col">
                         <h3 className="text-xl font-bold mb-4 text-white">New Purchase Order</h3>
                         <div className="flex-grow overflow-y-auto pr-2 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
-                                <div><label className="text-sm">Supplier</label><select name="supplierId" value={formState.supplierId} onChange={e => setFormState({...formState, supplierId: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1">{suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
-                                <div><label className="text-sm">Destination Branch</label><select name="destinationBranchId" value={formState.destinationBranchId} onChange={e => setFormState({...formState, destinationBranchId: e.target.value})} className="w-full bg-gray-700 p-2 rounded-md mt-1">{branches.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+                                <div><label className="text-sm">Supplier</label><select name="supplierId" value={formState.supplierId} onChange={e => setFormState({...formState, supplierId: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1">{suppliers.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}</select></div>
+                                <div><label className="text-sm">Destination Branch</label><select name="destinationBranchId" value={formState.destinationBranchId} onChange={e => setFormState({...formState, destinationBranchId: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1">{branches.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
                             </div>
-                            <h4 className="font-semibold mt-4 pt-4 border-t border-gray-700">Items</h4>
+                            <h4 className="font-semibold mt-4 pt-4 border-t border-slate-700">Items</h4>
                              <div className="space-y-2">
                                 {formState.items.map((item, index) => (
-                                    <div key={index} className="flex gap-2 items-center bg-gray-900/50 p-2 rounded-md">
-                                        <select value={item.variantId} onChange={e => handleItemChange(index, 'variantId', e.target.value)} className="w-1/2 bg-gray-700 p-2 rounded-md text-sm"><option value="">Select product</option>{allVariants.map(v => <option key={v.id} value={v.id}>{v.productName} - {v.name}</option>)}</select>
-                                        <input type="number" placeholder="Qty" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', e.target.value)} className="w-1/4 bg-gray-700 p-2 rounded-md text-sm" />
-                                        <input type="number" placeholder="Cost" value={item.cost} onChange={e => handleItemChange(index, 'cost', e.target.value)} className="w-1/4 bg-gray-700 p-2 rounded-md text-sm" />
+                                    <div key={index} className="flex gap-2 items-center bg-slate-900/50 p-2 rounded-md">
+                                        <select value={item.variantId} onChange={e => handleItemChange(index, 'variantId', e.target.value)} className="w-1/2 bg-slate-700 p-2 rounded-md text-sm"><option value="">Select product</option>{allVariants.map(v => <option key={v.id} value={v.id}>{v.productName} - {v.name}</option>)}</select>
+                                        <input type="number" placeholder="Qty" value={item.quantity} onChange={e => handleItemChange(index, 'quantity', e.target.value)} className="w-1/4 bg-slate-700 p-2 rounded-md text-sm" />
+                                        <input type="number" placeholder="Cost" value={item.cost} onChange={e => handleItemChange(index, 'cost', e.target.value)} className="w-1/4 bg-slate-700 p-2 rounded-md text-sm" />
                                         <button onClick={() => removeItemRow(index)} className="text-red-500 hover:text-red-400 p-1"><Icon name="trash" className="w-5 h-5"/></button>
                                     </div>
                                 ))}
                              </div>
-                             <button onClick={addItemRow} className="text-indigo-400 text-sm font-semibold">+ Add Item</button>
+                             <button onClick={addItemRow} className="text-cyan-400 text-sm font-semibold">+ Add Item</button>
                         </div>
-                        <div className="mt-6 flex justify-between items-center pt-4 border-t border-gray-700">
+                        <div className="mt-6 flex justify-between items-center pt-4 border-t border-slate-700">
                              <div className="text-xl font-bold">Total: {formatCurrency(totalCost)}</div>
-                             <div className="flex gap-3"><button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-md bg-gray-600 hover:bg-gray-500">Cancel</button><button onClick={handleSubmit} className="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-500">Create PO</button></div>
+                             <div className="flex gap-3"><button onClick={() => setModalOpen(false)} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500">Cancel</button><button onClick={handleSubmit} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500">Create PO</button></div>
                         </div>
                     </div>
                 </div>

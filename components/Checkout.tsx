@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { SubscriptionPlan } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
@@ -60,7 +62,7 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, billingCycle, onComplete }) =
         <button
             onClick={() => handlePayment(name)}
             disabled={status === 'PROCESSING'}
-            className="w-full flex items-center justify-center p-4 bg-gray-700 rounded-lg hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-wait"
+            className="w-full flex items-center justify-center p-4 bg-slate-700 rounded-lg hover:bg-slate-600 transition-colors disabled:opacity-50 disabled:cursor-wait"
         >
             <Icon name={icon} className="w-6 h-6 mr-3" />
             <span className="font-semibold">Pay with {name}</span>
@@ -72,13 +74,13 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, billingCycle, onComplete }) =
         const isPending = status === 'PENDING_MANUAL';
         return (
              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className={`p-6 bg-gray-800 rounded-lg shadow-lg max-w-md`}>
+                <div className={`p-6 bg-slate-800 rounded-lg shadow-lg max-w-md`}>
                     <Icon name={isSuccess || isPending ? 'check' : 'x-mark'} className={`w-16 h-16 mx-auto mb-4 ${isSuccess ? 'text-green-400' : isPending ? 'text-yellow-400' : 'text-red-400'}`} />
                     <h2 className="text-2xl font-bold text-white mb-2">
                         {isSuccess ? 'Payment Successful!' : isPending ? 'Payment Submitted' : 'Payment Failed'}
                     </h2>
-                    <p className="text-gray-400 mb-6">{statusMessage}</p>
-                    <button onClick={onComplete} className="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-md hover:bg-indigo-500">
+                    <p className="text-slate-400 mb-6">{statusMessage}</p>
+                    <button onClick={onComplete} className="bg-cyan-600 text-white font-semibold px-6 py-2 rounded-md hover:bg-cyan-500">
                         Back to Billing
                     </button>
                 </div>
@@ -88,51 +90,50 @@ const Checkout: React.FC<CheckoutProps> = ({ plan, billingCycle, onComplete }) =
 
     return (
         <div className="max-w-4xl mx-auto">
-            <div className="p-6 bg-gray-800 rounded-lg shadow-md mb-6">
+            <div className="p-6 bg-slate-800 rounded-lg shadow-md mb-6">
                 <h2 className="text-2xl font-bold text-white">Checkout</h2>
-                <p className="text-gray-400 mt-1">You are changing your subscription to the <span className="font-bold text-indigo-400">{plan.name} ({billingCycle})</span> plan.</p>
+                <p className="text-slate-400 mt-1">You are changing your subscription to the <span className="font-bold text-cyan-400">{plan.name} ({billingCycle})</span> plan.</p>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Order Summary */}
-                <div className="bg-gray-800 p-6 rounded-lg">
+                <div className="bg-slate-800 p-6 rounded-lg">
                     <h3 className="text-xl font-semibold mb-4 text-white">Order Summary</h3>
                     <div className="space-y-3">
                         <div className="flex justify-between items-center">
-                            <span className="text-gray-400">{plan.name} Plan ({billingCycle})</span>
+                            <span className="text-slate-400">{plan.name} Plan ({billingCycle})</span>
                             <span className="font-semibold text-white">{formatCurrency(price)}</span>
                         </div>
-                         <div className="flex justify-between items-center text-lg font-bold border-t border-gray-700 pt-3">
+                         <div className="flex justify-between items-center text-lg font-bold border-t border-slate-700 pt-3">
                             <span className="text-white">Total Due Today</span>
-                            <span className="text-indigo-400">{formatCurrency(price)}</span>
+                            <span className="text-cyan-400">{formatCurrency(price)}</span>
                         </div>
                     </div>
                 </div>
 
                 {/* Payment Methods */}
-                <div className="bg-gray-800 p-6 rounded-lg">
+                <div className="bg-slate-800 p-6 rounded-lg">
                     <h3 className="text-xl font-semibold mb-4 text-white">Select Payment Method</h3>
                      {status === 'PROCESSING' && (
-                        <div className="flex justify-center items-center p-8 bg-gray-900/50 rounded-lg">
+                        <div className="flex justify-center items-center p-8 bg-slate-900/50 rounded-lg">
                             <svg className="animate-spin h-8 w-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
                             <p className="ml-4 text-lg">Processing payment for {selectedMethod}...</p>
                         </div>
                     )}
-                    {/* FIX: Replaced conditional rendering with a conditional class to avoid TS type narrowing error. */}
                     <div className={`space-y-4 ${status !== 'IDLE' ? 'hidden' : ''}`}>
                         {paymentSettings.stripe.enabled && <PaymentMethodButton name="Stripe" icon="credit-card" />}
                         {paymentSettings.flutterwave.enabled && <PaymentMethodButton name="Flutterwave" icon="credit-card" />}
                         {paymentSettings.paystack.enabled && <PaymentMethodButton name="Paystack" icon="credit-card" />}
                         {paymentSettings.manual.enabled && (
-                            <div className="p-4 bg-gray-900/50 rounded-lg border border-gray-700">
+                            <div className="p-4 bg-slate-900/50 rounded-lg border border-slate-700">
                                 <h4 className="font-semibold mb-2">Manual Bank Transfer</h4>
-                                <p className="text-sm text-gray-400 whitespace-pre-wrap mb-4">{paymentSettings.manual.details}</p>
+                                <p className="text-sm text-slate-400 whitespace-pre-wrap mb-4">{paymentSettings.manual.details}</p>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-300">Upload Proof of Payment</label>
-                                    <input type="file" onChange={handleFileChange} className="mt-1 block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-indigo-300 hover:file:bg-gray-600"/>
+                                    <label className="text-sm font-medium text-slate-300">Upload Proof of Payment</label>
+                                    <input type="file" onChange={handleFileChange} className="mt-1 block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-slate-700 file:text-cyan-300 hover:file:bg-slate-600"/>
                                     {proofOfPayment && <p className="text-xs text-green-400 mt-1">File selected: {proofOfPayment.name}</p>}
                                 </div>
-                                <button onClick={() => handlePayment('Manual')} disabled={status === 'PROCESSING'} className="w-full mt-4 p-3 bg-indigo-600 rounded-lg hover:bg-indigo-500 font-semibold transition-colors disabled:opacity-50">
+                                <button onClick={() => handlePayment('Manual')} disabled={status === 'PROCESSING'} className="w-full mt-4 p-3 bg-cyan-600 rounded-lg hover:bg-cyan-500 font-semibold transition-colors disabled:opacity-50">
                                     I have paid, Submit for Review
                                 </button>
                             </div>

@@ -1,3 +1,5 @@
+
+
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
@@ -12,7 +14,7 @@ const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
 const ReportsSkeleton = () => (
     <div className="space-y-6">
         {/* Filters Skeleton */}
-        <div className="p-4 bg-gray-800 rounded-lg shadow-md">
+        <div className="p-4 bg-slate-800 rounded-lg shadow-md">
             <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="flex flex-wrap items-center gap-4">
                     <div className="flex flex-wrap items-center gap-2">
@@ -36,7 +38,7 @@ const ReportsSkeleton = () => (
         {/* Metric Cards Skeleton */}
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[...Array(4)].map((_, i) => (
-                 <div key={i} className="p-4 bg-gray-800 rounded-lg shadow-md flex items-center">
+                 <div key={i} className="p-4 bg-slate-800 rounded-lg shadow-md flex items-center">
                     <Skeleton className="h-12 w-12 rounded-full mr-4" />
                     <div className="flex-1">
                         <Skeleton className="h-4 w-1/2 mb-2" />
@@ -47,8 +49,8 @@ const ReportsSkeleton = () => (
         </div>
 
         {/* Report Content Skeleton */}
-        <div className="p-6 bg-gray-800 rounded-lg shadow-md">
-            <div className="flex flex-wrap gap-2 border-b border-gray-700 mb-6 pb-2">
+        <div className="p-6 bg-slate-800 rounded-lg shadow-md">
+            <div className="flex flex-wrap gap-2 border-b border-slate-700 mb-6 pb-2">
                 {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-9 w-32 rounded-md" />)}
             </div>
             <Skeleton className="h-96 w-full" />
@@ -59,12 +61,12 @@ const ReportsSkeleton = () => (
 type ReportTab = 'profit_loss' | 'sales' | 'credit' | 'purchases' | 'consignment' | 'deposit_sales';
 
 const MetricCard: React.FC<{ title: string; value: string | number; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
-  <div className="p-4 bg-gray-800 rounded-lg shadow-md flex items-center">
+  <div className="p-4 bg-slate-800 rounded-lg shadow-md flex items-center">
     <div className={`p-3 rounded-full ${iconBgColor} mr-4`}>
       <Icon name={iconName} className="w-6 h-6 text-white" />
     </div>
     <div>
-      <p className="text-sm text-gray-400">{title}</p>
+      <p className="text-sm text-slate-400">{title}</p>
       <p className="text-2xl font-bold text-white">{value}</p>
     </div>
   </div>
@@ -72,23 +74,23 @@ const MetricCard: React.FC<{ title: string; value: string | number; iconName: st
 
 // Individual Report Table Components
 const ProfitLossSummary: React.FC<{ data: any, formatCurrency: (val: number) => string }> = ({ data, formatCurrency }) => (
-    <div className="bg-gray-900/50 p-6 rounded-lg max-w-2xl mx-auto">
+    <div className="bg-slate-900/50 p-6 rounded-lg max-w-2xl mx-auto">
         <h3 className="font-bold text-xl mb-4 text-center text-white">Profit & Loss Summary</h3>
         <div className="space-y-3 text-lg">
-            <div className="flex justify-between p-2 rounded-md bg-gray-800/50">
-                <span className="font-semibold text-gray-300">Total Gross Revenue</span>
+            <div className="flex justify-between p-2 rounded-md bg-slate-800/50">
+                <span className="font-semibold text-slate-300">Total Gross Revenue</span>
                 <span className="font-mono">{formatCurrency(data.totalSellingPrice)}</span>
             </div>
             <div className="flex justify-between p-2">
-                <span className="text-gray-400">Discounts</span>
+                <span className="text-slate-400">Discounts</span>
                 <span className="font-mono text-red-400">- {formatCurrency(data.discount)}</span>
             </div>
-            <div className="flex justify-between p-2 border-t border-b border-gray-700 font-bold">
+            <div className="flex justify-between p-2 border-t border-b border-slate-700 font-bold">
                 <span className="text-white">Net Revenue</span>
                 <span className="font-mono text-white">{formatCurrency(data.totalSellingPrice - data.discount)}</span>
             </div>
             <div className="flex justify-between p-2">
-                <span className="text-gray-400">Cost of Goods Sold (COGS)</span>
+                <span className="text-slate-400">Cost of Goods Sold (COGS)</span>
                 <span className="font-mono text-red-400">- {formatCurrency(data.totalCostPrice)}</span>
             </div>
             <div className="flex justify-between p-3 rounded-md bg-green-500/10 font-bold text-2xl mt-2">
@@ -102,7 +104,7 @@ const ProfitLossSummary: React.FC<{ data: any, formatCurrency: (val: number) => 
 const DetailedSalesReport: React.FC<{ data: any[], totals: any, formatCurrency: (val: number) => string }> = ({ data, totals, formatCurrency }) => (
     <div className="overflow-x-auto max-h-[600px]">
         <table className="w-full text-left text-xs whitespace-nowrap">
-            <thead className="border-b border-gray-700 sticky top-0 bg-gray-800">
+            <thead className="border-b border-slate-700 sticky top-0 bg-slate-800">
                 <tr>
                     <th className="p-2">S/N</th><th className="p-2">Branch</th><th className="p-2">Customer</th><th className="p-2">Item</th>
                     <th className="p-2 text-right">Qty Sold</th>
@@ -114,7 +116,7 @@ const DetailedSalesReport: React.FC<{ data: any[], totals: any, formatCurrency: 
             </thead>
             <tbody>
                 {data.map((row, index) => (
-                    <tr key={row.id} className="border-b border-gray-700 hover:bg-gray-700/50">
+                    <tr key={row.id} className="border-b border-slate-700 hover:bg-slate-700/50">
                         <td className="p-2">{index + 1}</td><td className="p-2">{row.branchName}</td><td className="p-2">{row.customerName}</td><td className="p-2">{row.itemName}</td>
                         <td className="p-2 text-right font-bold">{row.quantitySold}</td>
                         <td className="p-2 text-right font-mono">{formatCurrency(row.costPrice)}</td><td className="p-2 text-right font-mono">{formatCurrency(row.totalCostPrice)}</td>
@@ -124,7 +126,7 @@ const DetailedSalesReport: React.FC<{ data: any[], totals: any, formatCurrency: 
                     </tr>
                 ))}
             </tbody>
-            <tfoot className="sticky bottom-0 bg-gray-800 font-bold border-t-2 border-gray-600">
+            <tfoot className="sticky bottom-0 bg-slate-800 font-bold border-t-2 border-slate-600">
                 <tr>
                     <td colSpan={4} className="p-2 text-right">Grand Total</td>
                     <td className="p-2 text-right">{totals.quantitySold}</td><td></td>
@@ -155,7 +157,7 @@ const CreditSalesReport: React.FC<{ data: (Sale & { customerName: string })[], f
     return (
         <div>
             <table className="w-full text-left">
-                <thead className="border-b border-gray-700">
+                <thead className="border-b border-slate-700">
                     <tr>
                         <th className="p-3 w-12"></th>
                         <th className="p-3">Sale ID</th>
@@ -168,7 +170,7 @@ const CreditSalesReport: React.FC<{ data: (Sale & { customerName: string })[], f
                 <tbody>
                     {data.map(sale => (
                         <React.Fragment key={sale.id}>
-                            <tr className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer" onClick={() => toggleRow(sale.id)}>
+                            <tr className="border-b border-slate-700 hover:bg-slate-700/50 cursor-pointer" onClick={() => toggleRow(sale.id)}>
                                 <td className="p-3">
                                     <button>
                                         <Icon name={expandedRows.has(sale.id) ? 'chevronDown' : 'chevronRight'} className="w-5 h-5"/>
@@ -181,13 +183,13 @@ const CreditSalesReport: React.FC<{ data: (Sale & { customerName: string })[], f
                                 <td className="p-3 text-right font-mono font-bold text-red-400">{formatCurrency(sale.amountDue)}</td>
                             </tr>
                             {expandedRows.has(sale.id) && (
-                                <tr className="bg-gray-900/50">
+                                <tr className="bg-slate-900/50">
                                     <td colSpan={6} className="p-4">
-                                        <div className="p-3 bg-gray-700/50 rounded-md">
+                                        <div className="p-3 bg-slate-700/50 rounded-md">
                                             <h4 className="font-semibold text-sm mb-2 text-white">Items in this Sale</h4>
                                             <table className="w-full text-xs">
                                                 <thead>
-                                                    <tr className="border-b border-gray-600">
+                                                    <tr className="border-b border-slate-600">
                                                         <th className="p-1 text-left">Item Name</th>
                                                         <th className="p-1 text-right">Quantity</th>
                                                         <th className="p-1 text-right">Unit Price</th>
@@ -212,7 +214,7 @@ const CreditSalesReport: React.FC<{ data: (Sale & { customerName: string })[], f
                         </React.Fragment>
                     ))}
                 </tbody>
-                <tfoot className="font-bold border-t-2 border-gray-600">
+                <tfoot className="font-bold border-t-2 border-slate-600">
                     <tr><td colSpan={5} className="p-3 text-right">Total Outstanding</td><td className="p-3 text-right font-mono text-red-400">{formatCurrency(totalOutstanding)}</td></tr>
                 </tfoot>
             </table>
@@ -236,7 +238,7 @@ const DepositSalesReport: React.FC<{ data: any[], formatCurrency: (val: number) 
     return (
         <div>
             <table className="w-full text-left">
-                <thead className="border-b border-gray-700">
+                <thead className="border-b border-slate-700">
                     <tr>
                         <th className="p-3 w-12"></th>
                         <th className="p-3">Sale ID</th>
@@ -249,7 +251,7 @@ const DepositSalesReport: React.FC<{ data: any[], formatCurrency: (val: number) 
                 <tbody>
                     {data.map(sale => (
                         <React.Fragment key={sale.id}>
-                            <tr className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer" onClick={() => toggleRow(sale.id)}>
+                            <tr className="border-b border-slate-700 hover:bg-slate-700/50 cursor-pointer" onClick={() => toggleRow(sale.id)}>
                                 <td className="p-3">
                                     <button><Icon name={expandedRows.has(sale.id) ? 'chevronDown' : 'chevronRight'} className="w-5 h-5"/></button>
                                 </td>
@@ -260,13 +262,13 @@ const DepositSalesReport: React.FC<{ data: any[], formatCurrency: (val: number) 
                                 <td className="p-3 text-right font-mono font-bold text-cyan-400">{formatCurrency(sale.depositAmount)}</td>
                             </tr>
                              {expandedRows.has(sale.id) && (
-                                <tr className="bg-gray-900/50">
+                                <tr className="bg-slate-900/50">
                                     <td colSpan={6} className="p-4">
-                                        <div className="p-3 bg-gray-700/50 rounded-md">
+                                        <div className="p-3 bg-slate-700/50 rounded-md">
                                             <h4 className="font-semibold text-sm mb-2 text-white">Items in this Sale</h4>
                                             <table className="w-full text-xs">
                                                 <thead>
-                                                    <tr className="border-b border-gray-600"><th className="p-1 text-left">Item Name</th><th className="p-1 text-right">Quantity</th><th className="p-1 text-right">Unit Price</th><th className="p-1 text-right">Total</th></tr>
+                                                    <tr className="border-b border-slate-600"><th className="p-1 text-left">Item Name</th><th className="p-1 text-right">Quantity</th><th className="p-1 text-right">Unit Price</th><th className="p-1 text-right">Total</th></tr>
                                                 </thead>
                                                 <tbody>
                                                     {sale.items.map((item: any) => (
@@ -284,7 +286,7 @@ const DepositSalesReport: React.FC<{ data: any[], formatCurrency: (val: number) 
                         </React.Fragment>
                     ))}
                 </tbody>
-                <tfoot className="font-bold border-t-2 border-gray-600">
+                <tfoot className="font-bold border-t-2 border-slate-600">
                     <tr><td colSpan={5} className="p-3 text-right">Total Paid from Deposits</td><td className="p-3 text-right font-mono text-cyan-400">{formatCurrency(totalFromDeposits)}</td></tr>
                 </tfoot>
             </table>
@@ -306,7 +308,7 @@ const PurchaseOrdersReport: React.FC<{ data: PurchaseOrder[], suppliers: Map<str
 
     return (
         <table className="w-full text-left">
-            <thead className="border-b border-gray-700">
+            <thead className="border-b border-slate-700">
                 <tr>
                     <th className="p-3 w-12"></th>
                     <th className="p-3">PO Number</th><th className="p-3">Date</th><th className="p-3">Supplier</th><th className="p-3">Destination</th><th className="p-3 text-right">Total</th><th className="p-3 text-center">Status</th>
@@ -315,7 +317,7 @@ const PurchaseOrdersReport: React.FC<{ data: PurchaseOrder[], suppliers: Map<str
             <tbody>
                 {data.map(po => (
                     <React.Fragment key={po.id}>
-                        <tr className="border-b border-gray-700 hover:bg-gray-700/50 cursor-pointer" onClick={() => toggleRow(po.id)}>
+                        <tr className="border-b border-slate-700 hover:bg-slate-700/50 cursor-pointer" onClick={() => toggleRow(po.id)}>
                             <td className="p-3"><button><Icon name={expandedRows.has(po.id) ? 'chevronDown' : 'chevronRight'} className="w-5 h-5"/></button></td>
                             <td className="p-3 font-mono">{po.poNumber}</td>
                             <td className="p-3">{new Date(po.createdAt).toLocaleDateString()}</td>
@@ -325,13 +327,13 @@ const PurchaseOrdersReport: React.FC<{ data: PurchaseOrder[], suppliers: Map<str
                             <td className="p-3 text-center">{po.status}</td>
                         </tr>
                         {expandedRows.has(po.id) && (
-                            <tr className="bg-gray-900/50">
+                            <tr className="bg-slate-900/50">
                                 <td colSpan={7} className="p-4">
-                                    <div className="p-3 bg-gray-700/50 rounded-md">
+                                    <div className="p-3 bg-slate-700/50 rounded-md">
                                         <h4 className="font-semibold text-sm mb-2 text-white">Items in this Order</h4>
                                         <table className="w-full text-xs">
                                             <thead>
-                                                <tr className="border-b border-gray-600"><th className="p-1 text-left">Item Name</th><th className="p-1 text-right">Quantity</th><th className="p-1 text-right">Unit Cost</th><th className="p-1 text-right">Total Cost</th></tr>
+                                                <tr className="border-b border-slate-600"><th className="p-1 text-left">Item Name</th><th className="p-1 text-right">Quantity</th><th className="p-1 text-right">Unit Cost</th><th className="p-1 text-right">Total Cost</th></tr>
                                             </thead>
                                             <tbody>
                                                 {po.items.map(item => (
@@ -358,14 +360,14 @@ const PurchaseOrdersReport: React.FC<{ data: PurchaseOrder[], suppliers: Map<str
 const ConsignmentReport: React.FC<{ data: any[], formatCurrency: (val: number) => string }> = ({ data, formatCurrency }) => (
     <div className="space-y-6">
         {data.map(supplierData => (
-            <div key={supplierData.supplierName} className="bg-gray-900/50 p-4 rounded-lg">
+            <div key={supplierData.supplierName} className="bg-slate-900/50 p-4 rounded-lg">
                 <h4 className="font-bold text-lg mb-2 text-white">{supplierData.supplierName}</h4>
                 <table className="w-full text-sm text-left">
-                    <thead className="border-b border-gray-700"><tr><th className="p-2">Product</th><th className="p-2">Branch</th><th className="p-2 text-right">Received</th><th className="p-2 text-right">Sold</th><th className="p-2 text-right">Remaining</th><th className="p-2 text-right">Cost Price</th><th className="p-2 text-right">Value Owed</th></tr></thead>
+                    <thead className="border-b border-slate-700"><tr><th className="p-2">Product</th><th className="p-2">Branch</th><th className="p-2 text-right">Received</th><th className="p-2 text-right">Sold</th><th className="p-2 text-right">Remaining</th><th className="p-2 text-right">Cost Price</th><th className="p-2 text-right">Value Owed</th></tr></thead>
                     <tbody>
-                        {supplierData.items.map((item: any) => (<tr key={item.variantId + item.branchName} className="border-b border-gray-700/50"><td className="p-2">{item.productName} ({item.variantName})</td><td className="p-2">{item.branchName}</td><td className="p-2 text-right">{item.quantityReceived}</td><td className="p-2 text-right text-yellow-400">{item.quantitySold}</td><td className="p-2 text-right font-bold text-green-400">{item.quantityReceived - item.quantitySold}</td><td className="p-2 text-right font-mono">{formatCurrency(item.costPrice)}</td><td className="p-2 text-right font-mono font-bold">{formatCurrency(item.quantitySold * item.costPrice)}</td></tr>))}
+                        {supplierData.items.map((item: any) => (<tr key={item.variantId + item.branchName} className="border-b border-slate-700/50"><td className="p-2">{item.productName} ({item.variantName})</td><td className="p-2">{item.branchName}</td><td className="p-2 text-right">{item.quantityReceived}</td><td className="p-2 text-right text-yellow-400">{item.quantitySold}</td><td className="p-2 text-right font-bold text-green-400">{item.quantityReceived - item.quantitySold}</td><td className="p-2 text-right font-mono">{formatCurrency(item.costPrice)}</td><td className="p-2 text-right font-mono font-bold">{formatCurrency(item.quantitySold * item.costPrice)}</td></tr>))}
                     </tbody>
-                    <tfoot className="font-bold border-t-2 border-gray-600"><tr><td colSpan={6} className="p-2 text-right">Total Owed to {supplierData.supplierName}</td><td className="p-2 text-right font-mono">{formatCurrency(supplierData.totalOwed)}</td></tr></tfoot>
+                    <tfoot className="font-bold border-t-2 border-slate-600"><tr><td colSpan={6} className="p-2 text-right">Total Owed to {supplierData.supplierName}</td><td className="p-2 text-right font-mono">{formatCurrency(supplierData.totalOwed)}</td></tr></tfoot>
                 </table>
             </div>
         ))}
@@ -495,7 +497,7 @@ const Reports: React.FC = () => {
 
   const reportTitles: Record<ReportTab, string> = { sales: 'Detailed Sales Report', credit: 'Credit Sales Report', purchases: 'Purchase Order Report', consignment: 'Consignment Report', profit_loss: 'Profit & Loss Summary', deposit_sales: 'Deposit Sales Report' };
   const dateFilters = ['Today', 'This Week', 'This Month', 'Last Month', 'This Year'];
-  const TabButton: React.FC<{tab: ReportTab, label: string}> = ({ tab, label }) => (<button onClick={() => setActiveReport(tab)} className={`px-4 py-2 font-medium text-sm rounded-md ${activeReport === tab ? 'bg-indigo-600 text-white' : 'text-gray-300 hover:bg-gray-700'}`}>{label}</button>);
+  const TabButton: React.FC<{tab: ReportTab, label: string}> = ({ tab, label }) => (<button onClick={() => setActiveReport(tab)} className={`px-4 py-2 font-medium text-sm rounded-md ${activeReport === tab ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>{label}</button>);
 
   return (
     <div id="report-printable-area">
@@ -506,24 +508,24 @@ const Reports: React.FC = () => {
         </div>
 
         <div className="space-y-6">
-            <div className="p-4 bg-gray-800 rounded-lg shadow-md no-print">
+            <div className="p-4 bg-slate-800 rounded-lg shadow-md no-print">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="flex flex-wrap items-center gap-4">
                         <div className="flex flex-wrap items-center gap-2">
-                            {dateFilters.map(filter => (<button key={filter} onClick={() => setDateFilter(filter)} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${activeFilter === filter ? 'bg-indigo-600 text-white' : 'bg-gray-700 hover:bg-gray-600'}`}>{filter}</button>))}
+                            {dateFilters.map(filter => (<button key={filter} onClick={() => setDateFilter(filter)} className={`px-3 py-1 text-sm font-semibold rounded-md transition-colors ${activeFilter === filter ? 'bg-cyan-600 text-white' : 'bg-slate-700 hover:bg-slate-600'}`}>{filter}</button>))}
                         </div>
                         <div className="flex items-center gap-2 text-sm">
-                            <input type="date" value={dateRange.start.toISOString().split('T')[0]} onChange={e => { setDateRange(prev => ({...prev, start: new Date(e.target.value)})); setActiveFilter('Custom'); }} className="bg-gray-700 border border-gray-600 rounded-md p-1"/>
-                            <span className="text-gray-400">to</span>
-                            <input type="date" value={dateRange.end.toISOString().split('T')[0]} onChange={e => { setDateRange(prev => ({...prev, end: new Date(e.target.value)})); setActiveFilter('Custom'); }} className="bg-gray-700 border border-gray-600 rounded-md p-1"/>
+                            <input type="date" value={dateRange.start.toISOString().split('T')[0]} onChange={e => { setDateRange(prev => ({...prev, start: new Date(e.target.value)})); setActiveFilter('Custom'); }} className="bg-slate-700 border border-slate-600 rounded-md p-1"/>
+                            <span className="text-slate-400">to</span>
+                            <input type="date" value={dateRange.end.toISOString().split('T')[0]} onChange={e => { setDateRange(prev => ({...prev, end: new Date(e.target.value)})); setActiveFilter('Custom'); }} className="bg-slate-700 border border-slate-600 rounded-md p-1"/>
                         </div>
                         <div className="flex items-center gap-2 text-sm">
-                            <label htmlFor="branch-filter" className="text-gray-400">Branch:</label>
+                            <label htmlFor="branch-filter" className="text-slate-400">Branch:</label>
                             <select
                                 id="branch-filter"
                                 value={branchFilter}
                                 onChange={e => setBranchFilter(e.target.value)}
-                                className="bg-gray-700 border border-gray-600 rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                className="bg-slate-700 border border-slate-600 rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                             >
                                 <option value="ALL">All Branches</option>
                                 {branches.map(branch => (
@@ -532,7 +534,7 @@ const Reports: React.FC = () => {
                             </select>
                         </div>
                     </div>
-                    <button onClick={handlePrint} className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="printer" className="w-5 h-5 mr-2"/>Print Report</button>
+                    <button onClick={handlePrint} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="printer" className="w-5 h-5 mr-2"/>Print Report</button>
                 </div>
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 no-print">
@@ -541,8 +543,8 @@ const Reports: React.FC = () => {
                 <MetricCard title="Items Sold" value={salesMetrics.totalItemsSold} iconName="inventory" iconBgColor="bg-orange-500" />
                 <MetricCard title="Avg. Sale Value" value={formatCurrency(salesMetrics.averageSaleValue)} iconName="calculator" iconBgColor="bg-purple-500" />
             </div>
-            <div className="p-6 bg-gray-800 rounded-lg shadow-md">
-                <div className="flex flex-wrap gap-2 border-b border-gray-700 mb-6 pb-2 no-print">
+            <div className="p-6 bg-slate-800 rounded-lg shadow-md">
+                <div className="flex flex-wrap gap-2 border-b border-slate-700 mb-6 pb-2 no-print">
                     <TabButton tab="profit_loss" label="Profit & Loss" /><TabButton tab="sales" label="Detailed Sales" /><TabButton tab="credit" label="Credit Sales" /><TabButton tab="deposit_sales" label="Deposit Sales" /><TabButton tab="purchases" label="Purchase Orders" /><TabButton tab="consignment" label="Consignment" />
                 </div>
                 {activeReport === 'profit_loss' && <ProfitLossSummary data={grandTotals} formatCurrency={formatCurrency} />}

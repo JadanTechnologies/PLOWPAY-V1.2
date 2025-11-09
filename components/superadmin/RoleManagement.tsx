@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminRole, Permission } from '../../types';
@@ -34,7 +36,7 @@ const CollapsibleSection: React.FC<{
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-        <div className="bg-gray-900/50 rounded-lg border border-gray-700">
+        <div className="bg-slate-900/50 rounded-lg border border-slate-700">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full flex justify-between items-center p-3 text-left font-semibold"
@@ -43,16 +45,16 @@ const CollapsibleSection: React.FC<{
                 <Icon name={isOpen ? 'chevronUp' : 'chevronDown'} className="w-5 h-5 transition-transform" />
             </button>
             {isOpen && (
-                <div className="p-4 border-t border-gray-700 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-4 border-t border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {permissions.map(permission => (
-                        <label key={permission} className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-700/50 transition-colors cursor-pointer">
+                        <label key={permission} className="flex items-center space-x-3 p-2 rounded-md hover:bg-slate-700/50 transition-colors cursor-pointer">
                             <input
                                 type="checkbox"
                                 checked={assignedPermissions.has(permission)}
                                 onChange={(e) => onPermissionChange(permission, e.target.checked)}
-                                className="h-5 w-5 rounded bg-gray-600 border-gray-500 text-cyan-500 focus:ring-cyan-600 focus:ring-offset-gray-800"
+                                className="h-5 w-5 rounded bg-slate-600 border-slate-500 text-cyan-500 focus:ring-cyan-600 focus:ring-offset-slate-800"
                             />
-                            <span className="text-gray-300">{permissionLabels[permission]}</span>
+                            <span className="text-slate-300">{permissionLabels[permission]}</span>
                         </label>
                     ))}
                 </div>
@@ -93,8 +95,8 @@ const RoleCard: React.FC<{ role: AdminRole }> = ({ role }) => {
     const isDeletable = !['Admin', 'Support', 'Developer'].includes(role.name);
 
     return (
-        <div className="bg-gray-800 rounded-lg shadow-md p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-700 pb-4 mb-4 gap-4">
+        <div className="bg-slate-800 rounded-lg shadow-md p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-700 pb-4 mb-4 gap-4">
                 <h3 className="text-xl font-bold text-white">{role.name}</h3>
                 <div className="flex items-center space-x-2 flex-shrink-0">
                     <button 
@@ -178,11 +180,11 @@ const RoleManagement: React.FC = () => {
 
     return (
         <div className="space-y-6">
-             <div className="p-6 bg-gray-800 rounded-lg shadow-md">
+             <div className="p-6 bg-slate-800 rounded-lg shadow-md">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                     <div>
                         <h2 className="text-2xl font-bold text-white mb-2">Role & Permission Management</h2>
-                        <p className="text-gray-400">Define what users can see and do within the admin panel.</p>
+                        <p className="text-slate-400">Define what users can see and do within the admin panel.</p>
                     </div>
                      <button onClick={openModal} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center mt-4 sm:mt-0">
                         <Icon name="plus" className="w-5 h-5 mr-2" />
@@ -198,24 +200,24 @@ const RoleManagement: React.FC = () => {
 
             {isModalOpen && (
                  <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
-                    <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
+                    <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col">
                         <h3 className="text-xl font-bold mb-4 text-white">Add New Role</h3>
                         <form onSubmit={(e) => { e.preventDefault(); handleAddRole(); }} className="flex-grow flex flex-col overflow-hidden">
                             <div className="mb-4">
-                                <label htmlFor="roleName" className="block text-sm font-medium text-gray-400">Role Name</label>
+                                <label htmlFor="roleName" className="block text-sm font-medium text-slate-400">Role Name</label>
                                 <input
                                     type="text"
                                     id="roleName"
                                     value={newRoleName}
                                     onChange={e => setNewRoleName(e.target.value)}
                                     required
-                                    className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                    className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
                                     placeholder="e.g., Marketing Manager"
                                 />
                             </div>
 
-                            <p className="text-sm font-medium text-gray-400 mb-2">Assign Permissions</p>
-                            <div className="flex-grow overflow-y-auto pr-2 -mr-2 border-t border-b border-gray-700 py-4 space-y-4">
+                            <p className="text-sm font-medium text-slate-400 mb-2">Assign Permissions</p>
+                            <div className="flex-grow overflow-y-auto pr-2 -mr-2 border-t border-b border-slate-700 py-4 space-y-4">
                                 {Object.entries(permissionGroups).map(([groupTitle, groupPermissions]) => (
                                      <CollapsibleSection
                                         key={groupTitle}
@@ -227,8 +229,8 @@ const RoleManagement: React.FC = () => {
                                 ))}
                             </div>
 
-                            <div className="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-700 flex-shrink-0">
-                                <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-500 font-semibold">Cancel</button>
+                            <div className="mt-6 flex justify-end space-x-3 pt-4 border-t border-slate-700 flex-shrink-0">
+                                <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md bg-slate-600 text-white hover:bg-slate-500 font-semibold">Cancel</button>
                                 <button type="submit" className="px-4 py-2 rounded-md bg-cyan-600 text-white hover:bg-cyan-500 font-semibold">
                                     Create Role
                                 </button>

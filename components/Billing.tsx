@@ -1,3 +1,5 @@
+
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { SubscriptionPlan, TenantStatus } from '../types';
@@ -15,15 +17,15 @@ const PlanCard: React.FC<{
     const price = billingCycle === 'yearly' ? plan.priceYearly : plan.price;
 
     return (
-        <div className={`bg-gray-800 p-8 rounded-lg border-2 ${isCurrent ? 'border-indigo-500' : isRecommended ? 'border-cyan-500' : 'border-gray-700'} relative flex flex-col`}>
+        <div className={`bg-slate-800 p-8 rounded-lg border-2 ${isCurrent ? 'border-cyan-500' : isRecommended ? 'border-teal-500' : 'border-slate-700'} relative flex flex-col`}>
             {isRecommended && !isCurrent && <span className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Recommended</span>}
             <h3 className="text-2xl font-semibold text-white">{plan.name}</h3>
-            <p className="text-gray-400 mt-2 h-10">{plan.description}</p>
+            <p className="text-slate-400 mt-2 h-10">{plan.description}</p>
             <div className="mt-4">
                 <span className="text-5xl font-extrabold text-white">{formatCurrency(price).replace(/\.00$/, '')}</span>
-                <span className="text-lg text-gray-400">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
+                <span className="text-lg text-slate-400">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
             </div>
-            <ul className="mt-6 space-y-3 text-gray-400 flex-grow">
+            <ul className="mt-6 space-y-3 text-slate-400 flex-grow">
                 {plan.features.map((feature, i) => (
                     <li key={i} className="flex items-center">
                         <Icon name="check" className="w-5 h-5 text-green-500 mr-2 flex-shrink-0" />
@@ -34,7 +36,7 @@ const PlanCard: React.FC<{
             <button
                 onClick={() => onSelect(plan)}
                 disabled={isCurrent}
-                className={`w-full mt-8 py-3 px-6 rounded-lg font-semibold transition-colors ${isCurrent ? 'bg-indigo-600 text-white cursor-not-allowed' : 'bg-gray-700 text-white hover:bg-gray-600'}`}
+                className={`w-full mt-8 py-3 px-6 rounded-lg font-semibold transition-colors ${isCurrent ? 'bg-cyan-600 text-white cursor-not-allowed' : 'bg-slate-700 text-white hover:bg-slate-600'}`}
             >
                 {isCurrent ? 'Current Plan' : 'Switch to this Plan'}
             </button>
@@ -70,30 +72,30 @@ const Billing: React.FC<BillingProps> = ({ onStartCheckout }) => {
             ACTIVE: 'bg-green-500/20 text-green-300',
             SUSPENDED: 'bg-red-500/20 text-red-300',
             TRIAL: 'bg-yellow-500/20 text-yellow-300',
-            UNVERIFIED: 'bg-gray-500/20 text-gray-300',
+            UNVERIFIED: 'bg-slate-500/20 text-slate-300',
         };
         return <span className={`px-2 py-1 text-xs font-semibold rounded-full ${styles[status]}`}>{status}</span>;
     };
 
     return (
         <div className="space-y-8">
-            <div className="p-6 bg-gray-800 rounded-lg shadow-md">
+            <div className="p-6 bg-slate-800 rounded-lg shadow-md">
                 <h2 className="text-2xl font-bold text-white">Billing & Subscription</h2>
-                <p className="text-gray-400 mt-1">Manage your plan and view billing details.</p>
+                <p className="text-slate-400 mt-1">Manage your plan and view billing details.</p>
             </div>
 
             {/* Current Plan */}
-            <div className="bg-gray-800 p-6 rounded-lg border border-indigo-500 shadow-lg">
+            <div className="bg-slate-800 p-6 rounded-lg border border-cyan-500 shadow-lg">
                 <h3 className="text-xl font-bold text-white mb-4">Your Current Plan</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="md:col-span-2 space-y-4">
                         <div className="flex items-baseline">
-                            <span className="text-3xl font-bold text-indigo-400">{currentPlan.name}</span>
+                            <span className="text-3xl font-bold text-cyan-400">{currentPlan.name}</span>
                             <span className="ml-4">{getStatusBadge(currentTenant.status)}</span>
                         </div>
-                        <p className="text-gray-400">{currentPlan.description}</p>
-                        <div className="flex items-center text-sm text-gray-300">
-                           <Icon name="calendar" className="w-5 h-5 mr-2 text-gray-400" />
+                        <p className="text-slate-400">{currentPlan.description}</p>
+                        <div className="flex items-center text-sm text-slate-300">
+                           <Icon name="calendar" className="w-5 h-5 mr-2 text-slate-400" />
                            Subscribed on: {currentTenant.joinDate.toLocaleDateString()}
                         </div>
                         {currentTenant.status === 'TRIAL' && currentTenant.trialEndDate && (
@@ -103,10 +105,10 @@ const Billing: React.FC<BillingProps> = ({ onStartCheckout }) => {
                             </div>
                         )}
                     </div>
-                    <div className="text-left md:text-right bg-gray-900/50 p-4 rounded-md">
-                        <p className="text-gray-400 capitalize">{currentTenant.billingCycle} cost</p>
+                    <div className="text-left md:text-right bg-slate-900/50 p-4 rounded-md">
+                        <p className="text-slate-400 capitalize">{currentTenant.billingCycle} cost</p>
                         <p className="text-4xl font-extrabold text-white">{formatCurrency(currentTenant.billingCycle === 'yearly' ? currentPlan.priceYearly : currentPlan.price)}</p>
-                        <p className="text-gray-500">Next payment due: July 15, 2024</p>
+                        <p className="text-slate-500">Next payment due: July 15, 2024</p>
                     </div>
                 </div>
             </div>
@@ -115,9 +117,9 @@ const Billing: React.FC<BillingProps> = ({ onStartCheckout }) => {
              <div className="py-8">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold text-white">Change Your Plan</h2>
-                <div className="mt-4 inline-flex items-center bg-gray-700 p-1 rounded-full text-sm font-semibold">
-                    <button onClick={() => setBillingCycle('monthly')} className={`px-4 py-1 rounded-full transition-colors ${billingCycle === 'monthly' ? 'bg-indigo-600 text-white' : 'text-gray-300'}`}>Monthly</button>
-                    <button onClick={() => setBillingCycle('yearly')} className={`px-4 py-1 rounded-full transition-colors relative ${billingCycle === 'yearly' ? 'bg-indigo-600 text-white' : 'text-gray-300'}`}>
+                <div className="mt-4 inline-flex items-center bg-slate-700 p-1 rounded-full text-sm font-semibold">
+                    <button onClick={() => setBillingCycle('monthly')} className={`px-4 py-1 rounded-full transition-colors ${billingCycle === 'monthly' ? 'bg-cyan-600 text-white' : 'text-slate-300'}`}>Monthly</button>
+                    <button onClick={() => setBillingCycle('yearly')} className={`px-4 py-1 rounded-full transition-colors relative ${billingCycle === 'yearly' ? 'bg-cyan-600 text-white' : 'text-slate-300'}`}>
                         Yearly
                         <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">Save 20%</span>
                     </button>

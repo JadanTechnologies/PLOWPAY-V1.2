@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { View } from '../App';
 import Icon from './icons/index.tsx';
@@ -20,11 +22,11 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-950 p-4">
-            <div className="w-full max-w-md p-8 space-y-6 bg-gray-800 rounded-2xl shadow-2xl relative">
+        <div className="flex items-center justify-center min-h-screen bg-slate-950 p-4">
+            <div className="w-full max-w-md p-8 space-y-6 bg-slate-800 rounded-2xl shadow-2xl relative border border-slate-700">
                 <button 
                   onClick={() => onNavigate('login')} 
-                  className="absolute top-4 left-4 text-gray-400 hover:text-indigo-400 transition-colors flex items-center text-sm font-semibold"
+                  className="absolute top-4 left-4 text-slate-400 hover:text-cyan-400 transition-colors flex items-center text-sm font-semibold"
                 >
                     <Icon name="chevronLeft" className="w-5 h-5 mr-1" />
                     Back to Log In
@@ -37,13 +39,13 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) => {
                 {submitted ? (
                     <div className="text-center">
                         <Icon name="check" className="w-12 h-12 text-green-400 mx-auto mb-4" />
-                        <p className="text-gray-300">
+                        <p className="text-slate-300">
                             If an account with the email <strong>{email}</strong> exists, a password reset link has been sent. Please check your inbox.
                         </p>
                     </div>
                 ) : (
                     <>
-                        <p className="text-center text-sm text-gray-400">
+                        <p className="text-center text-sm text-slate-400">
                             Enter your email address and we will send you a link to reset your password.
                         </p>
                         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
@@ -54,11 +56,11 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onNavigate }) => {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="appearance-none relative block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-gray-200 placeholder-gray-400 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                                className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-700 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 sm:text-sm"
                                 placeholder="Email Address"
                             />
                             <div>
-                                <button type="submit" className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-800">
+                                <button type="submit" className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 focus:ring-offset-slate-800">
                                     Send Reset Link
                                 </button>
                             </div>

@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AdminUser, AdminUserStatus, Permission } from '../../types';
@@ -94,7 +96,7 @@ const TeamManagement: React.FC = () => {
     const canManage = hasPermission('manageTeam');
 
     return (
-        <div className="p-6 bg-gray-800 rounded-lg shadow-md">
+        <div className="p-6 bg-slate-800 rounded-lg shadow-md">
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white">Team Management</h2>
                 {canManage && (
@@ -106,7 +108,7 @@ const TeamManagement: React.FC = () => {
             </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="border-b border-gray-700">
+                    <thead className="border-b border-slate-700">
                         <tr>
                             <th className="p-3 text-sm font-semibold tracking-wide">Name</th>
                             <th className="p-3 text-sm font-semibold tracking-wide">Email</th>
@@ -119,13 +121,13 @@ const TeamManagement: React.FC = () => {
                     </thead>
                     <tbody>
                         {adminUsers.map(user => (
-                            <tr key={user.id} className="border-b border-gray-700 hover:bg-gray-700/50">
+                            <tr key={user.id} className="border-b border-slate-700 hover:bg-slate-700/50">
                                 <td className="p-3 whitespace-nowrap font-medium">{user.name}</td>
-                                <td className="p-3 whitespace-nowrap text-gray-400">{user.email}</td>
+                                <td className="p-3 whitespace-nowrap text-slate-400">{user.email}</td>
                                 <td className="p-3 whitespace-nowrap">{roleMap.get(user.roleId) || 'Unknown Role'}</td>
                                 <td className="p-3 whitespace-nowrap text-center">{getStatusBadge(user.status)}</td>
-                                <td className="p-3 whitespace-nowrap text-gray-400">{user.joinDate.toLocaleDateString()}</td>
-                                <td className="p-3 whitespace-nowrap text-gray-400 font-mono">{user.lastLoginIp || 'N/A'}</td>
+                                <td className="p-3 whitespace-nowrap text-slate-400">{user.joinDate.toLocaleDateString()}</td>
+                                <td className="p-3 whitespace-nowrap text-slate-400 font-mono">{user.lastLoginIp || 'N/A'}</td>
                                 {canManage && (
                                     <td className="p-3 text-center whitespace-nowrap space-x-2">
                                          <button onClick={() => openModal(user)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-sm">Edit</button>
@@ -139,43 +141,43 @@ const TeamManagement: React.FC = () => {
                     </tbody>
                 </table>
                  {adminUsers.length === 0 && (
-                    <p className="text-center text-gray-400 py-8">No team members found.</p>
+                    <p className="text-center text-slate-400 py-8">No team members found.</p>
                 )}
             </div>
 
             {isModalOpen && canManage && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
-                    <div className="bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+                    <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md">
                         <h3 className="text-xl font-bold mb-4 text-white">{editingUser ? 'Edit Team Member' : 'Add Team Member'}</h3>
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-400">Full Name</label>
-                                <input type="text" id="name" name="name" value={formData.name} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+                                <label htmlFor="name" className="block text-sm font-medium text-slate-400">Full Name</label>
+                                <input type="text" id="name" name="name" value={formData.name} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
                             </div>
                             <div>
-                                <label htmlFor="email" className="block text-sm font-medium text-gray-400">Email Address</label>
-                                <input type="email" id="email" name="email" value={formData.email} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+                                <label htmlFor="email" className="block text-sm font-medium text-slate-400">Email Address</label>
+                                <input type="email" id="email" name="email" value={formData.email} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
                             </div>
                             <div>
-                                <label htmlFor="username" className="block text-sm font-medium text-gray-400">Username</label>
-                                <input type="text" id="username" name="username" value={formData.username} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+                                <label htmlFor="username" className="block text-sm font-medium text-slate-400">Username</label>
+                                <input type="text" id="username" name="username" value={formData.username} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
                             </div>
                             <div>
-                                <label htmlFor="password" className="block text-sm font-medium text-gray-400">Password</label>
-                                <input type="password" id="password" name="password" value={formData.password} onChange={handleFormChange} required={!editingUser} placeholder={editingUser ? 'Leave blank to keep current password' : ''} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+                                <label htmlFor="password" className="block text-sm font-medium text-slate-400">Password</label>
+                                <input type="password" id="password" name="password" value={formData.password} onChange={handleFormChange} required={!editingUser} placeholder={editingUser ? 'Leave blank to keep current password' : ''} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
                             </div>
                              <div>
-                                <label htmlFor="roleId" className="block text-sm font-medium text-gray-400">Role</label>
-                                <select id="roleId" name="roleId" value={formData.roleId} onChange={handleFormChange} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                                <label htmlFor="roleId" className="block text-sm font-medium text-slate-400">Role</label>
+                                <select id="roleId" name="roleId" value={formData.roleId} onChange={handleFormChange} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500">
                                     {adminRoles.map(role => (
                                         <option key={role.id} value={role.id}>{role.name}</option>
                                     ))}
                                 </select>
                             </div>
                              {formData.roleId && (
-                                <div className="p-3 bg-gray-900/50 rounded-md border border-gray-700">
-                                    <h4 className="text-sm font-semibold text-gray-300 mb-2">Role Permissions:</h4>
-                                    <ul className="text-xs text-gray-400 grid grid-cols-1 sm:grid-cols-2 gap-1">
+                                <div className="p-3 bg-slate-900/50 rounded-md border border-slate-700">
+                                    <h4 className="text-sm font-semibold text-slate-300 mb-2">Role Permissions:</h4>
+                                    <ul className="text-xs text-slate-400 grid grid-cols-1 sm:grid-cols-2 gap-1">
                                         {adminRoles.find(r => r.id === formData.roleId)?.permissions.map(p => (
                                             <li key={p} className="flex items-center truncate">
                                                 <Icon name="check" className="w-4 h-4 mr-2 text-cyan-400 flex-shrink-0" />
@@ -185,8 +187,8 @@ const TeamManagement: React.FC = () => {
                                     </ul>
                                 </div>
                             )}
-                            <div className="mt-6 flex justify-end space-x-3 pt-4 border-t border-gray-700">
-                                <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-500 font-semibold">Cancel</button>
+                            <div className="mt-6 flex justify-end space-x-3 pt-4 border-t border-slate-700">
+                                <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md bg-slate-600 text-white hover:bg-slate-500 font-semibold">Cancel</button>
                                 <button type="submit" className="px-4 py-2 rounded-md bg-cyan-600 text-white hover:bg-cyan-500 font-semibold">
                                     {editingUser ? 'Save Changes' : 'Add Member'}
                                 </button>
