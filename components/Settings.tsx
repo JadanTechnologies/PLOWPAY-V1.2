@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { Staff, StaffRole, TenantPermission, TenantAutomations, Branch } from '../types';
-import { allCurrencies, allLanguages } from '../utils/data';
+import { allCurrencies, allLanguages, allTimezones } from '../utils/data';
 import ConfirmationModal from './ConfirmationModal';
 import GoogleMap from './GoogleMap';
 
@@ -108,13 +107,13 @@ const SettingCard: React.FC<{ title: string, icon: string, description: string, 
 const Localization: React.FC = () => {
     const { currentTenant, systemSettings, updateCurrentTenantSettings } = useAppContext();
 
-    const handleSettingChange = (setting: 'currency' | 'language', value: string) => {
+    const handleSettingChange = (setting: 'currency' | 'language' | 'timezone', value: string) => {
         if (!currentTenant) return;
         updateCurrentTenantSettings({ [setting]: value });
     };
 
     return (
-        <SettingCard title="Localization" icon="globe" description="Set your preferred language and currency. Changes are applied in real-time.">
+        <SettingCard title="Localization" icon="globe" description="Set your preferred language, currency, and timezone.">
             <div className="space-y-4 max-w-sm">
                 <div>
                     <label className="block text-sm font-medium text-slate-400">Currency</label>
@@ -137,6 +136,18 @@ const Localization: React.FC = () => {
                     >
                         {allLanguages.map(l => (
                             <option key={l.code} value={l.code}>{l.name}</option>
+                        ))}
+                    </select>
+                </div>
+                 <div>
+                    <label className="block text-sm font-medium text-slate-400">Timezone</label>
+                    <select
+                        value={currentTenant?.timezone || systemSettings.defaultTimezone}
+                        onChange={(e) => handleSettingChange('timezone', e.target.value)}
+                        className="w-full mt-1 bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
+                    >
+                        {allTimezones.map(t => (
+                            <option key={t.value} value={t.value}>{t.label}</option>
                         ))}
                     </select>
                 </div>

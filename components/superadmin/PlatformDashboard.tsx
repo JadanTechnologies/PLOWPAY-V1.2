@@ -1,5 +1,4 @@
 
-
 import React, { useMemo, useState } from 'react';
 import {
     ResponsiveContainer,
@@ -164,7 +163,8 @@ const PlatformDashboard: React.FC = () => {
                                 fill="#8884d8"
                                 dataKey="value"
                                 nameKey="name"
-                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                // FIX: Added a fallback for 'percent' to ensure it's a number before performing arithmetic operations, resolving a potential TypeScript error.
+                                label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                             >
                                 {revenueByPlanData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />

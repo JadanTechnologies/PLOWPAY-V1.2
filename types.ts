@@ -225,6 +225,7 @@ export interface Tenant {
   trialEndDate?: Date;
   currency?: string; // e.g. 'USD', 'NGN'
   language?: string; // e.g. 'en', 'es'
+  timezone?: string;
   automations?: TenantAutomations;
   isVerified: boolean;
   billingCycle: 'monthly' | 'yearly';
@@ -514,17 +515,33 @@ export interface MapProvider {
     apiKey: string;
 }
 
+export interface GeminiSettings {
+    apiKey: string;
+}
+
+export interface OpenAISettings {
+    apiKey: string;
+}
+
+export interface AISettings {
+    provider: 'gemini' | 'openai';
+    gemini: GeminiSettings;
+    openai: OpenAISettings;
+}
+
 export interface SystemSettings {
   currencies: Currency[];
   defaultCurrency: string;
   languages: Language[];
   defaultLanguage: string;
+  defaultTimezone: string;
   maintenanceSettings: MaintenanceSettings;
   accessControlSettings: AccessControlSettings;
   landingPageMetrics: LandingPageMetrics;
   featuredUpdate: FeaturedUpdateSettings;
   mapProviders: MapProvider[];
   activeMapProviderId: string;
+  aiSettings: AISettings;
 }
 
 export type PaymentTransactionStatus = 'COMPLETED' | 'PENDING' | 'FAILED' | 'REJECTED';
@@ -680,7 +697,7 @@ export interface AppContextType {
   updateMaintenanceSettings: (settings: MaintenanceSettings) => void;
   updateAccessControlSettings: (settings: AccessControlSettings) => void;
   updateLandingPageMetrics: (metrics: LandingPageMetrics) => void;
-  updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout'>>) => void;
+  updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout' | 'timezone'>>) => void;
   updateTenantLogisticsConfig: (config: { activeTrackerProviderId: string; }) => void;
   updateTenantAutomations: (newAutomations: Partial<TenantAutomations>) => void;
   addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => void;

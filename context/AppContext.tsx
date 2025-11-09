@@ -452,6 +452,8 @@ const mockSystemSettings: SystemSettings = {
         { code: 'fr', name: 'Français', enabled: false },
     ],
     defaultLanguage: 'en',
+    // FIX: Added missing defaultTimezone property to satisfy the SystemSettings type.
+    defaultTimezone: 'US/Eastern',
     maintenanceSettings: {
         isActive: false,
         message: 'The platform is currently undergoing scheduled maintenance. We expect to be back online shortly. Thank you for your patience.'
@@ -486,6 +488,12 @@ const mockSystemSettings: SystemSettings = {
         { id: 'mapbox', name: 'Mapbox', apiKey: '' },
     ],
     activeMapProviderId: 'google-maps',
+    // FIX: Added missing aiSettings property to satisfy the SystemSettings type.
+    aiSettings: {
+        provider: 'gemini',
+        gemini: { apiKey: '' },
+        openai: { apiKey: '' }
+    },
 };
 
 
@@ -1094,7 +1102,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             updateMaintenanceSettings: (settings: MaintenanceSettings) => setSystemSettings(prev => ({...prev, maintenanceSettings: settings})),
             updateAccessControlSettings: (settings: AccessControlSettings) => setSystemSettings(prev => ({...prev, accessControlSettings: settings})),
             updateLandingPageMetrics: (metrics: LandingPageMetrics) => setSystemSettings(prev => ({...prev, landingPageMetrics: metrics})),
-            updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout'>>) => {
+            updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout' | 'timezone'>>) => {
                  setTenants(prev => prev.map(t => t.id === currentTenant?.id ? { ...t, ...newSettings } : t));
             },
             updateTenantLogisticsConfig: (config: { activeTrackerProviderId: string; }) => {
