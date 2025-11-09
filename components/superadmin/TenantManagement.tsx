@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Tenant, TenantStatus } from '../../types';
 import Icon from '../icons/index.tsx';
@@ -13,6 +13,7 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
     const [modal, setModal] = useState<'NONE' | 'ADD_TENANT' | 'EDIT_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE'>('NONE');
     const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [searchTerm, setSearchTerm] = useState('');
     const ITEMS_PER_PAGE = 10;
 
 
@@ -27,10 +28,22 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
 
     const planMap = new Map(subscriptionPlans.map(p => [p.id, p.name]));
     
-    const totalPages = Math.ceil(tenants.length / ITEMS_PER_PAGE);
+    const filteredTenants = useMemo(() => {
+        return tenants.filter(tenant => 
+            tenant.businessName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            tenant.email.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [tenants, searchTerm]);
+
+    const totalPages = Math.ceil(filteredTenants.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
-    const currentTenants = tenants.slice(startIndex, endIndex);
+    const currentTenants = filteredTenants.slice(startIndex, endIndex);
+
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+        setCurrentPage(1); // Reset to first page on new search
+    };
 
     const handlePrevPage = () => {
         setCurrentPage(prev => Math.max(prev - 1, 1));
@@ -130,6 +143,20 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
                     Add Tenant
                 </button>
             </div>
+            <div className="mb-4">
+                <div className="relative">
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                        <Icon name="search" className="w-5 h-5 text-slate-400" />
+                    </span>
+                    <input
+                        type="text"
+                        placeholder="Search by business name or email..."
+                        value={searchTerm}
+                        onChange={handleSearchChange}
+                        className="w-full max-w-sm py-2 pl-10 pr-4 text-white bg-slate-700 border border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                    />
+                </div>
+            </div>
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
                     <thead className="border-b border-slate-700 text-xs text-slate-400 uppercase">
@@ -182,7 +209,7 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
             
              <div className="flex justify-between items-center mt-4">
                 <span className="text-sm text-slate-400">
-                    Showing {startIndex + 1}-{Math.min(endIndex, tenants.length)} of {tenants.length} tenants
+                    Showing {filteredTenants.length > 0 ? startIndex + 1 : 0}-{Math.min(endIndex, filteredTenants.length)} of {filteredTenants.length} tenants
                 </span>
                 <div className="flex items-center gap-2">
                     <button 
@@ -193,7 +220,7 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
                         Previous
                     </button>
                     <span className="text-sm text-slate-400">
-                        Page {currentPage} of {totalPages}
+                        Page {currentPage} of {totalPages || 1}
                     </span>
                     <button 
                         onClick={handleNextPage} 
