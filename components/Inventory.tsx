@@ -321,7 +321,7 @@ const Inventory: React.FC = () => {
                                     {filteredProducts.map((product) => (
                                         <React.Fragment key={product.id}>
                                             <tr className="border-b border-slate-800 bg-slate-900/50">
-                                                <td colSpan={4 + branches.length} className="p-3 font-semibold text-white">
+                                                <td colSpan={4 + branches.length + 2} className="p-3 font-semibold text-white">
                                                     {product.name} <span className="text-sm font-normal text-slate-400 ml-2">({categoryMap.get(product.categoryId)})</span>
                                                 </td>
                                             </tr>
@@ -406,10 +406,10 @@ const Inventory: React.FC = () => {
                                         </td>
                                         <td className="p-3 text-slate-300 text-xs">
                                             {log.action === 'ADJUSTMENT' ? (<><div><strong>Branch:</strong> {branchMap.get(log.branchId!)}</div><div><strong>Reason:</strong> {log.reason}</div></>) 
-                                            : (<><div><strong>From:</strong> {branchMap.get(log.fromBranchId!)}</div><div><strong>To:</strong> {branchMap.get(log.toBranchId!)}</div></>)}
+                                            : ( log.action === 'TRANSFER' ? <><div><strong>From:</strong> {branchMap.get(log.fromBranchId!)}</div><div><strong>To:</strong> {branchMap.get(log.toBranchId!)}</div></> : <div><strong>Branch:</strong> {branchMap.get(log.branchId!)}</div>)}
                                         </td>
                                         <td className="p-3 whitespace-nowrap text-right font-bold font-mono">
-                                            {log.action === 'ADJUSTMENT' ? (<span className={log.quantity > 0 ? 'text-green-500' : 'text-red-500'}>{log.quantity > 0 ? `+${log.quantity}` : log.quantity}</span>) : (<span className="text-slate-300">{log.quantity}</span>)}
+                                            {log.action === 'ADJUSTMENT' || log.action === 'SALE' || log.action === 'RETURN' ? (<span className={log.quantity > 0 ? 'text-green-500' : 'text-red-500'}>{log.quantity > 0 ? `+${log.quantity}` : log.quantity}</span>) : (<span className="text-slate-300">{log.quantity}</span>)}
                                         </td>
                                     </tr>
                                 ))}
@@ -447,7 +447,6 @@ const Inventory: React.FC = () => {
             {/* Modals */}
              {(isAdjustModalOpen || isEditModalOpen || isTransferModalOpen || isAddProductModalOpen || isCategoryModalOpen) && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4" aria-modal="true" role="dialog">
-                    {/* All modals will be rendered here. Their content is controlled by the respective `is...Open` state */}
                     {isAdjustModalOpen && selectedProduct && selectedVariant && (
                         <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-slate-700">
                              <h3 className="text-xl font-bold mb-2 text-white">Adjust Stock</h3>
@@ -480,6 +479,143 @@ const Inventory: React.FC = () => {
                             </div>
                         </div>
                     )}
+                    
+                    {isTransferModalOpen && selectedProduct && selectedVariant && (
+                        <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-slate-700">
+                            <h3 className="text-xl font-bold mb-2 text-white">Transfer Stock</h3>
+                            <p className="text-slate-400 mb-4">{selectedProduct.name} - {selectedVariant.name}</p>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400">From Branch</label>
+                                    <select 
+                                        value={transferFromBranchId} 
+                                        onChange={e => setTransferFromBranchId(e.target.value)} 
+                                        className="w-full py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"
+                                    >
+                                        <option value="">Select source</option>
+                                        {availableFromBranches.map(branch => 
+                                            <option key={branch.id} value={branch.id}>
+                                                {branch.name} (Stock: {selectedVariant.stockByBranch[branch.id] || 0})
+                                            </option>
+                                        )}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400">To Branch</label>
+                                    <select 
+                                        value={transferToBranchId} 
+                                        onChange={e => setTransferToBranchId(e.target.value)} 
+                                        disabled={!transferFromBranchId}
+                                        className="w-full py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md disabled:bg-slate-700/50"
+                                    >
+                                        <option value="">Select destination</option>
+                                        {availableToBranches.map(branch => 
+                                            <option key={branch.id} value={branch.id}>{branch.name}</option>
+                                        )}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400">Quantity to Transfer</label>
+                                    <input 
+                                        type="number" 
+                                        value={transferQuantity} 
+                                        onChange={e => setTransferQuantity(e.target.value)} 
+                                        max={maxTransferQty}
+                                        disabled={!transferFromBranchId}
+                                        className="w-full py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md disabled:bg-slate-700/50"
+                                    />
+                                    {transferFromBranchId && <p className="text-xs text-slate-500 mt-1">Available to transfer: {maxTransferQty}</p>}
+                                </div>
+                            </div>
+                            <div className="mt-6 flex justify-end space-x-3">
+                                <button onClick={closeTransferModal} className="px-4 py-2 rounded-md bg-slate-600 text-white hover:bg-slate-500 font-semibold">Cancel</button>
+                                <button onClick={initiateStockTransfer} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold">Initiate Transfer</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {isEditModalOpen && editingProduct && editingVariant && (
+                        <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-lg border border-slate-700">
+                            <h3 className="text-xl font-bold mb-2 text-white">Edit Variant</h3>
+                            <p className="text-slate-400 mb-4">{editingProduct.name} - {editingVariant.name}</p>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-400">SKU</label>
+                                    <input 
+                                        type="text" 
+                                        value={editingVariant.sku} 
+                                        onChange={e => setEditingVariant({...editingVariant, sku: e.target.value})} 
+                                        className="w-full py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-400">Selling Price</label>
+                                        <input 
+                                            type="number" 
+                                            value={editingVariant.sellingPrice} 
+                                            onChange={e => setEditingVariant({...editingVariant, sellingPrice: parseFloat(e.target.value)})} 
+                                            className="w-full py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-400">Cost Price</label>
+                                        <input 
+                                            type="number" 
+                                            value={editingVariant.costPrice} 
+                                            onChange={e => setEditingVariant({...editingVariant, costPrice: parseFloat(e.target.value)})} 
+                                            className="w-full py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-400">Batch Number</label>
+                                        <input 
+                                            type="text" 
+                                            value={editingVariant.batchNumber || ''} 
+                                            onChange={e => setEditingVariant({...editingVariant, batchNumber: e.target.value})} 
+                                            className="w-full py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-400">Expiry Date</label>
+                                        <input 
+                                            type="date" 
+                                            value={editingVariant.expiryDate || ''} 
+                                            onChange={e => setEditingVariant({...editingVariant, expiryDate: e.target.value})} 
+                                            className="w-full py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mt-6 flex justify-end space-x-3">
+                                <button onClick={closeEditModal} className="px-4 py-2 rounded-md bg-slate-600 text-white hover:bg-slate-500 font-semibold">Cancel</button>
+                                <button onClick={handleVariantUpdate} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold">Save Changes</button>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {isCategoryModalOpen && (
+                        <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-slate-700">
+                            <h3 className="text-xl font-bold mb-4 text-white">{editingCategory ? 'Edit Category' : 'Add New Category'}</h3>
+                            <div>
+                                <label htmlFor="categoryName" className="block text-sm font-medium text-slate-400">Category Name</label>
+                                <input 
+                                    type="text" 
+                                    id="categoryName" 
+                                    value={categoryFormName} 
+                                    onChange={e => setCategoryFormName(e.target.value)}
+                                    className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"
+                                />
+                            </div>
+                            <div className="mt-6 flex justify-end space-x-3">
+                                <button onClick={closeCategoryModal} className="px-4 py-2 rounded-md bg-slate-600 text-white hover:bg-slate-500 font-semibold">Cancel</button>
+                                <button onClick={handleSaveCategory} className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold">Save Category</button>
+                            </div>
+                        </div>
+                    )}
+                    
                     {isAddProductModalOpen && (
                          <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-4xl max-h-[90vh] flex flex-col border border-slate-700">
                              <h3 className="text-xl font-bold mb-4 text-white">Add New Product</h3>
