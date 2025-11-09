@@ -9,7 +9,7 @@ interface TenantManagementProps {
 }
 
 const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) => {
-    const { tenants, subscriptionPlans, addTenant, extendTrial, activateSubscription, updateTenant } = useAppContext();
+    const { tenants, subscriptionPlans, addTenant, extendTrial, activateSubscription, updateTenant, setNotification } = useAppContext();
     const [modal, setModal] = useState<'NONE' | 'ADD_TENANT' | 'EDIT_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE'>('NONE');
     const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
@@ -23,6 +23,8 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
         planId: subscriptionPlans[0]?.id || ''
     };
     const [formState, setFormState] = useState(initialFormState);
+    const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [extendDays, setExtendDays] = useState(14);
     const [selectedPlanId, setSelectedPlanId] = useState(subscriptionPlans[0]?.id || '');
 
@@ -55,6 +57,8 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
 
     const openModal = (modalType: 'ADD_TENANT' | 'EDIT_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE', tenant: Tenant | null = null) => {
         setModal(modalType);
+        setLogoFile(null);
+        setLogoPreview(null);
         if (tenant) {
             setSelectedTenant(tenant);
             if (modalType === 'ACTIVATE') {
@@ -72,6 +76,7 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
                     companyLogoUrl: tenant.companyLogoUrl || '',
                     planId: tenant.planId,
                 });
+                setLogoPreview(tenant.companyLogoUrl || null);
             }
         } else {
             setFormState(initialFormState);
@@ -83,26 +88,50 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
         setSelectedTenant(null);
         setFormState(initialFormState);
         setExtendDays(14);
+        setLogoFile(null);
+        setLogoPreview(null);
     };
 
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            setLogoFile(file);
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setLogoPreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormState(prev => ({ ...prev, [e.target.name]: e.target.value }));
     };
     
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (modal === 'EDIT_TENANT' && selectedTenant) {
             const updateData: Partial<Tenant> = { ...formState };
             if (!formState.password || formState.password.trim() === '') {
                 delete (updateData as any).password;
             }
+             if (logoPreview && logoPreview !== selectedTenant.companyLogoUrl) {
+                updateData.companyLogoUrl = logoPreview;
+            }
             updateTenant(selectedTenant.id, updateData);
+            setNotification({ type: 'success', message: 'Tenant updated successfully.' });
+            closeModal();
         } else {
-            // FIX: Pass the expected two arguments to the addTenant function.
-            addTenant(formState, '');
+            if (!logoPreview) {
+                setNotification({type: 'error', message: 'Please upload a company logo.'});
+                return;
+            }
+            const { success, message } = await addTenant(formState, logoPreview);
+            setNotification({ type: success ? 'success' : 'error', message });
+            if (success) {
+                closeModal();
+            }
         }
-        closeModal();
     };
 
     const handleExtendTrial = () => {
@@ -271,6 +300,22 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
                                     <select name="planId" value={formState.planId} onChange={handleFormChange} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md">
                                         {subscriptionPlans.map(plan => <option key={plan.id} value={plan.id}>{plan.name}</option>)}
                                     </select>
+                                </div>
+                                 <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-slate-400">Company Logo</label>
+                                    <div className="mt-1 flex items-center space-x-4 p-3 bg-slate-700 border border-slate-600 rounded-md">
+                                        {logoPreview ? (
+                                            <img src={logoPreview} alt="Logo Preview" className="h-16 w-16 rounded-md object-contain bg-white/10" />
+                                        ) : (
+                                            <div className="h-16 w-16 rounded-md bg-slate-600 flex items-center justify-center">
+                                                <Icon name="briefcase" className="w-8 h-8 text-slate-500" />
+                                            </div>
+                                        )}
+                                        <label htmlFor="logo-upload" className="cursor-pointer bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-md text-sm">
+                                            <span>{logoFile || logoPreview ? 'Change Logo' : 'Upload Logo'}</span>
+                                            <input id="logo-upload" name="logo" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} required={modal === 'ADD_TENANT'}/>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>

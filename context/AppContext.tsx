@@ -8,7 +8,9 @@ import {
     Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, 
     InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, 
     AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost, 
-    LocalSession, Profile, allPermissions, IpGeolocationProvider, MapProvider, AISettings, SupabaseSettings
+    LocalSession, Profile, allPermissions, IpGeolocationProvider, MapProvider, AISettings, SupabaseSettings,
+    // FIX: Import ProductVariant to resolve multiple 'Cannot find name' errors.
+    ProductVariant
 } from '../types';
 
 // Initial Data
@@ -302,8 +304,9 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [auditLogsState, setAuditLogsState] = useState<AuditLog[]>(auditLogs);
     const [depositsState, setDepositsState] = useState<Deposit[]>(deposits);
     const [supportTicketsState, setSupportTicketsState] = useState<SupportTicket[]>(supportTickets);
+    const [inAppNotifications, setInAppNotifications] = useState<InAppNotification[]>([]);
 
-
+    const [currentStaffUser, setCurrentStaffUser] = useState<Staff | null>(staff[0] || null);
     const [searchTerm, setSearchTerm] = useState('');
     const [theme, setTheme] = useState<'light' | 'dark'>('dark');
     
@@ -452,7 +455,10 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setCurrentTenant(null); // Clear tenant context
     };
     
-    const currentStaffUser = staff[0];
+    // FIX: Moved activateSubscription outside of memoizedSetters to fix ReferenceError.
+    const activateSubscription = useCallback((tenantId: string, planId: string, billingCycle: 'monthly' | 'yearly') => {
+        setTenantsState(prev => prev.map(t => t.id === tenantId ? { ...t, status: 'ACTIVE', planId, billingCycle, trialEndDate: undefined } : t));
+    }, []);
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
         switch (metric) {
@@ -464,6 +470,18 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     };
     
+    // FIX: Moved updateDeposit before addSale to make it available in its scope.
+    const updateDeposit = useCallback((depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes' | 'appliedSaleId'>>) => {
+        setDepositsState(prev => prev.map(d => d.id === depositId ? { ...d, ...updates } : d));
+    }, []);
+
+    // FIX: Added a local formatCurrency function because useCurrency hook is not available here.
+    const formatCurrency = (value: number) => {
+        const currencyInfo = systemSettingsState.currencies.find(c => c.code === currentCurrency);
+        const symbol = currencyInfo ? currencyInfo.symbol : '$';
+        return `${symbol}${value.toFixed(2)}`;
+    };
+
     const addSale = async (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'>): Promise<{success: boolean, message: string, newSale?: Sale}> => {
         const { items, total, payments, customerId } = saleData;
 
@@ -544,6 +562,9 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setAdminUsersState(prev => prev.map(u => u.id === userId ? { ...u, ...userData } : u));
     };
     
+    // FIX: Moved updateShipmentStatus before memoizedSetters to make it available in other memoized functions.
+    const updateShipmentStatus = useCallback((shipmentId: string, status: Shipment['status']) => setShipmentsState(prev => prev.map(s => s.id === shipmentId ? { ...s, status } : s)), []);
+
     // Most functions are defined via useCallback to maintain reference equality
     const memoizedSetters = {
         // ... other setters
@@ -580,7 +601,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setTrucksState(prev => prev.map(t => t.id === truckId ? { ...t, currentLocation: { ...t.currentLocation, lat: t.currentLocation.lat + 0.01 }, lastUpdate: new Date() } : t));
         }, []),
         addShipment: useCallback((shipmentData: Omit<Shipment, 'id'>) => setShipmentsState(prev => [...prev, { ...shipmentData, id: `ship-${Date.now()}` }]), []),
-        updateShipmentStatus: useCallback((shipmentId: string, status: Shipment['status']) => setShipmentsState(prev => prev.map(s => s.id === shipmentId ? { ...s, status } : s)), []),
+        updateShipmentStatus,
         updateTrackerProviders: useCallback((providers: TrackerProvider[]) => setTrackerProvidersState(providers), []),
         addBranch: useCallback((branchName: string) => setBranchesState(prev => [...prev, { id: `branch-${Date.now()}`, name: branchName, location: { lat: 0, lng: 0 } }]), []),
         updateBranchLocation: useCallback((branchId: string, location: { lat: number, lng: number }) => setBranchesState(prev => prev.map(b => b.id === branchId ? { ...b, location } : b)), []),
@@ -595,8 +616,21 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             
             const saleTotal = shipment.items.reduce((acc, item) => acc + (item.sellingPrice * item.quantity), 0);
             
+            // FIX: Correctly map shipment items to CartItem, resolving missing 'name' and 'variantName' properties.
             const saleResult = await addSale({
-                items: shipment.items.map(i => ({...i, costPrice: 0})),
+                items: shipment.items.map(i => {
+                    const product = productsState.find(p => p.id === i.productId);
+                    const variant = product?.variants.find(v => v.id === i.variantId);
+                    return {
+                        productId: i.productId,
+                        variantId: i.variantId,
+                        name: product?.name || 'N/A',
+                        variantName: variant?.name || 'N/A',
+                        quantity: i.quantity,
+                        sellingPrice: i.sellingPrice,
+                        costPrice: 0, // In-transit sales may not have accurate cost price at point of sale
+                    };
+                }),
                 total: saleTotal,
                 branchId: shipment.destination,
                 customerId: newCustomer.id,
@@ -611,7 +645,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 return { success: true, message: 'Shipment sold successfully' };
             }
             return { success: false, message: saleResult.message };
-        }, [shipmentsState]),
+        }, [shipmentsState, productsState]),
         receiveShipment: useCallback((shipmentId: string) => {
             const shipment = shipmentsState.find(s => s.id === shipmentId);
             if (!shipment) return;
@@ -710,9 +744,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             setDepositsState(prev => [newDeposit, ...prev]);
             return { success: true, message: 'Deposit recorded successfully!' };
         }, []),
-        updateDeposit: useCallback((depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes' | 'appliedSaleId'>>) => {
-            setDepositsState(prev => prev.map(d => d.id === depositId ? { ...d, ...updates } : d));
-        }, []),
+        updateDeposit,
         addConsignment: useCallback((consignmentData: Omit<Consignment, 'id' | 'status'>) => {
             const newConsignment: Consignment = { ...consignmentData, id: `con-${Date.now()}`, status: 'ACTIVE' };
             setConsignmentsState(prev => [newConsignment, ...prev]);
@@ -729,9 +761,6 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 }
                 return t;
             }));
-        }, []),
-        activateSubscription: useCallback((tenantId: string, planId: string, billingCycle: 'monthly' | 'yearly') => {
-            setTenantsState(prev => prev.map(t => t.id === tenantId ? { ...t, status: 'ACTIVE', planId, billingCycle, trialEndDate: undefined } : t));
         }, []),
         changeSubscriptionPlan: useCallback((tenantId: string, newPlanId: string, billingCycle: 'monthly' | 'yearly') => {
              setTenantsState(prev => prev.map(t => t.id === tenantId ? { ...t, planId: newPlanId, billingCycle } : t));
@@ -777,30 +806,32 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             }
             setPaymentTransactionsState(prev => [newTransaction, ...prev]);
             
+            const plan = subscriptionPlansState.find(p => p.id === planId);
+            
             if (success && method !== 'Manual') {
                 activateSubscription(tenantId, planId, billingCycle);
-                return { success: true, message: `Payment successful! Your ${planMap.get(planId)} plan is now active.` };
+                return { success: true, message: `Payment successful! Your ${plan?.name || 'selected'} plan is now active.` };
             } else if (method === 'Manual') {
                  return { success: true, message: 'Your payment has been submitted for review. Your plan will be activated upon confirmation.' };
             } else {
                  return { success: false, message: 'Your payment could not be processed. Please try again or contact support.' };
             }
-        }, [activateSubscription]),
+        }, [activateSubscription, subscriptionPlansState]),
         updatePaymentTransactionStatus: useCallback((transactionId: string, newStatus: 'COMPLETED' | 'REJECTED') => {
             setPaymentTransactionsState(prev => prev.map(tx => {
                 if (tx.id === transactionId) {
                     if (newStatus === 'COMPLETED' && tx.status === 'PENDING') {
                         // Activate subscription for the tenant
-                        const plan = subscriptionPlans.find(p => p.id === tx.planId);
+                        const plan = subscriptionPlansState.find(p => p.id === tx.planId);
                         if (plan) {
-                           activateSubscription(tx.tenantId, tx.planId, plan.price === tx.amount ? 'monthly' : 'yearly');
+                           activateSubscription(tx.tenantId, tx.planId, tx.amount === plan.price ? 'monthly' : 'yearly');
                         }
                     }
                     return { ...tx, status: newStatus };
                 }
                 return tx;
             }));
-        }, [subscriptionPlans, activateSubscription]),
+        }, [subscriptionPlansState, activateSubscription]),
         updateEmailTemplate: useCallback((templateId: string, newSubject: string, newBody: string) => setEmailTemplatesState(prev => prev.map(t => t.id === templateId ? {...t, subject: newSubject, body: newBody } : t)), []),
         updateSmsTemplate: useCallback((templateId: string, newBody: string) => setSmsTemplatesState(prev => prev.map(t => t.id === templateId ? {...t, body: newBody } : t)), []),
         markInAppNotificationAsRead: useCallback((notificationId: string) => setInAppNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n)), []),
@@ -966,6 +997,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         categories: categoriesState, paymentTransactions: paymentTransactionsState, emailTemplates: emailTemplatesState,
         smsTemplates: smsTemplatesState, auditLogs: auditLogsState, deposits: depositsState, supportTickets: supportTicketsState,
         blogPosts: blogPostsState,
+        inAppNotifications,
         currentTenant, currentAdminUser, impersonatedUser,
         notification, setNotification, logAction,
         searchTerm, setSearchTerm, theme, setTheme,
@@ -973,7 +1005,11 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         getMetric, addSale, adjustStock, transferStock, addProduct, updateProductVariant,
         addAdminUser, updateAdminUser, updateAdminRole, addAdminRole, deleteAdminRole,
         session, profile, isLoading, handleImpersonate, stopImpersonating, login, logout,
-        allTenantPermissions, allPermissions, currentStaffUser,
+        allTenantPermissions, allPermissions, currentStaffUser, setCurrentStaffUser,
+        activateSubscription,
+        // FIX: Add missing properties to the context value to match AppContextType.
+        updateTenant,
+        updateCurrentTenantSettings,
         ...memoizedSetters,
     };
 
