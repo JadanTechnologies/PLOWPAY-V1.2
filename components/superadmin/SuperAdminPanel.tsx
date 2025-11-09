@@ -10,7 +10,7 @@ import PaymentGateways from './PaymentSettings';
 import NotificationSettings from './NotificationSettings';
 import SubscriptionManagement from './SubscriptionManagement';
 import { useAppContext } from '../../hooks/useAppContext';
-import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language, LandingPageMetrics, FeaturedUpdateSettings, Tenant, AISettings } from '../../types';
+import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language, LandingPageMetrics, FeaturedUpdateSettings, Tenant, AISettings, IpGeolocationProvider, MapProvider } from '../../types';
 import Icon from '../icons/index.tsx';
 import { usePermissions } from '../../hooks/usePermissions';
 import Announcements from './Announcements';
@@ -42,8 +42,8 @@ const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void 
 };
 
 const Settings: React.FC = () => {
-    type SettingsTab = 'branding' | 'content' | 'faqs' | 'localization' | 'ai_settings' | 'landing' | 'featured_update';
-    const [activeTab, setActiveTab] = useState<SettingsTab>('localization');
+    type SettingsTab = 'branding' | 'content' | 'faqs' | 'localization' | 'providers' | 'ai_settings' | 'landing' | 'featured_update';
+    const [activeTab, setActiveTab] = useState<SettingsTab>('providers');
     const { brandConfig, pageContent, systemSettings, updateBrandConfig, updatePageContent, updateFaqs, updateSystemSettings, updateLandingPageMetrics, setNotification } = useAppContext();
 
     // State for each settings tab
@@ -63,6 +63,13 @@ const Settings: React.FC = () => {
     const [defaultLanguage, setDefaultLanguage] = useState<string>(systemSettings.defaultLanguage);
     const [defaultTimezone, setDefaultTimezone] = useState<string>(systemSettings.defaultTimezone);
 
+    // State for providers
+    const [mapProviders, setMapProviders] = useState<MapProvider[]>(systemSettings.mapProviders);
+    const [activeMapProviderId, setActiveMapProviderId] = useState<string>(systemSettings.activeMapProviderId);
+    const [ipGeoProviders, setIpGeoProviders] = useState<IpGeolocationProvider[]>(systemSettings.ipGeolocationProviders);
+    const [activeIpGeoProviderId, setActiveIpGeoProviderId] = useState<string>(systemSettings.activeIpGeolocationProviderId);
+
+
     useEffect(() => {
         setBrandForm(brandConfig);
         setContentForm(pageContent);
@@ -75,6 +82,10 @@ const Settings: React.FC = () => {
         setLanguages(systemSettings.languages);
         setDefaultLanguage(systemSettings.defaultLanguage);
         setDefaultTimezone(systemSettings.defaultTimezone);
+        setMapProviders(systemSettings.mapProviders);
+        setActiveMapProviderId(systemSettings.activeMapProviderId);
+        setIpGeoProviders(systemSettings.ipGeolocationProviders);
+        setActiveIpGeoProviderId(systemSettings.activeIpGeolocationProviderId);
     }, [brandConfig, pageContent, systemSettings]);
 
     const handleBrandSave = () => {
@@ -228,6 +239,17 @@ const Settings: React.FC = () => {
         }
     };
 
+    const handleProviderSave = () => {
+        if (window.confirm("Are you sure you want to save provider settings?")) {
+            updateSystemSettings({ 
+                mapProviders,
+                activeMapProviderId,
+                ipGeolocationProviders: ipGeoProviders,
+                activeIpGeolocationProviderId: activeIpGeoProviderId 
+            });
+        }
+    };
+
     const renderTabContent = () => {
         switch (activeTab) {
             case 'branding':
@@ -343,6 +365,48 @@ const Settings: React.FC = () => {
                         </div>
                     </div>
                 );
+            case 'providers':
+                return (
+                    <div className="space-y-6">
+                        <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
+                            <h3 className="text-lg font-semibold text-white">Map Provider Settings</h3>
+                             <div>
+                                <label className="block text-sm font-medium text-slate-400">Active Map Provider</label>
+                                <select value={activeMapProviderId} onChange={e => setActiveMapProviderId(e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3">
+                                    {mapProviders.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+                             {mapProviders.map((provider, index) => (
+                                <div key={provider.id}>
+                                    <label className="block text-sm font-medium text-slate-400">{provider.name} API Key</label>
+                                    <input type="password" value={provider.apiKey} onChange={e => { const newProviders = [...mapProviders]; newProviders[index].apiKey = e.target.value; setMapProviders(newProviders); }} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3"/>
+                                </div>
+                             ))}
+                        </div>
+                         <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
+                            <h3 className="text-lg font-semibold text-white">IP Geolocation Provider</h3>
+                             <div>
+                                <label className="block text-sm font-medium text-slate-400">Active IP Geolocation Provider</label>
+                                <select value={activeIpGeoProviderId} onChange={e => setActiveIpGeoProviderId(e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3">
+                                    {ipGeoProviders.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                                </select>
+                            </div>
+                             {ipGeoProviders.map((provider, index) => (
+                                <div key={provider.id} className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-400">{provider.name} API Key</label>
+                                        <input type="password" value={provider.apiKey} onChange={e => { const newProviders = [...ipGeoProviders]; newProviders[index].apiKey = e.target.value; setIpGeoProviders(newProviders); }} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3"/>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-400">{provider.name} API Endpoint</label>
+                                        <input type="text" value={provider.apiEndpoint} onChange={e => { const newProviders = [...ipGeoProviders]; newProviders[index].apiEndpoint = e.target.value; setIpGeoProviders(newProviders); }} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md py-2 px-3"/>
+                                    </div>
+                                </div>
+                             ))}
+                        </div>
+                        <div className="text-right"><button onClick={handleProviderSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Provider Settings</button></div>
+                    </div>
+                );
             case 'ai_settings':
                  return (
                     <div className="space-y-6">
@@ -434,7 +498,7 @@ const Settings: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div className="lg:col-span-1">
                     <nav className="flex flex-col space-y-2">
-                        {(['branding', 'content', 'faqs', 'localization', 'ai_settings', 'landing', 'featured_update'] as SettingsTab[]).map(tab => (
+                        {(['branding', 'content', 'faqs', 'localization', 'providers', 'ai_settings', 'landing', 'featured_update'] as SettingsTab[]).map(tab => (
                             <button key={tab} onClick={() => setActiveTab(tab)} className={`w-full text-left p-3 rounded-md font-medium text-sm ${activeTab === tab ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>
                                 {tab.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </button>

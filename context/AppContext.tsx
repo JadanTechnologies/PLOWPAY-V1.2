@@ -108,6 +108,8 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         },
         mapProviders: [{id: 'google', name: 'Google Maps', apiKey: ''}],
         activeMapProviderId: 'google',
+        ipGeolocationProviders: [{ id: 'ipinfo', name: 'IPinfo.io', apiKey: '', apiEndpoint: 'https://ipinfo.io/' }],
+        activeIpGeolocationProviderId: 'ipinfo',
         aiSettings: {
             provider: 'gemini',
             gemini: { apiKey: '' },

@@ -205,8 +205,9 @@ const AppContent: React.FC = () => {
     };
   
     const { isActive: isMaintenanceMode, message: maintenanceMessage } = systemSettings.maintenanceSettings || { isActive: false, message: '' };
-    const { accessControlSettings } = systemSettings;
+    const { accessControlSettings, ipGeolocationProviders, activeIpGeolocationProviderId } = systemSettings;
     const [isBlocked, setIsBlocked] = useState(false);
+    const [isCheckingAccess, setIsCheckingAccess] = useState(true);
 
     const userRole = useMemo(() => {
       if (!profile) return null;
@@ -224,59 +225,97 @@ const AppContent: React.FC = () => {
     }, [brandConfig]);
 
     useEffect(() => {
-      if (userRole === 'SUPER_ADMIN' && !impersonatedUser) { // Super admins are not blocked
-          setIsBlocked(false);
-          return;
-      }
+        if (userRole === 'SUPER_ADMIN' && !impersonatedUser) { // Super admins are not blocked
+            setIsBlocked(false);
+            setIsCheckingAccess(false);
+            return;
+        }
 
-      // In a real app, you would get user info from a server-side context or a trusted client-side service.
-      // We will continue to simulate it here for demonstration.
-      const checkAccess = () => {
-          const { mode, ipBlacklist, countryBlacklist, browserBlacklist, deviceBlacklist, ipWhitelist, countryWhitelist, browserWhitelist, deviceWhitelist } = accessControlSettings;
-          if (mode === 'ALLOW_ALL') return false;
+        const checkAccess = async () => {
+            const { mode, ipBlacklist, countryBlacklist, browserBlacklist, deviceBlacklist, ipWhitelist, countryWhitelist, browserWhitelist, deviceWhitelist } = accessControlSettings;
+            if (mode === 'ALLOW_ALL') {
+                setIsCheckingAccess(false);
+                return false;
+            }
 
-          const userAgent = navigator.userAgent;
-          let browser = "Other";
-          if (userAgent.includes("Chrome")) browser = "Chrome";
-          else if (userAgent.includes("Firefox")) browser = "Firefox";
-          else if (userAgent.includes("Safari")) browser = "Safari";
-          else if (userAgent.includes("MSIE") || userAgent.includes("Trident/")) browser = "IE";
-          
-          let device: 'desktop' | 'mobile' | 'tablet' = 'desktop';
-          if (/Mobi|Android/i.test(userAgent)) device = 'mobile';
-          else if (/Tablet|iPad/i.test(userAgent)) device = 'tablet';
+            const userAgent = navigator.userAgent;
+            let browser = "Other";
+            if (userAgent.includes("Chrome")) browser = "Chrome";
+            else if (userAgent.includes("Firefox")) browser = "Firefox";
+            else if (userAgent.includes("Safari")) browser = "Safari";
+            else if (userAgent.includes("MSIE") || userAgent.includes("Trident/")) browser = "IE";
+            
+            let device: 'desktop' | 'mobile' | 'tablet' = 'desktop';
+            if (/Mobi|Android/i.test(userAgent)) device = 'mobile';
+            else if (/Tablet|iPad/i.test(userAgent)) device = 'tablet';
 
-          const userContext = { ip: '81.91.130.5', country: 'IR', browser, device };
+            let userIp = '127.0.0.1';
+            let userCountry = 'US';
 
-          if (mode === 'BLOCK_LISTED') {
-              if (ipBlacklist.some(ip => ip === userContext.ip)) return true;
-              if (countryBlacklist.includes(userContext.country)) return true;
-              if (browserBlacklist.includes(userContext.browser)) return true;
-              if (deviceBlacklist.includes(userContext.device)) return true;
-          }
+            try {
+                // Get user's public IP
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                if (!ipRes.ok) throw new Error('Failed to fetch IP');
+                const ipData = await ipRes.json();
+                userIp = ipData.ip;
 
-          if (mode === 'ALLOW_LISTED') {
-              if (ipWhitelist.length > 0 && !ipWhitelist.some(ip => ip === userContext.ip)) return true;
-              if (countryWhitelist.length > 0 && !countryWhitelist.includes(userContext.country)) return true;
-              if (browserWhitelist.length > 0 && !browserWhitelist.includes(userContext.browser)) return true;
-              if (deviceWhitelist.length > 0 && !deviceWhitelist.includes(userContext.device)) return true;
-          }
-          
-          return false;
-      };
+                // Get geolocation data
+                const provider = ipGeolocationProviders.find(p => p.id === activeIpGeolocationProviderId);
+                if (provider && provider.apiKey && provider.apiEndpoint) {
+                    const geoRes = await fetch(`${provider.apiEndpoint}${userIp}?token=${provider.apiKey}`);
+                    if (!geoRes.ok) throw new Error('Failed to fetch geo data');
+                    const geoData = await geoRes.json();
+                    userCountry = geoData.country; // Standard field for IPinfo.io
+                }
+            } catch (error) {
+                console.error("Could not determine user location, access will not be blocked:", error);
+                setIsBlocked(false);
+                setIsCheckingAccess(false);
+                return;
+            }
 
-      setIsBlocked(checkAccess());
+            const userContext = { ip: userIp, country: userCountry, browser, device };
 
-  }, [accessControlSettings, userRole, impersonatedUser]);
+            let isUserBlocked = false;
+            if (mode === 'BLOCK_LISTED') {
+                if (ipBlacklist.some(ip => ip === userContext.ip)) isUserBlocked = true;
+                if (countryBlacklist.includes(userContext.country)) isUserBlocked = true;
+                if (browserBlacklist.includes(userContext.browser)) isUserBlocked = true;
+                if (deviceBlacklist.includes(userContext.device)) isUserBlocked = true;
+            }
 
+            if (mode === 'ALLOW_LISTED') {
+                let isAllowed = true;
+                if (ipWhitelist.length > 0 && !ipWhitelist.some(ip => ip === userContext.ip)) isAllowed = false;
+                if (countryWhitelist.length > 0 && !countryWhitelist.includes(userContext.country)) isAllowed = false;
+                if (browserWhitelist.length > 0 && !browserWhitelist.includes(userContext.browser)) isAllowed = false;
+                if (deviceWhitelist.length > 0 && !deviceWhitelist.includes(userContext.device)) isAllowed = false;
+                if (!isAllowed) isUserBlocked = true;
+            }
+            
+            setIsBlocked(isUserBlocked);
+            setIsCheckingAccess(false);
+        };
 
-  if (isBlocked) {
-      return <AccessDeniedPage />;
-  }
+        checkAccess();
 
-  if (isMaintenanceMode && userRole !== 'SUPER_ADMIN') {
-      return <MaintenancePage message={maintenanceMessage} />;
-  }
+    }, [accessControlSettings, userRole, impersonatedUser, ipGeolocationProviders, activeIpGeolocationProviderId]);
+
+    if (isCheckingAccess) {
+        return (
+            <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
+                Verifying access...
+            </div>
+        );
+    }
+    
+    if (isBlocked) {
+        return <AccessDeniedPage />;
+    }
+
+    if (isMaintenanceMode && userRole !== 'SUPER_ADMIN') {
+        return <MaintenancePage message={maintenanceMessage} />;
+    }
   
   let viewComponent;
   switch (view) {

@@ -519,6 +519,13 @@ export interface MapProvider {
     apiKey: string;
 }
 
+export interface IpGeolocationProvider {
+    id: string;
+    name: string;
+    apiKey: string;
+    apiEndpoint: string;
+}
+
 export interface GeminiSettings {
     apiKey: string;
 }
@@ -545,6 +552,8 @@ export interface SystemSettings {
   featuredUpdate: FeaturedUpdateSettings;
   mapProviders: MapProvider[];
   activeMapProviderId: string;
+  ipGeolocationProviders: IpGeolocationProvider[];
+  activeIpGeolocationProviderId: string;
   aiSettings: AISettings;
 }
 
