@@ -270,6 +270,12 @@ export interface AdminUser {
   lastLoginDate?: Date;
 }
 
+export interface Profile {
+  id: string;
+  is_super_admin: boolean;
+  tenant_id: string | null;
+}
+
 export interface BrandConfig {
   name: string;
   logoUrl: string; 
@@ -757,4 +763,9 @@ export interface AppContextType {
   impersonatedUser: Tenant | null;
   stopImpersonating: () => void;
   logout: () => void;
+  // FIX: Add missing properties for auth and app state.
+  session: any; // Supabase session object. Using 'any' as we can't import the type here.
+  profile: Profile | null;
+  isLoading: boolean;
+  handleImpersonate: (tenant: Tenant) => void;
 }

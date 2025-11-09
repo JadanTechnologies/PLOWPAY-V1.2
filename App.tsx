@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -7,7 +5,7 @@ import SuperAdminPanel from './components/superadmin/SuperAdminPanel';
 import LandingPage from './components/LandingPage';
 import Login from './components/Login';
 import { useAppContext } from './hooks/useAppContext';
-import { FaqItem, PageContent, NotificationType, BlogPost, AdminUser, Tenant } from './types';
+import { FaqItem, PageContent, NotificationType, BlogPost, Tenant } from './types';
 import Icon from './components/icons/index.tsx';
 import SignUp from './components/SignUp';
 import ForgotPassword from './components/ForgotPassword';
@@ -179,184 +177,164 @@ const InfoPage: React.FC<{ pageKey: View, setView: (view: View) => void }> = ({ 
     );
 };
 
-const App: React.FC = () => {
-  const [view, setView] = useState<View>('landing');
-  const [loggedInUser, setLoggedInUser] = useState<AdminUser | Tenant | null>(null);
-  const [impersonatedUser, setImpersonatedUser] = useState<Tenant | null>(null);
-  const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
-
-  const handleLoginSuccess = (user: AdminUser | Tenant) => {
-    setLoggedInUser(user);
-    setView('app');
-  };
-  
-  const handleImpersonate = (tenant: Tenant) => {
-    setImpersonatedUser(tenant);
-  };
-
-  const handleStopImpersonating = () => {
-    setImpersonatedUser(null);
-  };
-
-  const handleLogout = () => {
-    setLoggedInUser(null);
-    setImpersonatedUser(null);
-    setView('landing');
-  };
-
-  const handleNavigate = (newView: View, data?: any) => {
-    if (newView === 'verification' && data?.email) {
-        setVerificationEmail(data.email);
-    }
-    setView(newView);
-  };
-  
-  const RenderedView = () => {
-      const { brandConfig, systemSettings, notification, setNotification } = useAppContext();
-      const { isActive: isMaintenanceMode, message: maintenanceMessage } = systemSettings.maintenanceSettings || { isActive: false, message: '' };
-      const { accessControlSettings } = systemSettings;
-      const [isBlocked, setIsBlocked] = useState(false);
-
-      const userRole = useMemo(() => {
-          if (!loggedInUser) return null;
-          if ('roleId' in loggedInUser && loggedInUser.roleId.startsWith('role-')) return 'SUPER_ADMIN';
-          if ('businessName' in loggedInUser) return 'TENANT';
-          return null;
-      }, [loggedInUser]);
-
-      useEffect(() => {
-        document.title = `${brandConfig.name} - SaaS POS`;
-        const favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-        if (favicon) {
-            favicon.href = brandConfig.faviconUrl;
-        }
-      }, [brandConfig]);
-
-      useEffect(() => {
-        if (userRole === 'SUPER_ADMIN' && !impersonatedUser) { // Super admins are not blocked
-            setIsBlocked(false);
-            return;
-        }
-
-        const checkAccess = () => {
-            const { mode, ipBlacklist, countryBlacklist, browserBlacklist, deviceBlacklist, ipWhitelist, countryWhitelist, browserWhitelist, deviceWhitelist } = accessControlSettings;
-            if (mode === 'ALLOW_ALL') return false;
-
-            // --- SIMULATION CONTEXT ---
-            // In a real app, this data would come from the user's request, GeoIP lookup, and user-agent parsing.
-            // For this demo, we'll simulate a user from a blocked country (Iran) on a blocked browser (IE).
-            const userAgent = navigator.userAgent;
-            let browser = "Other";
-            if (userAgent.includes("Chrome")) browser = "Chrome";
-            else if (userAgent.includes("Firefox")) browser = "Firefox";
-            else if (userAgent.includes("Safari")) browser = "Safari";
-            else if (userAgent.includes("MSIE") || userAgent.includes("Trident/")) browser = "IE";
-            
-            let device: 'desktop' | 'mobile' | 'tablet' = 'desktop';
-            if (/Mobi|Android/i.test(userAgent)) device = 'mobile';
-            else if (/Tablet|iPad/i.test(userAgent)) device = 'tablet';
-
-
-            const userContext = {
-                ip: '81.91.130.5', // A sample IP from Iran for demo purposes
-                country: 'IR', // Simulating a user from Iran
-                browser: browser,
-                device: device
-            };
-
-            if (mode === 'BLOCK_LISTED') {
-                if (ipBlacklist.some(ip => ip === userContext.ip)) return true;
-                if (countryBlacklist.includes(userContext.country)) return true;
-                if (browserBlacklist.includes(userContext.browser)) return true;
-                if (deviceBlacklist.includes(userContext.device)) return true;
-            }
-
-            if (mode === 'ALLOW_LISTED') {
-                if (ipWhitelist.length > 0 && !ipWhitelist.some(ip => ip === userContext.ip)) return true;
-                if (countryWhitelist.length > 0 && !countryWhitelist.includes(userContext.country)) return true;
-                if (browserWhitelist.length > 0 && !browserWhitelist.includes(userContext.browser)) return true;
-                if (deviceWhitelist.length > 0 && !deviceWhitelist.includes(userContext.device)) return true;
-            }
-            
-            return false; // If no rules match to block, allow.
-        };
-
-        setIsBlocked(checkAccess());
-
-    }, [accessControlSettings, userRole, impersonatedUser]);
-
-
-    if (isBlocked) {
-        return <AccessDeniedPage />;
-    }
-
-    if (isMaintenanceMode && userRole !== 'SUPER_ADMIN') {
-        return <MaintenancePage message={maintenanceMessage} />;
-    }
+const AppContent: React.FC = () => {
+    const [view, setView] = useState<View>('landing');
+    const [verificationEmail, setVerificationEmail] = useState<string | null>(null);
     
-    let viewComponent;
-    switch (view) {
-      case 'landing':
-        viewComponent = <LandingPage onNavigate={handleNavigate} />;
-        break;
-      case 'login':
-        viewComponent = <Login onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
-        break;
-      case 'signup':
-        viewComponent = <SignUp onNavigate={handleNavigate} />;
-        break;
-      case 'verification':
-        viewComponent = <VerificationPage email={verificationEmail} onNavigate={handleNavigate} />;
-        break;
-      case 'forgot_password':
-        viewComponent = <ForgotPassword onNavigate={handleNavigate} />;
-        break;
-      case 'terms':
-      case 'privacy':
-      case 'refund':
-      case 'contact':
-      case 'about':
-      case 'faq':
-      case 'help':
-      case 'api':
-      case 'blog':
-        viewComponent = <InfoPage pageKey={view} setView={handleNavigate} />;
-        break;
-      case 'app':
-        if (loggedInUser) {
-          const isSuperAdmin = 'roleId' in loggedInUser && loggedInUser.roleId.startsWith('role-');
-          const isImpersonating = isSuperAdmin && !!impersonatedUser;
+    const { 
+        session, profile, impersonatedUser,
+        brandConfig, systemSettings, notification, setNotification,
+        handleImpersonate 
+    } = useAppContext();
 
-          if (isImpersonating) {
-            viewComponent = <TenantApp />;
-          } else if (isSuperAdmin) {
-            viewComponent = <SuperAdminPanel onImpersonate={handleImpersonate} />;
-          } else { // is a Tenant
-            viewComponent = <TenantApp />;
-          }
-        } else {
-            setTimeout(() => setView('login'), 0); 
-            viewComponent = <Login onLoginSuccess={handleLoginSuccess} onNavigate={handleNavigate} />;
+    useEffect(() => {
+        if (session && profile) {
+            setView('app');
+        } else if (!session) {
+            if (view === 'app') {
+                setView('landing');
+            }
         }
-        break;
-      default:
-        viewComponent = <LandingPage onNavigate={handleNavigate} />;
-        break;
-    }
+    }, [session, profile, view]);
+    
+    const handleNavigate = (newView: View, data?: any) => {
+        if (newView === 'verification' && data?.email) {
+            setVerificationEmail(data.email);
+        }
+        setView(newView);
+    };
+  
+    const { isActive: isMaintenanceMode, message: maintenanceMessage } = systemSettings.maintenanceSettings || { isActive: false, message: '' };
+    const { accessControlSettings } = systemSettings;
+    const [isBlocked, setIsBlocked] = useState(false);
 
-    return (
-        <>
-            <Notification notification={notification} onDismiss={() => setNotification(null)} />
-            {viewComponent}
-        </>
-    );
+    const userRole = useMemo(() => {
+      if (!profile) return null;
+      if (profile.is_super_admin) return 'SUPER_ADMIN';
+      if (profile.tenant_id) return 'TENANT';
+      return null;
+    }, [profile]);
+
+    useEffect(() => {
+      document.title = `${brandConfig.name} - SaaS POS`;
+      const favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (favicon) {
+          favicon.href = brandConfig.faviconUrl;
+      }
+    }, [brandConfig]);
+
+    useEffect(() => {
+      if (userRole === 'SUPER_ADMIN' && !impersonatedUser) { // Super admins are not blocked
+          setIsBlocked(false);
+          return;
+      }
+
+      // In a real app, you would get user info from a server-side context or a trusted client-side service.
+      // We will continue to simulate it here for demonstration.
+      const checkAccess = () => {
+          const { mode, ipBlacklist, countryBlacklist, browserBlacklist, deviceBlacklist, ipWhitelist, countryWhitelist, browserWhitelist, deviceWhitelist } = accessControlSettings;
+          if (mode === 'ALLOW_ALL') return false;
+
+          const userAgent = navigator.userAgent;
+          let browser = "Other";
+          if (userAgent.includes("Chrome")) browser = "Chrome";
+          else if (userAgent.includes("Firefox")) browser = "Firefox";
+          else if (userAgent.includes("Safari")) browser = "Safari";
+          else if (userAgent.includes("MSIE") || userAgent.includes("Trident/")) browser = "IE";
+          
+          let device: 'desktop' | 'mobile' | 'tablet' = 'desktop';
+          if (/Mobi|Android/i.test(userAgent)) device = 'mobile';
+          else if (/Tablet|iPad/i.test(userAgent)) device = 'tablet';
+
+          const userContext = { ip: '81.91.130.5', country: 'IR', browser, device };
+
+          if (mode === 'BLOCK_LISTED') {
+              if (ipBlacklist.some(ip => ip === userContext.ip)) return true;
+              if (countryBlacklist.includes(userContext.country)) return true;
+              if (browserBlacklist.includes(userContext.browser)) return true;
+              if (deviceBlacklist.includes(userContext.device)) return true;
+          }
+
+          if (mode === 'ALLOW_LISTED') {
+              if (ipWhitelist.length > 0 && !ipWhitelist.some(ip => ip === userContext.ip)) return true;
+              if (countryWhitelist.length > 0 && !countryWhitelist.includes(userContext.country)) return true;
+              if (browserWhitelist.length > 0 && !browserWhitelist.includes(userContext.browser)) return true;
+              if (deviceWhitelist.length > 0 && !deviceWhitelist.includes(userContext.device)) return true;
+          }
+          
+          return false;
+      };
+
+      setIsBlocked(checkAccess());
+
+  }, [accessControlSettings, userRole, impersonatedUser]);
+
+
+  if (isBlocked) {
+      return <AccessDeniedPage />;
+  }
+
+  if (isMaintenanceMode && userRole !== 'SUPER_ADMIN') {
+      return <MaintenancePage message={maintenanceMessage} />;
+  }
+  
+  let viewComponent;
+  switch (view) {
+    case 'landing':
+      viewComponent = <LandingPage onNavigate={handleNavigate} />;
+      break;
+    case 'login':
+      viewComponent = <Login onNavigate={handleNavigate} />;
+      break;
+    case 'signup':
+      viewComponent = <SignUp onNavigate={handleNavigate} />;
+      break;
+    case 'verification':
+      viewComponent = <VerificationPage email={verificationEmail} onNavigate={handleNavigate} />;
+      break;
+    case 'forgot_password':
+      viewComponent = <ForgotPassword onNavigate={handleNavigate} />;
+      break;
+    case 'terms': case 'privacy': case 'refund': case 'contact':
+    case 'about': case 'faq': case 'help': case 'api': case 'blog':
+      viewComponent = <InfoPage pageKey={view} setView={handleNavigate} />;
+      break;
+    case 'app':
+      if (session && profile) {
+        if (profile.is_super_admin) {
+          viewComponent = impersonatedUser ? <TenantApp /> : <SuperAdminPanel onImpersonate={handleImpersonate} />;
+        } else if (profile.tenant_id) {
+          viewComponent = <TenantApp />;
+        } else {
+            // This case might happen during signup process before tenant is fully created
+            viewComponent = <div>Setting up your account...</div>
+        }
+      } else {
+        // Not logged in, redirect
+        setTimeout(() => setView('login'), 0); 
+        viewComponent = <Login onNavigate={handleNavigate} />;
+      }
+      break;
+    default:
+      viewComponent = <LandingPage onNavigate={handleNavigate} />;
+      break;
   }
 
   return (
-    <AppContextProvider loggedInUser={loggedInUser} onLogout={handleLogout} impersonatedUser={impersonatedUser} onStopImpersonating={handleStopImpersonating}>
-      <RenderedView/>
-    </AppContextProvider>
-  )
+      <>
+          <Notification notification={notification} onDismiss={() => setNotification(null)} />
+          {viewComponent}
+      </>
+  );
+}
+
+
+const App: React.FC = () => {
+    return (
+        <AppContextProvider>
+            <AppContent />
+        </AppContextProvider>
+    )
 };
 
 export default App;

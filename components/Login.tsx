@@ -2,43 +2,35 @@ import React, { useState } from 'react';
 import Icon from './icons/index.tsx';
 import { useAppContext } from '../hooks/useAppContext';
 import { View } from '../App';
-import { AdminUser, Tenant } from '../types';
+import { supabase } from '../utils/supabase';
 
 interface LoginProps {
-  onLoginSuccess: (user: AdminUser | Tenant) => void;
   onNavigate: (view: View) => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
+const Login: React.FC<LoginProps> = ({ onNavigate }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { brandConfig, updateLastLogin, tenants, adminUsers } = useAppContext();
+  const [loading, setLoading] = useState(false);
+  const { brandConfig } = useAppContext();
 
-
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
-    const lowerCaseInput = email.toLowerCase();
-    // In a real app, this would be the request IP. We simulate it here.
-    const simulatedIp = '203.0.113.42'; 
+    const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+    });
 
-    const adminUser = adminUsers.find(u => (u.username?.toLowerCase() === lowerCaseInput || u.email.toLowerCase() === lowerCaseInput) && u.password === password);
-    if (adminUser) {
-        updateLastLogin(lowerCaseInput, simulatedIp);
-        onLoginSuccess(adminUser);
-        return;
+    if (error) {
+        setError(error.message);
     }
-
-    const tenantUser = tenants.find(t => (t.username.toLowerCase() === lowerCaseInput || t.email.toLowerCase() === lowerCaseInput) && t.password === password);
-    if (tenantUser) {
-       updateLastLogin(lowerCaseInput, simulatedIp);
-       onLoginSuccess(tenantUser);
-       return;
-    }
-
-    setError('Invalid credentials. Please try again.');
+    // On success, the onAuthStateChange listener in AppContext will handle navigation.
+    
+    setLoading(false);
   };
   
   return (
@@ -71,15 +63,15 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
         <form className="mt-8 space-y-6" onSubmit={handleLogin}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
-              <label htmlFor="email-address" className="sr-only">Username or Email</label>
+              <label htmlFor="email-address" className="sr-only">Email</label>
               <input
                 id="email-address"
                 name="email"
-                type="text"
-                autoComplete="username"
+                type="email"
+                autoComplete="email"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-gray-200 placeholder-gray-400 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Username or Email"
+                placeholder="Email Address"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -102,12 +94,11 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
           
           <div className="flex items-center justify-end">
             <div className="text-sm">
-                <button onClick={() => onNavigate('forgot_password')} className="font-medium text-indigo-400 hover:text-indigo-300">
+                <button type="button" onClick={() => onNavigate('forgot_password')} className="font-medium text-indigo-400 hover:text-indigo-300">
                     Forgot your password?
                 </button>
             </div>
           </div>
-
 
           {error && (
             <div className="flex items-center text-red-400">
@@ -119,9 +110,10 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
           <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-800"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 focus:ring-offset-gray-800 disabled:opacity-50"
             >
-              Sign In
+              {loading ? 'Signing In...' : 'Sign In'}
             </button>
           </div>
         </form>
@@ -132,15 +124,6 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess, onNavigate }) => {
                 Sign up
             </button>
         </p>
-
-        <div className="text-center text-sm text-gray-500 bg-gray-900/50 p-3 rounded-md border border-gray-700">
-            <p className="font-semibold text-gray-400 mb-2">Use these credentials for the demo:</p>
-            <p><strong className="text-gray-300">Super Admin:</strong> super</p>
-            <p><strong className="text-gray-300">Password:</strong> super</p>
-            <div className="my-2 border-t border-gray-700"></div>
-            <p><strong className="text-gray-300">Tenant:</strong> tenant</p>
-            <p><strong className="text-gray-300">Password:</strong> tenant</p>
-        </div>
       </div>
     </div>
   );

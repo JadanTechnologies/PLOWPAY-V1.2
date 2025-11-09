@@ -1,10 +1,9 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { View } from '../App';
 import Icon from './icons/index.tsx';
 import { useAppContext } from '../hooks/useAppContext';
 import { countries, phoneCodes } from '../utils/data';
+import { supabase } from '../utils/supabase';
 
 interface SignUpProps {
   onNavigate: (view: View, data?: any) => void;
@@ -44,10 +43,10 @@ const PasswordStrengthMeter: React.FC<{ password?: string }> = ({ password = '' 
 
 
 const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
-    const { addTenant, subscriptionPlans, brandConfig, setNotification, updateLastLogin } = useAppContext();
+    const { brandConfig, setNotification } = useAppContext();
     const [formState, setFormState] = useState({
         businessName: '',
-        fullName: '',
+        ownerName: '',
         email: '',
         password: '',
         country: 'US',
@@ -57,6 +56,7 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
     const [logoFile, setLogoFile] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         setFormState(prev => ({ ...prev, [e.target.name]: e.target.value }));
@@ -77,10 +77,7 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        if (!formState.businessName || !formState.fullName || !formState.email || !formState.password) {
-            setError('All fields are required.');
-            return;
-        }
+        
         if (formState.password.length < 8) {
             setError('Password must be at least 8 characters long.');
             return;
@@ -89,30 +86,63 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
             setError('Company logo is required.');
             return;
         }
-        
-        const premiumPlan = subscriptionPlans.find(p => p.name.toLowerCase() === 'premium');
 
-        const result = await addTenant({
-            businessName: formState.businessName,
-            ownerName: formState.fullName,
+        setLoading(true);
+
+        const { data: { user }, error: signUpError } = await supabase.auth.signUp({
             email: formState.email,
-            username: formState.email, // Simple default
             password: formState.password,
-            planId: premiumPlan?.id || subscriptionPlans[0]?.id || '', // Default to premium plan for trial
-            companyLogoUrl: logoPreview || '',
-            country: formState.country,
-            phoneCountryCode: formState.phoneCountryCode,
-            companyPhone: formState.companyPhone,
+            options: {
+                data: {
+                    full_name: formState.ownerName,
+                }
+            }
         });
-        
-        if (result.success) {
-            const simulatedIp = '203.0.113.58';
-            updateLastLogin(formState.email, simulatedIp);
+
+        if (signUpError) {
+            setError(signUpError.message);
+            setLoading(false);
+            return;
+        }
+
+        if (user) {
+            // 2. Upload logo
+            const fileExt = logoFile.name.split('.').pop();
+            const filePath = `${user.id}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage
+                .from('company_logos')
+                .upload(filePath, logoFile);
+
+            if (uploadError) {
+                setError(`Error uploading logo: ${uploadError.message}`);
+                // TODO: Clean up created user if this fails
+                setLoading(false);
+                return;
+            }
+
+            // 3. Get public URL for the logo
+            const { data: { publicUrl } } = supabase.storage
+                .from('company_logos')
+                .getPublicUrl(filePath);
+
+            // 4. Call DB function to create tenant and link profile
+            const { error: rpcError } = await supabase.rpc('create_tenant_for_user', {
+                business_name: formState.businessName,
+                owner_name: formState.ownerName,
+                company_logo_url: publicUrl
+            });
+
+            if (rpcError) {
+                setError(`Error creating tenant: ${rpcError.message}`);
+                setLoading(false);
+                return;
+            }
+            
             setNotification({ message: 'Sign up successful! Please check your email to verify your account.', type: 'success' });
             onNavigate('verification', { email: formState.email });
-        } else {
-             setNotification({ message: result.message, type: 'error' });
         }
+
+        setLoading(false);
     };
 
     return (
@@ -134,7 +164,7 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
 
                 <form className="mt-8 space-y-4" onSubmit={handleSignUp}>
                     <input name="businessName" type="text" required placeholder="Business Name" value={formState.businessName} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
-                    <input name="fullName" type="text" required placeholder="Your Full Name" value={formState.fullName} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
+                    <input name="ownerName" type="text" required placeholder="Your Full Name" value={formState.ownerName} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
                     <div>
                         <label className="text-sm font-medium text-slate-400">Company Logo</label>
                         <div className="mt-1 flex items-center space-x-4 p-3 bg-slate-800 border border-slate-600 rounded-md">
@@ -146,7 +176,7 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
                                 </div>
                             )}
                             <label htmlFor="logo-upload" className="cursor-pointer bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-md text-sm">
-                                <span>{logoFile ? 'Change Logo' : 'Change Logo'}</span>
+                                <span>{logoFile ? 'Change Logo' : 'Upload Logo'}</span>
                                 <input id="logo-upload" name="logo" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} required/>
                             </label>
                         </div>
@@ -168,8 +198,8 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
                     {error && <p className="text-sm text-red-400">{error}</p>}
 
                     <div>
-                        <button type="submit" className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 focus:ring-offset-slate-800 mt-4">
-                            Sign Up
+                        <button type="submit" disabled={loading} className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 focus:ring-offset-slate-800 mt-4 disabled:opacity-50">
+                            {loading ? 'Creating Account...' : 'Sign Up'}
                         </button>
                     </div>
                 </form>
