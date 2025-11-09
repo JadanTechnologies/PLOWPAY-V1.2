@@ -275,7 +275,7 @@ interface HeldOrder {
   id: number;
   cart: CartItem[];
   // FIX: Added 'id' to the customer object in HeldOrder to match the customer state type.
-  customer: { id: string; name: string; phone?: string; };
+  customer: { id: string; name: string; phone: string; };
   discount: number;
   heldAt: Date;
 }
@@ -658,7 +658,7 @@ const PointOfSale: React.FC = () => {
     const newHeldOrder: HeldOrder = {
       id: Date.now(),
       cart,
-      customer,
+      customer: { ...customer, phone: customer.phone || '' },
       discount,
       heldAt: new Date(),
     };

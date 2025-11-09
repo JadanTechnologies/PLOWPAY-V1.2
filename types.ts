@@ -251,6 +251,22 @@ export type Permission =
   | 'manageSupport'
   | 'manageBlog';
 
+// FIX: Export `allPermissions` array for use in other files.
+export const allPermissions: Permission[] = [
+  'viewPlatformDashboard',
+  'manageTenants',
+  'manageSubscriptions',
+  'manageTeam',
+  'manageRoles',
+  'manageSystemSettings',
+  'managePaymentGateways',
+  'manageNotificationSettings',
+  'manageAnnouncements',
+  'viewAuditLogs',
+  'manageSupport',
+  'manageBlog',
+];
+
 export interface AdminRole {
     id: string;
     name: string;
@@ -711,7 +727,7 @@ export interface AppContextType {
   addProduct: (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => void;
   updateProductVariant: (productId: string, variantId: string, variantData: Partial<Omit<ProductVariant, 'id' | 'stockByBranch'>>) => void;
   addAdminUser: (userData: Omit<AdminUser, 'id' | 'joinDate' | 'status' | 'lastLoginIp' | 'lastLoginDate'>) => void;
-  updateAdminUser: (userId: string, userData: Partial<Omit<AdminUser, 'id' | 'joinDate'>>) => void;
+  updateAdminUser: (userId: string, userData: Partial<AdminUser>) => void;
   updateAdminRole: (roleId: string, permissions: Permission[]) => void;
   addAdminRole: (roleData: Omit<AdminRole, 'id'>) => void;
   deleteAdminRole: (roleId: string) => void;
@@ -728,10 +744,10 @@ export interface AppContextType {
   updateTenantLogisticsConfig: (config: { activeTrackerProviderId: string; }) => void;
   updateTenantAutomations: (newAutomations: Partial<TenantAutomations>) => void;
   addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => void;
-  updateSubscriptionPlan: (planId: string, planData: Partial<Omit<SubscriptionPlan, 'id'>>) => void;
+  updateSubscriptionPlan: (planId: string, planData: Partial<SubscriptionPlan>) => void;
   deleteSubscriptionPlan: (planId: string) => void;
   addTruck: (truckData: Omit<Truck, 'id' | 'lastUpdate'>) => void;
-  updateTruck: (truckId: string, truckData: Partial<Omit<Truck, 'id' | 'lastUpdate'>>) => void;
+  updateTruck: (truckId: string, truckData: Partial<Truck>) => void;
   deleteTruck: (truckId: string) => void;
   updateTruckVitals: (truckId: string) => void;
   addShipment: (shipmentData: Omit<Shipment, 'id'>) => void;
@@ -751,10 +767,10 @@ export interface AppContextType {
   addAccount: (accountData: Omit<Account, 'id' | 'balance'>) => void;
   addJournalEntry: (entryData: Omit<JournalEntry, 'id' | 'date'>) => void;
   addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'>, logoBase64: string) => Promise<{ success: boolean; message: string }>;
-  updateTenant: (tenantId: string, tenantData: Partial<Omit<Tenant, 'id' | 'joinDate'>>) => void;
+  updateTenant: (tenantId: string, tenantData: Partial<Tenant>) => void;
   verifyTenant: (email: string) => void;
-  updateTenantProfile: (tenantData: Partial<Omit<Tenant, 'id'>>) => void;
-  updateAdminProfile: (adminData: Partial<Omit<AdminUser, 'id'>>) => void;
+  updateTenantProfile: (tenantData: Partial<Tenant>) => void;
+  updateAdminProfile: (adminData: Partial<AdminUser>) => void;
   addAnnouncement: (announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => void;
   markAnnouncementAsRead: (announcementId: string, userId: string) => void;
   addCustomer: (customerData: Omit<Customer, 'id' | 'creditBalance'>) => void;
@@ -781,7 +797,7 @@ export interface AppContextType {
   replyToSupportTicket: (ticketId: string, message: Omit<TicketMessage, 'id' | 'timestamp'>) => void;
   updateTicketStatus: (ticketId: string, status: SupportTicket['status']) => void;
   addBlogPost: (postData: Omit<BlogPost, 'id' | 'createdAt' | 'authorName'>) => void;
-  updateBlogPost: (postId: string, postData: Partial<Omit<BlogPost, 'id' | 'authorId' | 'authorName' | 'createdAt'>>) => void;
+  updateBlogPost: (postId: string, postData: Partial<BlogPost>) => void;
   deleteBlogPost: (postId: string) => void;
   updateLastLogin: (email: string, ip: string) => void;
   generateInsights: () => Promise<string>;

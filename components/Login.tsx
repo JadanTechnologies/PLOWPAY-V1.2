@@ -2,15 +2,12 @@ import React, { useState } from 'react';
 import Icon from './icons/index.tsx';
 import { useAppContext } from '../hooks/useAppContext';
 import { View } from '../App';
-// FIX: Removed unused supabase import.
-// import { supabase } from '../utils/supabase';
 
 interface LoginProps {
   onNavigate: (view: View) => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onNavigate }) => {
-  // FIX: Switched from email to username to align with demo login logic.
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,7 +19,6 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
     setError('');
     setLoading(true);
 
-    // FIX: Replaced direct Supabase call with login function from context.
     const { success, message } = await login(username, password);
 
     if (!success) {
@@ -71,7 +67,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 autoComplete="username"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-gray-600 bg-gray-700 text-gray-200 placeholder-gray-400 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Username (e.g. superadmin, tenantadmin)"
+                placeholder="Username (e.g. super, tenant)"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />

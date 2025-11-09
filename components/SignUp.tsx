@@ -3,8 +3,6 @@ import { View } from '../App';
 import Icon from './icons/index.tsx';
 import { useAppContext } from '../hooks/useAppContext';
 import { countries, phoneCodes } from '../utils/data';
-// FIX: Removed unused supabase import.
-// import { supabase } from '../utils/supabase';
 
 interface SignUpProps {
   onNavigate: (view: View, data?: any) => void;
