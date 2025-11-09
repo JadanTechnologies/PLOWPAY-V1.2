@@ -3,8 +3,6 @@ import { View } from '../App';
 import Icon from './icons/index.tsx';
 import { useAppContext } from '../hooks/useAppContext';
 import { countries, phoneCodes } from '../utils/data';
-// FIX: Removed unused supabase import.
-// import { supabase } from '../utils/supabase';
 
 interface SignUpProps {
   onNavigate: (view: View, data?: any) => void;
@@ -90,13 +88,11 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
         }
 
         setLoading(true);
-
-        // FIX: Replaced direct Supabase calls with addTenant from context.
+        
         const { success, message } = await addTenant({
             ...formState,
             planId: 'plan-basic', // Default to basic plan on signup
         }, logoPreview);
-
 
         if (success) {
             setNotification({ message: 'Sign up successful! Please "verify" your email to continue.', type: 'success' });
@@ -104,7 +100,6 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
         } else {
             setError(message);
         }
-        
 
         setLoading(false);
     };
@@ -155,7 +150,8 @@ const SignUp: React.FC<SignUpProps> = ({ onNavigate }) => {
                         <input name="companyPhone" type="tel" required placeholder="Company Phone" value={formState.companyPhone} onChange={handleFormChange} className="appearance-none relative block w-2/3 px-3 py-3 border-r border-t border-b border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-r-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
                     </div>
                     <input name="email" type="email" required placeholder="Email Address" value={formState.email} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
-                     <input name="username" type="text" required placeholder="Username" value={formState.username} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
+                    <input name="username" type="text" required placeholder="Username" value={formState.username} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
+
                     <div>
                         <input name="password" type="password" required placeholder="Password" value={formState.password} onChange={handleFormChange} className="appearance-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-800 text-slate-200 placeholder-slate-400 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 sm:text-sm" />
                         <PasswordStrengthMeter password={formState.password} />

@@ -86,7 +86,8 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
             }
             updateTenant(selectedTenant.id, updateData);
         } else {
-            addTenant(formState);
+            // FIX: Pass the expected two arguments to the addTenant function.
+            addTenant(formState, '');
         }
         closeModal();
     };

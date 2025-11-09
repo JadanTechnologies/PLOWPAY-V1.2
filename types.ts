@@ -645,6 +645,14 @@ export interface SupportTicket {
     messages: TicketMessage[];
 }
 
+export interface LocalSession {
+    user: {
+        id: string;
+        email: string;
+    };
+    profile: Profile;
+}
+
 export interface AppContextType {
   products: Product[];
   sales: Sale[];
@@ -742,7 +750,7 @@ export interface AppContextType {
   deleteStaffRole: (roleId: string) => void;
   addAccount: (accountData: Omit<Account, 'id' | 'balance'>) => void;
   addJournalEntry: (entryData: Omit<JournalEntry, 'id' | 'date'>) => void;
-  addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'>) => Promise<{ success: boolean; message: string }>;
+  addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'>, logoBase64: string) => Promise<{ success: boolean; message: string }>;
   updateTenant: (tenantId: string, tenantData: Partial<Omit<Tenant, 'id' | 'joinDate'>>) => void;
   verifyTenant: (email: string) => void;
   updateTenantProfile: (tenantData: Partial<Omit<Tenant, 'id'>>) => void;
@@ -780,8 +788,8 @@ export interface AppContextType {
   impersonatedUser: Tenant | null;
   stopImpersonating: () => void;
   logout: () => void;
-  // FIX: Add missing properties for auth and app state.
-  session: any; // Supabase session object. Using 'any' as we can't import the type here.
+  login: (username: string, password: string) => Promise<{ success: boolean; message: string }>;
+  session: LocalSession | null;
   profile: Profile | null;
   isLoading: boolean;
   handleImpersonate: (tenant: Tenant) => void;

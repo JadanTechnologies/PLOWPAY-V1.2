@@ -1,6 +1,5 @@
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
-import { supabase } from '../utils/supabase';
-import { Session, User } from '@supabase/supabase-js';
+// FIX: Removed supabase import as it's not used in the demo version and the file is empty.
 import { 
     AppContextType, Product, Sale, Branch, StockLog, Tenant, SubscriptionPlan, 
     AdminUser, AdminRole, Permission, BrandConfig, PageContent, FaqItem, 
@@ -10,7 +9,9 @@ import {
     Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, 
     InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, 
     AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost,
-    FeaturedUpdateSettings
+    FeaturedUpdateSettings,
+    LocalSession,
+    Profile
 } from '../types';
 import { allCurrencies, allLanguages, allTimezones } from '../utils/data';
 
@@ -37,7 +38,7 @@ const sampleAdminRoles: AdminRole[] = [
 ];
 
 const sampleAdminUsers: AdminUser[] = [
-    { id: 'user-super', name: 'Platform Owner', email: 'superadmin@flowpay.com', roleId: 'role-super', status: 'ACTIVE', joinDate: new Date('2023-01-15') }
+    { id: 'user-super', name: 'Platform Owner', email: 'superadmin@flowpay.com', username: 'superadmin', roleId: 'role-super', status: 'ACTIVE', joinDate: new Date('2023-01-15') }
 ];
 
 const sampleSubscriptionPlans: SubscriptionPlan[] = [
@@ -96,14 +97,9 @@ const sampleCustomers: Customer[] = [
 // --- END SAMPLE DATA ---
 
 
-interface Profile {
-    id: string;
-    is_super_admin: boolean;
-    tenant_id: string | null;
-}
-
 export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [session, setSession] = useState<Session | null>(null);
+    // FIX: Changed session state to use LocalSession for demo purposes without Supabase.
+    const [session, setSession] = useState<LocalSession | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -213,141 +209,27 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     const [currentCurrency, setCurrentCurrency] = useState<string>('USD');
     const [impersonatedUser, setImpersonatedUser] = useState<Tenant | null>(null);
 
-    // Auth & Profile loading
+    // FIX: Replaced Supabase auth with localStorage-based session management for demo purposes.
+    // Auth & Profile loading from localStorage
     useEffect(() => {
-        const getSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            setSession(session);
-            if(session) {
-                const { data: profileData, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                if(profileData) setProfile(profileData);
+        const storedSession = localStorage.getItem('session');
+        if (storedSession) {
+            try {
+                const parsedSession: LocalSession = JSON.parse(storedSession);
+                setSession(parsedSession);
+                setProfile(parsedSession.profile);
+                if (parsedSession.profile.tenant_id) {
+                    const tenant = sampleTenants.find(t => t.id === parsedSession.profile.tenant_id);
+                    setCurrentTenant(tenant || null);
+                }
+            } catch (e) {
+                localStorage.removeItem('session');
             }
-            setIsLoading(false);
-        };
-        getSession();
-
-        const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session);
-            // On signout, clear profile and data
-            if (!session) {
-                setProfile(null);
-                setCurrentTenant(null);
-                // Clear all data states
-                setProducts([]); setSales([]); setBranches([]); // etc...
-            }
-        });
-
-        return () => {
-            authListener?.subscription.unsubscribe();
-        };
+        }
+        setIsLoading(false);
     }, []);
 
-    // Data fetching effect
-    useEffect(() => {
-        if (!session || !profile) {
-            // If not logged in, stick with sample data
-            setIsLoading(false);
-            return;
-        };
-
-        const fetchData = async () => {
-            setIsLoading(true);
-
-            // Fetch global data
-            const [plansRes, settingsRes, announcementsRes] = await Promise.all([
-                supabase.from('subscription_plans').select('*'),
-                supabase.from('system_settings').select('settings').eq('id', 1).single(),
-                supabase.from('announcements').select('*')
-            ]);
-            if (plansRes.data && plansRes.data.length > 0) setSubscriptionPlans(plansRes.data as any);
-            if (settingsRes.data) {
-                const dbSettings = settingsRes.data.settings as any;
-                setBrandConfig({ name: dbSettings.name || 'FlowPay', logoUrl: dbSettings.logoUrl || '', faviconUrl: dbSettings.faviconUrl || '' });
-                setSystemSettings(prev => ({ ...prev, ...dbSettings }));
-            }
-            if (announcementsRes.data) setAnnouncements(announcementsRes.data as any);
-            
-            // Fetch tenant or admin data
-            if (profile.is_super_admin && !impersonatedUser) {
-                 const [tenantsRes, adminsRes, rolesRes, paymentTransactionsRes, allSupportTicketsRes, blogPostsRes, allAuditLogsRes] = await Promise.all([
-                    supabase.from('tenants').select('*'),
-                    supabase.from('admin_users').select('*'),
-                    supabase.from('admin_roles').select('*'),
-                    supabase.from('payment_transactions').select('*'),
-                    supabase.from('support_tickets').select('*, messages:ticket_messages(*)'),
-                    supabase.from('blog_posts').select('*'),
-                    supabase.from('audit_logs').select('*'),
-                ]);
-                if (tenantsRes.data && tenantsRes.data.length > 0) setTenants(tenantsRes.data as any);
-                if (adminsRes.data && adminsRes.data.length > 0) setAdminUsers(adminsRes.data as any);
-                if (rolesRes.data && rolesRes.data.length > 0) setAdminRoles(rolesRes.data as any);
-                if (paymentTransactionsRes.data) setPaymentTransactions(paymentTransactionsRes.data as any);
-                if (allSupportTicketsRes.data) setSupportTickets(allSupportTicketsRes.data as any);
-                if (blogPostsRes.data) setBlogPosts(blogPostsRes.data as any);
-                if (allAuditLogsRes.data) setAuditLogs(allAuditLogsRes.data as any);
-            } else {
-                const tenantIdToFetch = impersonatedUser?.id || profile.tenant_id;
-                if (tenantIdToFetch) {
-                    const { data: currentTenantData } = await supabase.from('tenants').select('*').eq('id', tenantIdToFetch).single();
-                    if(currentTenantData) setCurrentTenant(currentTenantData as any);
-
-                    // Fetch all data scoped to the tenant
-                    const [
-                        productsRes, salesRes, branchesRes, staffRes, staffRolesRes, stockLogsRes,
-                        customersRes, suppliersRes, purchaseOrdersRes, accountsRes, journalEntriesRes,
-                        consignmentsRes, depositsRes, categoriesRes, auditLogsRes, supportTicketsRes, 
-                        trucksRes, shipmentsRes
-                    ] = await Promise.all([
-                        supabase.from('products').select('*, category:categories(name), variants:product_variants(*)').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('sales').select('*, items:sale_items(*), payments:sale_payments(*)').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('branches').select('*').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('staff').select('*').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('staff_roles').select('*').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('stock_logs').select('*').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('customers').select('*').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('suppliers').select('*').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('purchase_orders').select('*, items:purchase_order_items(*)').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('accounts').select('*').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('journal_entries').select('*, transactions:journal_transactions(*)').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('consignments').select('*, items:consignment_items(*)').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('deposits').select('*').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('categories').select('*').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('audit_logs').select('*').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('support_tickets').select('*, messages:ticket_messages(*)').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('trucks').select('*').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('shipments').select('*, items:shipment_items(*)').eq('tenant_id', tenantIdToFetch),
-                    ]);
-                    
-                    if (productsRes.data && productsRes.data.length > 0) setProducts(productsRes.data.map(p => ({ ...p, variants: p.variants.map((v:any) => ({...v, sellingPrice: v.selling_price, costPrice: v.cost_price, stockByBranch: v.stock_by_branch, consignmentStockByBranch: v.consignment_stock_by_branch, reorderPointByBranch: v.reorder_point_by_branch, batchNumber: v.batch_number, expiryDate: v.expiry_date })) })) as any);
-                    if (salesRes.data) setSales(salesRes.data as any);
-                    if (branchesRes.data && branchesRes.data.length > 0) setBranches(branchesRes.data as any);
-                    if (staffRes.data && staffRes.data.length > 0) setStaff(staffRes.data as any);
-                    if (staffRolesRes.data && staffRolesRes.data.length > 0) setStaffRoles(staffRolesRes.data as any);
-                    if (stockLogsRes.data) setStockLogs(stockLogsRes.data as any);
-                    if (customersRes.data && customersRes.data.length > 0) setCustomers(customersRes.data as any);
-                    if (suppliersRes.data) setSuppliers(suppliersRes.data as any);
-                    if (purchaseOrdersRes.data) setPurchaseOrders(purchaseOrdersRes.data as any);
-                    if (accountsRes.data) setAccounts(accountsRes.data as any);
-                    if (journalEntriesRes.data) setJournalEntries(journalEntriesRes.data as any);
-                    if (consignmentsRes.data) setConsignments(consignmentsRes.data as any);
-                    if (depositsRes.data) setDeposits(depositsRes.data as any);
-                    if (categoriesRes.data && categoriesRes.data.length > 0) setCategories(categoriesRes.data as any);
-                    if (auditLogsRes.data) setAuditLogs(auditLogsRes.data as any);
-                    if (supportTicketsRes.data) setSupportTickets(supportTicketsRes.data as any);
-                    if (trucksRes.data) setTrucks(trucksRes.data as any);
-                    if (shipmentsRes.data) setShipments(shipmentsRes.data as any);
-                }
-            }
-
-            setIsLoading(false);
-        };
-
-        fetchData();
-    }, [session, profile, impersonatedUser]);
+    // FIX: Removed Supabase data fetching useEffect. The app now relies on sample data.
 
     // UI Effects
     useEffect(() => {
@@ -357,11 +239,53 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         localStorage.setItem('theme', theme);
     }, [theme]);
     
-    // Auth functions
-    const logout = async () => {
-        await supabase.auth.signOut();
+    // FIX: Implemented login logic for demo users.
+    const login = useCallback(async (username: string, password: string): Promise<{ success: boolean; message: string }> => {
+        if (password !== '12345') {
+            return { success: false, message: 'Invalid username or password.' };
+        }
+
+        let user: AdminUser | Staff | null = null;
+        let profile: Profile | null = null;
+
+        if (username.toLowerCase() === 'superadmin' || username.toLowerCase() === 'super') {
+            user = adminUsers.find(u => u.username?.toLowerCase() === 'superadmin') || null;
+            if (user) {
+                profile = { id: user.id, is_super_admin: true, tenant_id: null };
+            }
+        } else if (username.toLowerCase() === 'tenantadmin' || username.toLowerCase() === 'tenant') {
+            user = staff.find(s => s.username.toLowerCase() === 'tenantadmin') || null;
+            if (user) {
+                profile = { id: user.id, is_super_admin: false, tenant_id: 'tenant-1' };
+            }
+        } else {
+             user = staff.find(s => s.username.toLowerCase() === username.toLowerCase()) || null;
+             if(user) {
+                 profile = { id: user.id, is_super_admin: false, tenant_id: 'tenant-1' };
+             }
+        }
+
+        if (user && profile) {
+            const localSession: LocalSession = { user: { id: user.id, email: user.email }, profile };
+            localStorage.setItem('session', JSON.stringify(localSession));
+            setSession(localSession);
+            setProfile(profile);
+            if (profile.tenant_id) {
+                setCurrentTenant(tenants.find(t => t.id === profile.tenant_id) || null);
+            }
+            return { success: true, message: 'Logged in successfully.' };
+        }
+
+        return { success: false, message: 'Invalid username or password.' };
+    }, [adminUsers, staff, tenants]);
+    
+    // FIX: Updated logout to clear localStorage session.
+    const logout = useCallback(async () => {
+        localStorage.removeItem('session');
+        setSession(null);
+        setProfile(null);
         setImpersonatedUser(null);
-    };
+    }, []);
     
     const stopImpersonating = () => {
         setImpersonatedUser(null);
@@ -369,43 +293,58 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
 
     // Data manipulation functions (examples)
     const addSale = useCallback(async (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'>): Promise<{success: boolean, message: string, newSale?: Sale}> => {
-      if (!currentTenant) return { success: false, message: 'No tenant context.' };
-      
-      // THIS IS A SIMPLIFIED VERSION. A real implementation should use a Supabase Edge Function (RPC call)
-      // to perform these operations in a single database transaction to ensure data integrity.
-      
-      const { data: sale, error } = await supabase
-        .from('sales')
-        .insert({
-            tenant_id: currentTenant.id,
-            branch_id: saleData.branchId,
-            customer_id: saleData.customerId,
-            total: saleData.total
-            // ... other fields
-        })
-        .select()
-        .single();
-        
-      if (error || !sale) {
-        setNotification({ type: 'error', message: error?.message || 'Failed to record sale.' });
-        return { success: false, message: error?.message || 'Failed to record sale.' };
-      }
-      
-      // Add sale items and payments... update stock...
-      // ...
-      
+      // This is a simplified local state update. A real app would use a database.
+      const newSale: Sale = {
+        ...saleData,
+        id: `sale-${Date.now()}`,
+        date: new Date(),
+        status: saleData.total - saleData.payments.reduce((sum, p) => sum + p.amount, 0) <= 0 ? 'PAID' : 'UNPAID',
+        amountDue: Math.max(0, saleData.total - saleData.payments.reduce((sum, p) => sum + p.amount, 0)),
+      };
+      setSales(prev => [newSale, ...prev]);
       setNotification({ type: 'success', message: 'Sale recorded!' });
-      // Refetch sales or optimistically update state
-      setSales(prev => [sale as Sale, ...prev]);
-
-      return { success: true, message: 'Sale completed successfully.', newSale: sale as Sale };
-    }, [currentTenant]);
+      return { success: true, message: 'Sale completed successfully.', newSale };
+    }, []);
     
-    const addTenant = async (tenantData: any) => {
-        // This is now handled in SignUp.tsx via auth helpers and direct calls
-        console.warn("addTenant from context is deprecated. Use signup flow.");
-        return { success: false, message: "Use signup flow." };
-    };
+    // FIX: Implemented addTenant to work with local state for the demo signup flow.
+    const addTenant = useCallback(async (
+        tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'>,
+        logoBase64: string
+    ): Promise<{ success: boolean; message: string }> => {
+        const existingTenant = tenants.find(t => t.email.toLowerCase() === tenantData.email.toLowerCase() || t.username.toLowerCase() === tenantData.username.toLowerCase());
+        if (existingTenant) {
+            return { success: false, message: 'A tenant with this email or username already exists.' };
+        }
+        const newId = `tenant-${Date.now()}`;
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 14);
+        
+        const newTenant: Tenant = {
+            ...tenantData,
+            id: newId,
+            joinDate: new Date(),
+            status: 'UNVERIFIED',
+            trialEndDate,
+            isVerified: false,
+            billingCycle: 'monthly',
+            companyLogoUrl: logoBase64,
+        };
+        setTenants(prev => [...prev, newTenant]);
+        
+        // Also create a staff user for the tenant owner
+        const newStaff: Staff = {
+            id: `staff-${Date.now()}`,
+            name: tenantData.ownerName,
+            email: tenantData.email,
+            username: tenantData.username,
+            password: tenantData.password,
+            roleId: 'srole-admin', // Assuming 'srole-admin' is the Tenant Admin role
+            branchId: 'branch-1', // Assuming a default branch
+        };
+        setStaff(prev => [...prev, newStaff]);
+
+        return { success: true, message: 'Tenant created successfully.' };
+    }, [tenants]);
 
     // Dummy implementations for functions not fully implemented after refactor
     const dummyFunction = async (...args: any[]): Promise<any> => {
@@ -422,6 +361,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         isLoading,
         currentAdminUser: profile?.is_super_admin ? (adminUsers.find(u => u.id === profile.id) || null) : null,
         currentTenant,
+        login,
         logout,
         impersonatedUser,
         handleImpersonate: setImpersonatedUser,
