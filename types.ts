@@ -540,6 +540,11 @@ export interface AISettings {
     openai: OpenAISettings;
 }
 
+export interface SupabaseSettings {
+    projectUrl: string;
+    anonKey: string;
+}
+
 export interface SystemSettings {
   currencies: Currency[];
   defaultCurrency: string;
@@ -555,6 +560,7 @@ export interface SystemSettings {
   ipGeolocationProviders: IpGeolocationProvider[];
   activeIpGeolocationProviderId: string;
   aiSettings: AISettings;
+  supabaseSettings: SupabaseSettings;
 }
 
 export type PaymentTransactionStatus = 'COMPLETED' | 'PENDING' | 'FAILED' | 'REJECTED';

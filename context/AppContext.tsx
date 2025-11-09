@@ -114,6 +114,10 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
             provider: 'gemini',
             gemini: { apiKey: '' },
             openai: { apiKey: '' }
+        },
+        supabaseSettings: {
+            projectUrl: '',
+            anonKey: ''
         }
     });
     const [trucks, setTrucks] = useState<Truck[]>([]);

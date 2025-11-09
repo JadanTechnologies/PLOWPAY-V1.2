@@ -10,7 +10,7 @@ import PaymentGateways from './PaymentSettings';
 import NotificationSettings from './NotificationSettings';
 import SubscriptionManagement from './SubscriptionManagement';
 import { useAppContext } from '../../hooks/useAppContext';
-import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language, LandingPageMetrics, FeaturedUpdateSettings, Tenant, AISettings, IpGeolocationProvider, MapProvider } from '../../types';
+import { BrandConfig, PageContent, FaqItem, SystemSettings, Currency, Language, LandingPageMetrics, FeaturedUpdateSettings, Tenant, AISettings, IpGeolocationProvider, MapProvider, SupabaseSettings } from '../../types';
 import Icon from '../icons/index.tsx';
 import { usePermissions } from '../../hooks/usePermissions';
 import Announcements from './Announcements';
@@ -42,8 +42,8 @@ const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void 
 };
 
 const Settings: React.FC = () => {
-    type SettingsTab = 'branding' | 'content' | 'faqs' | 'localization' | 'providers' | 'ai_settings' | 'landing' | 'featured_update';
-    const [activeTab, setActiveTab] = useState<SettingsTab>('providers');
+    type SettingsTab = 'branding' | 'content' | 'faqs' | 'localization' | 'providers' | 'ai_settings' | 'landing' | 'featured_update' | 'supabase';
+    const [activeTab, setActiveTab] = useState<SettingsTab>('supabase');
     const { brandConfig, pageContent, systemSettings, updateBrandConfig, updatePageContent, updateFaqs, updateSystemSettings, updateLandingPageMetrics, setNotification } = useAppContext();
 
     // State for each settings tab
@@ -55,6 +55,8 @@ const Settings: React.FC = () => {
     const [aiSettings, setAiSettings] = useState<AISettings>(systemSettings.aiSettings);
     const [showGeminiKey, setShowGeminiKey] = useState(false);
     const [showOpenAiKey, setShowOpenAiKey] = useState(false);
+    const [supabaseSettings, setSupabaseSettings] = useState<SupabaseSettings>(systemSettings.supabaseSettings);
+    const [showSupabaseKey, setShowSupabaseKey] = useState(false);
     
     // State for localization
     const [currencies, setCurrencies] = useState<Currency[]>(systemSettings.currencies);
@@ -77,6 +79,7 @@ const Settings: React.FC = () => {
         setLandingMetrics(systemSettings.landingPageMetrics);
         setFeaturedUpdate(systemSettings.featuredUpdate);
         setAiSettings(systemSettings.aiSettings);
+        setSupabaseSettings(systemSettings.supabaseSettings);
         setCurrencies(systemSettings.currencies);
         setDefaultCurrency(systemSettings.defaultCurrency);
         setLanguages(systemSettings.languages);
@@ -236,6 +239,12 @@ const Settings: React.FC = () => {
 
         if (window.confirm("Are you sure you want to save AI settings?")) {
             updateSystemSettings({ aiSettings });
+        }
+    };
+
+    const handleSupabaseSettingsSave = () => {
+        if (window.confirm("Are you sure you want to save these Supabase settings? Note: This will NOT update the primary app connection. See instructions.")) {
+            updateSystemSettings({ supabaseSettings });
         }
     };
 
@@ -489,6 +498,43 @@ const Settings: React.FC = () => {
                         </div>
                     </div>
                 );
+            case 'supabase':
+                return (
+                    <div className="space-y-6">
+                        <div className="bg-yellow-900/50 border border-yellow-700 p-4 rounded-lg flex items-start gap-3">
+                            <Icon name="notification" className="w-6 h-6 text-yellow-400 flex-shrink-0 mt-1" />
+                            <div>
+                                <h4 className="font-bold text-yellow-300">Important: Primary Connection Method</h4>
+                                <p className="text-sm text-yellow-400 mt-1">For the main application to connect to Supabase upon startup, you <strong className="font-bold text-white">must</strong> set the credentials in a <code className="bg-black/50 p-1 rounded">.env</code> file in your project's root directory. The settings saved here are for reference or for other parts of the application and will not affect the initial connection.</p>
+                                <pre className="bg-black/50 p-3 rounded-md text-xs text-white mt-2 overflow-x-auto">
+                                    <code>
+                                        VITE_SUPABASE_URL="YOUR_SUPABASE_URL_HERE"<br />
+                                        VITE_SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY_HERE"
+                                    </code>
+                                </pre>
+                            </div>
+                        </div>
+                        <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
+                            <h3 className="text-lg font-semibold text-white">Supabase Credentials</h3>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-400">Project URL</label>
+                                <input type="text" value={supabaseSettings.projectUrl} onChange={e => setSupabaseSettings({...supabaseSettings, projectUrl: e.target.value})} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
+                            </div>
+                             <div>
+                                <label className="block text-sm font-medium text-slate-400">Anon (Public) Key</label>
+                                 <div className="relative">
+                                    <input type={showSupabaseKey ? 'text' : 'password'} value={supabaseSettings.anonKey} onChange={e => setSupabaseSettings({...supabaseSettings, anonKey: e.target.value})} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 pr-10 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
+                                     <button type="button" onClick={() => setShowSupabaseKey(!showSupabaseKey)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                                        <Icon name={showSupabaseKey ? 'eye-slash' : 'eye'} className="w-5 h-5" />
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <button onClick={handleSupabaseSettingsSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Supabase Settings</button>
+                        </div>
+                    </div>
+                );
         }
     }
 
@@ -498,7 +544,7 @@ const Settings: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div className="lg:col-span-1">
                     <nav className="flex flex-col space-y-2">
-                        {(['branding', 'content', 'faqs', 'localization', 'providers', 'ai_settings', 'landing', 'featured_update'] as SettingsTab[]).map(tab => (
+                        {(['branding', 'content', 'faqs', 'localization', 'providers', 'ai_settings', 'supabase', 'landing', 'featured_update'] as SettingsTab[]).map(tab => (
                             <button key={tab} onClick={() => setActiveTab(tab)} className={`w-full text-left p-3 rounded-md font-medium text-sm ${activeTab === tab ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>
                                 {tab.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </button>
