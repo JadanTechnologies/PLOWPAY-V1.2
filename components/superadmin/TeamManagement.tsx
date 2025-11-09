@@ -4,7 +4,6 @@ import { AdminUser, AdminUserStatus, Permission } from '../../types';
 import Icon from '../icons/index.tsx';
 import { usePermissions } from '../../hooks/usePermissions';
 
-// FIX: Added 'manageBlog' to permissionLabels to include all possible permissions.
 const permissionLabels: Record<Permission, string> = {
     viewPlatformDashboard: 'View Platform Dashboard',
     manageTenants: 'Manage Tenants',
