@@ -30,6 +30,71 @@ const getInitialTheme = (): 'light' | 'dark' => {
     return 'dark';
 };
 
+// --- START SAMPLE DATA ---
+const sampleAdminRoles: AdminRole[] = [
+    { id: 'role-super', name: 'Admin', permissions: ['viewPlatformDashboard', 'manageTenants', 'manageSubscriptions', 'manageTeam', 'manageRoles', 'manageSystemSettings', 'managePaymentGateways', 'manageNotificationSettings', 'manageAnnouncements', 'viewAuditLogs', 'manageSupport', 'manageBlog'] },
+    { id: 'role-support', name: 'Support', permissions: ['viewPlatformDashboard', 'manageTenants', 'manageSupport'] }
+];
+
+const sampleAdminUsers: AdminUser[] = [
+    { id: 'user-super', name: 'Platform Owner', email: 'superadmin@flowpay.com', roleId: 'role-super', status: 'ACTIVE', joinDate: new Date('2023-01-15') }
+];
+
+const sampleSubscriptionPlans: SubscriptionPlan[] = [
+    { id: 'plan-basic', name: 'Basic', price: 29, priceYearly: 290, features: ['1 Branch', '2 Staff', 'POS & Inventory', 'Basic Reporting'], description: 'For small businesses just getting started.', recommended: false },
+    { id: 'plan-pro', name: 'Pro', price: 79, priceYearly: 790, features: ['5 Branches', '10 Staff', 'All Features', 'Advanced Reporting', 'API Access'], description: 'For growing businesses that need more power.', recommended: true }
+];
+
+const sampleTenants: Tenant[] = [
+    { 
+        id: 'tenant-1', businessName: 'The Coffee Corner', ownerName: 'Tenant Admin', email: 'tenantadmin@example.com', username: 'tenantadmin',
+        status: 'ACTIVE', planId: 'plan-pro', joinDate: new Date('2023-05-20'), isVerified: true, billingCycle: 'monthly'
+    }
+];
+
+const sampleBranches: Branch[] = [
+    { id: 'branch-1', name: 'Main Street Cafe', location: { lat: 34.0522, lng: -118.2437 } }
+];
+
+const sampleStaffRoles: StaffRole[] = [
+    { id: 'srole-admin', name: 'Tenant Admin', permissions: allTenantPermissions },
+    { id: 'srole-cashier', name: 'Cashier', permissions: ['accessPOS', 'makeDeposits', 'accessReturns'] }
+];
+
+const sampleStaff: Staff[] = [
+    { id: 'staff-1', name: 'Tenant Admin', email: 'tenantadmin@example.com', username: 'tenantadmin', roleId: 'srole-admin', branchId: 'branch-1' },
+    { id: 'staff-2', name: 'Cashier User', email: 'cashier@example.com', username: 'cashier', roleId: 'srole-cashier', branchId: 'branch-1' },
+];
+
+const sampleCategories: Category[] = [
+    { id: 'cat-1', name: 'Beverages' },
+    { id: 'cat-2', name: 'Pastries' }
+];
+
+const sampleProducts: Product[] = [
+    {
+        id: 'prod-1', name: 'Espresso', categoryId: 'cat-1',
+        variants: [
+            { id: 'var-1', name: 'Single', sku: 'ESP-S', sellingPrice: 2.5, costPrice: 0.5, stockByBranch: { 'branch-1': 100 } },
+            { id: 'var-2', name: 'Double', sku: 'ESP-D', sellingPrice: 3.5, costPrice: 1.0, stockByBranch: { 'branch-1': 100 } }
+        ],
+        isFavorite: true
+    },
+    {
+        id: 'prod-2', name: 'Croissant', categoryId: 'cat-2',
+        variants: [
+            { id: 'var-3', name: 'Plain', sku: 'CRO-P', sellingPrice: 3.0, costPrice: 1.2, stockByBranch: { 'branch-1': 50 } },
+            { id: 'var-4', name: 'Chocolate', sku: 'CRO-C', sellingPrice: 3.75, costPrice: 1.5, stockByBranch: { 'branch-1': 40 } }
+        ]
+    }
+];
+
+const sampleCustomers: Customer[] = [
+    { id: 'cust-walkin', name: 'Walk-in Customer', creditBalance: 0 },
+    { id: 'cust-1', name: 'John Doe', phone: '555-1234', creditBalance: 25.50, creditLimit: 200 }
+];
+// --- END SAMPLE DATA ---
+
 
 interface Profile {
     id: string;
@@ -43,17 +108,17 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     const [isLoading, setIsLoading] = useState(true);
 
     // Data states, now fetched from Supabase
-    const [products, setProducts] = useState<Product[]>([]);
+    const [products, setProducts] = useState<Product[]>(sampleProducts);
     const [sales, setSales] = useState<Sale[]>([]);
-    const [branches, setBranches] = useState<Branch[]>([]);
-    const [staff, setStaff] = useState<Staff[]>([]);
-    const [staffRoles, setStaffRoles] = useState<StaffRole[]>([]);
+    const [branches, setBranches] = useState<Branch[]>(sampleBranches);
+    const [staff, setStaff] = useState<Staff[]>(sampleStaff);
+    const [staffRoles, setStaffRoles] = useState<StaffRole[]>(sampleStaffRoles);
     const [stockLogs, setStockLogs] = useState<StockLog[]>([]);
-    const [tenants, setTenants] = useState<Tenant[]>([]);
+    const [tenants, setTenants] = useState<Tenant[]>(sampleTenants);
     const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
-    const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>([]);
-    const [adminUsers, setAdminUsers] = useState<AdminUser[]>([]);
-    const [adminRoles, setAdminRoles] = useState<AdminRole[]>([]);
+    const [subscriptionPlans, setSubscriptionPlans] = useState<SubscriptionPlan[]>(sampleSubscriptionPlans);
+    const [adminUsers, setAdminUsers] = useState<AdminUser[]>(sampleAdminUsers);
+    const [adminRoles, setAdminRoles] = useState<AdminRole[]>(sampleAdminRoles);
     const [brandConfig, setBrandConfig] = useState<BrandConfig>({ name: "FlowPay", logoUrl: "", faviconUrl: "/vite.svg" });
     const [pageContent, setPageContent] = useState<PageContent>({ about: '', contact: '', terms: '', privacy: '', refund: '', faqs: [], helpCenter: '', apiDocs: '', blog: '' });
     const [paymentSettings, setPaymentSettings] = useState<PaymentSettings>({
@@ -128,10 +193,10 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
     const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [customers, setCustomers] = useState<Customer[]>(sampleCustomers);
     const [consignments, setConsignments] = useState<Consignment[]>([]);
     const [deposits, setDeposits] = useState<Deposit[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
+    const [categories, setCategories] = useState<Category[]>(sampleCategories);
     const [paymentTransactions, setPaymentTransactions] = useState<PaymentTransaction[]>([]);
     const [emailTemplates, setEmailTemplates] = useState<EmailTemplate[]>([]);
     const [smsTemplates, setSmsTemplates] = useState<SmsTemplate[]>([]);
@@ -184,6 +249,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     // Data fetching effect
     useEffect(() => {
         if (!session || !profile) {
+            // If not logged in, stick with sample data
             setIsLoading(false);
             return;
         };
@@ -197,7 +263,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
                 supabase.from('system_settings').select('settings').eq('id', 1).single(),
                 supabase.from('announcements').select('*')
             ]);
-            if (plansRes.data) setSubscriptionPlans(plansRes.data as any);
+            if (plansRes.data && plansRes.data.length > 0) setSubscriptionPlans(plansRes.data as any);
             if (settingsRes.data) {
                 const dbSettings = settingsRes.data.settings as any;
                 setBrandConfig({ name: dbSettings.name || 'FlowPay', logoUrl: dbSettings.logoUrl || '', faviconUrl: dbSettings.faviconUrl || '' });
@@ -216,9 +282,9 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
                     supabase.from('blog_posts').select('*'),
                     supabase.from('audit_logs').select('*'),
                 ]);
-                if (tenantsRes.data) setTenants(tenantsRes.data as any);
-                if (adminsRes.data) setAdminUsers(adminsRes.data as any);
-                if (rolesRes.data) setAdminRoles(rolesRes.data as any);
+                if (tenantsRes.data && tenantsRes.data.length > 0) setTenants(tenantsRes.data as any);
+                if (adminsRes.data && adminsRes.data.length > 0) setAdminUsers(adminsRes.data as any);
+                if (rolesRes.data && rolesRes.data.length > 0) setAdminRoles(rolesRes.data as any);
                 if (paymentTransactionsRes.data) setPaymentTransactions(paymentTransactionsRes.data as any);
                 if (allSupportTicketsRes.data) setSupportTickets(allSupportTicketsRes.data as any);
                 if (blogPostsRes.data) setBlogPosts(blogPostsRes.data as any);
@@ -256,20 +322,20 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
                         supabase.from('shipments').select('*, items:shipment_items(*)').eq('tenant_id', tenantIdToFetch),
                     ]);
                     
-                    if (productsRes.data) setProducts(productsRes.data.map(p => ({ ...p, variants: p.variants.map((v:any) => ({...v, sellingPrice: v.selling_price, costPrice: v.cost_price, stockByBranch: v.stock_by_branch, consignmentStockByBranch: v.consignment_stock_by_branch, reorderPointByBranch: v.reorder_point_by_branch, batchNumber: v.batch_number, expiryDate: v.expiry_date })) })) as any);
+                    if (productsRes.data && productsRes.data.length > 0) setProducts(productsRes.data.map(p => ({ ...p, variants: p.variants.map((v:any) => ({...v, sellingPrice: v.selling_price, costPrice: v.cost_price, stockByBranch: v.stock_by_branch, consignmentStockByBranch: v.consignment_stock_by_branch, reorderPointByBranch: v.reorder_point_by_branch, batchNumber: v.batch_number, expiryDate: v.expiry_date })) })) as any);
                     if (salesRes.data) setSales(salesRes.data as any);
-                    if (branchesRes.data) setBranches(branchesRes.data as any);
-                    if (staffRes.data) setStaff(staffRes.data as any);
-                    if (staffRolesRes.data) setStaffRoles(staffRolesRes.data as any);
+                    if (branchesRes.data && branchesRes.data.length > 0) setBranches(branchesRes.data as any);
+                    if (staffRes.data && staffRes.data.length > 0) setStaff(staffRes.data as any);
+                    if (staffRolesRes.data && staffRolesRes.data.length > 0) setStaffRoles(staffRolesRes.data as any);
                     if (stockLogsRes.data) setStockLogs(stockLogsRes.data as any);
-                    if (customersRes.data) setCustomers(customersRes.data as any);
+                    if (customersRes.data && customersRes.data.length > 0) setCustomers(customersRes.data as any);
                     if (suppliersRes.data) setSuppliers(suppliersRes.data as any);
                     if (purchaseOrdersRes.data) setPurchaseOrders(purchaseOrdersRes.data as any);
                     if (accountsRes.data) setAccounts(accountsRes.data as any);
                     if (journalEntriesRes.data) setJournalEntries(journalEntriesRes.data as any);
                     if (consignmentsRes.data) setConsignments(consignmentsRes.data as any);
                     if (depositsRes.data) setDeposits(depositsRes.data as any);
-                    if (categoriesRes.data) setCategories(categoriesRes.data as any);
+                    if (categoriesRes.data && categoriesRes.data.length > 0) setCategories(categoriesRes.data as any);
                     if (auditLogsRes.data) setAuditLogs(auditLogsRes.data as any);
                     if (supportTicketsRes.data) setSupportTickets(supportTicketsRes.data as any);
                     if (trucksRes.data) setTrucks(trucksRes.data as any);

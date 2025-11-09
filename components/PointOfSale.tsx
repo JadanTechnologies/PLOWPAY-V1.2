@@ -198,7 +198,7 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
+        <div id="invoice-modal-container" className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-center items-center p-4">
             <div id="invoice-modal" className="bg-slate-800 rounded-lg shadow-xl w-full max-w-md max-h-[90vh] flex flex-col border border-slate-700">
                 <div className="no-print p-6 text-center border-b border-slate-700">
                     <Icon name="check" className="w-12 h-12 mx-auto text-green-400 mb-2" />

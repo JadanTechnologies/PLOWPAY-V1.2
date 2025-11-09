@@ -68,27 +68,57 @@
       }
 
       @media print {
-        body * {
-          visibility: hidden;
+        /* Hide non-essential UI components */
+        body > #root > div > aside, 
+        body > #root > div > div > header,
+        .no-print {
+          display: none !important;
         }
-        #invoice-modal, #invoice-modal *,
-        #report-printable-area, #report-printable-area * {
-          visibility: visible;
+
+        /* Reset main content area for printing */
+        body > #root > div > div > main {
+          padding: 0 !important;
+          overflow: visible !important;
         }
+
+        /* Make the printable modal wrapper take up the whole screen */
+        #invoice-modal-container {
+          position: static !important;
+          display: block !important;
+          background: none !important;
+          backdrop-filter: none !important;
+          padding: 0 !important;
+          height: auto !important;
+          width: 100% !important;
+          overflow: visible !important;
+        }
+
+        /* The printable area should be a block element */
         #invoice-modal, #report-printable-area {
-          position: absolute;
-          left: 0;
-          top: 0;
-          width: 100%;
-          height: auto;
+          visibility: visible;
+          display: block !important;
+          position: static !important;
+          width: 100% !important;
+          height: auto !important;
+          overflow: visible !important;
           background: white !important;
           color: black !important;
-          padding: 1.5rem;
+          padding: 1.5rem !important;
+          margin: 0 !important;
+          border: none !important;
+          box-shadow: none !important;
         }
+        
+        /* Ensure all children within printable areas are visible and styled for print */
         #invoice-content *, #report-printable-area * {
+            visibility: visible !important;
             color: black !important;
             background: transparent !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
         }
+
+        /* Specific styles for report printing */
         #report-printable-area table {
             width: 100%;
             border-collapse: collapse;
@@ -110,9 +140,6 @@
             margin-bottom: 1.5rem;
             border-bottom: 2px solid #333;
             padding-bottom: 1rem;
-        }
-        .no-print {
-          display: none !important;
         }
       }
     </style>
