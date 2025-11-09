@@ -94,6 +94,8 @@ export interface CartItem {
   quantity: number;
   sellingPrice: number;
   costPrice: number;
+  batchNumber?: string;
+  expiryDate?: string;
 }
 
 export interface Payment {

@@ -10,7 +10,6 @@ import {
     Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, 
     InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, 
     AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost,
-    // FIX: Import FeaturedUpdateSettings type.
     FeaturedUpdateSettings
 } from '../types';
 import { allCurrencies, allLanguages, allTimezones } from '../utils/data';
@@ -98,9 +97,9 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
             deviceBlacklist: [],
         },
         landingPageMetrics: {
-            businesses: { value: 150, label: 'Businesses Trust Us' },
-            users: { value: 2500, label: 'Active Users Daily' },
-            revenue: { value: 5, label: 'Million in Revenue Processed' },
+            businesses: { value: 0, label: 'Businesses Trust Us' },
+            users: { value: 0, label: 'Active Users Daily' },
+            revenue: { value: 0, label: 'Million in Revenue Processed' },
         },
         featuredUpdate: {
             isActive: false,
@@ -187,45 +186,88 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
             setIsLoading(true);
 
             // Fetch global data
-            const [plansRes, settingsRes] = await Promise.all([
+            const [plansRes, settingsRes, announcementsRes] = await Promise.all([
                 supabase.from('subscription_plans').select('*'),
-                supabase.from('system_settings').select('settings').eq('id', 1).single()
+                supabase.from('system_settings').select('settings').eq('id', 1).single(),
+                supabase.from('announcements').select('*')
             ]);
-            if (plansRes.data) setSubscriptionPlans(plansRes.data);
+            if (plansRes.data) setSubscriptionPlans(plansRes.data as any);
             if (settingsRes.data) {
-                // Here you would merge your db settings with defaults
-                // For simplicity, we assume all settings are in the DB
                 const dbSettings = settingsRes.data.settings as any;
                 setBrandConfig({ name: dbSettings.name || 'FlowPay', logoUrl: dbSettings.logoUrl || '', faviconUrl: dbSettings.faviconUrl || '' });
                 setSystemSettings(prev => ({ ...prev, ...dbSettings }));
             }
+            if (announcementsRes.data) setAnnouncements(announcementsRes.data as any);
             
             // Fetch tenant or admin data
             if (profile.is_super_admin && !impersonatedUser) {
-                // Fetch all data for super admin
-                const [tenantsRes, adminsRes, rolesRes] = await Promise.all([
+                 const [tenantsRes, adminsRes, rolesRes, paymentTransactionsRes, allSupportTicketsRes, blogPostsRes, allAuditLogsRes] = await Promise.all([
                     supabase.from('tenants').select('*'),
                     supabase.from('admin_users').select('*'),
-                    supabase.from('admin_roles').select('*')
+                    supabase.from('admin_roles').select('*'),
+                    supabase.from('payment_transactions').select('*'),
+                    supabase.from('support_tickets').select('*, messages:ticket_messages(*)'),
+                    supabase.from('blog_posts').select('*'),
+                    supabase.from('audit_logs').select('*'),
                 ]);
-                if (tenantsRes.data) setTenants(tenantsRes.data);
-                if (adminsRes.data) setAdminUsers(adminsRes.data);
-                if (rolesRes.data) setAdminRoles(rolesRes.data);
-
+                if (tenantsRes.data) setTenants(tenantsRes.data as any);
+                if (adminsRes.data) setAdminUsers(adminsRes.data as any);
+                if (rolesRes.data) setAdminRoles(rolesRes.data as any);
+                if (paymentTransactionsRes.data) setPaymentTransactions(paymentTransactionsRes.data as any);
+                if (allSupportTicketsRes.data) setSupportTickets(allSupportTicketsRes.data as any);
+                if (blogPostsRes.data) setBlogPosts(blogPostsRes.data as any);
+                if (allAuditLogsRes.data) setAuditLogs(allAuditLogsRes.data as any);
             } else {
                 const tenantIdToFetch = impersonatedUser?.id || profile.tenant_id;
                 if (tenantIdToFetch) {
                     const { data: currentTenantData } = await supabase.from('tenants').select('*').eq('id', tenantIdToFetch).single();
-                    if(currentTenantData) setCurrentTenant(currentTenantData);
+                    if(currentTenantData) setCurrentTenant(currentTenantData as any);
 
                     // Fetch all data scoped to the tenant
-                    const [productsRes, salesRes /*, ... other fetches */] = await Promise.all([
-                        supabase.from('products').select('*, categories(name), product_variants(*)').eq('tenant_id', tenantIdToFetch),
-                        supabase.from('sales').select('*, sale_items(*), sale_payments(*)').eq('tenant_id', tenantIdToFetch)
-                        // ... add all other tenant-specific table fetches here
+                    const [
+                        productsRes, salesRes, branchesRes, staffRes, staffRolesRes, stockLogsRes,
+                        customersRes, suppliersRes, purchaseOrdersRes, accountsRes, journalEntriesRes,
+                        consignmentsRes, depositsRes, categoriesRes, auditLogsRes, supportTicketsRes, 
+                        trucksRes, shipmentsRes
+                    ] = await Promise.all([
+                        supabase.from('products').select('*, category:categories(name), variants:product_variants(*)').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('sales').select('*, items:sale_items(*), payments:sale_payments(*)').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('branches').select('*').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('staff').select('*').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('staff_roles').select('*').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('stock_logs').select('*').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('customers').select('*').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('suppliers').select('*').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('purchase_orders').select('*, items:purchase_order_items(*)').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('accounts').select('*').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('journal_entries').select('*, transactions:journal_transactions(*)').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('consignments').select('*, items:consignment_items(*)').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('deposits').select('*').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('categories').select('*').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('audit_logs').select('*').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('support_tickets').select('*, messages:ticket_messages(*)').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('trucks').select('*').eq('tenant_id', tenantIdToFetch),
+                        supabase.from('shipments').select('*, items:shipment_items(*)').eq('tenant_id', tenantIdToFetch),
                     ]);
-                    if (productsRes.data) setProducts(productsRes.data as any);
+                    
+                    if (productsRes.data) setProducts(productsRes.data.map(p => ({ ...p, variants: p.variants.map((v:any) => ({...v, sellingPrice: v.selling_price, costPrice: v.cost_price, stockByBranch: v.stock_by_branch, consignmentStockByBranch: v.consignment_stock_by_branch, reorderPointByBranch: v.reorder_point_by_branch, batchNumber: v.batch_number, expiryDate: v.expiry_date })) })) as any);
                     if (salesRes.data) setSales(salesRes.data as any);
+                    if (branchesRes.data) setBranches(branchesRes.data as any);
+                    if (staffRes.data) setStaff(staffRes.data as any);
+                    if (staffRolesRes.data) setStaffRoles(staffRolesRes.data as any);
+                    if (stockLogsRes.data) setStockLogs(stockLogsRes.data as any);
+                    if (customersRes.data) setCustomers(customersRes.data as any);
+                    if (suppliersRes.data) setSuppliers(suppliersRes.data as any);
+                    if (purchaseOrdersRes.data) setPurchaseOrders(purchaseOrdersRes.data as any);
+                    if (accountsRes.data) setAccounts(accountsRes.data as any);
+                    if (journalEntriesRes.data) setJournalEntries(journalEntriesRes.data as any);
+                    if (consignmentsRes.data) setConsignments(consignmentsRes.data as any);
+                    if (depositsRes.data) setDeposits(depositsRes.data as any);
+                    if (categoriesRes.data) setCategories(categoriesRes.data as any);
+                    if (auditLogsRes.data) setAuditLogs(auditLogsRes.data as any);
+                    if (supportTicketsRes.data) setSupportTickets(supportTicketsRes.data as any);
+                    if (trucksRes.data) setTrucks(trucksRes.data as any);
+                    if (shipmentsRes.data) setShipments(shipmentsRes.data as any);
                 }
             }
 

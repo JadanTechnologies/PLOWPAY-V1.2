@@ -581,7 +581,9 @@ const PointOfSale: React.FC = () => {
             variantName: variant.name,
             quantity: quantityChange, 
             sellingPrice: variant.sellingPrice,
-            costPrice: variant.costPrice
+            costPrice: variant.costPrice,
+            batchNumber: variant.batchNumber,
+            expiryDate: variant.expiryDate,
         }];
     });
   }, [isReturnMode, currentBranchId, setSaleStatus]);
@@ -803,6 +805,13 @@ const PointOfSale: React.FC = () => {
                                         <p className="text-cyan-400 text-xs">{formatCurrency(item.sellingPrice)}</p>
                                         <p className="text-slate-500 text-xs">(Stock: {availableStock})</p>
                                     </div>
+                                    {(item.batchNumber || item.expiryDate) && (
+                                        <div className="text-xs text-slate-500 mt-1">
+                                            {item.batchNumber && <span className="font-mono">Batch: {item.batchNumber}</span>}
+                                            {item.batchNumber && item.expiryDate && <span> &bull; </span>}
+                                            {item.expiryDate && <span>Expires: {item.expiryDate}</span>}
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button onClick={() => handleUpdateQuantity(item.variantId, -1)} className="bg-slate-700 rounded-full p-1 w-6 h-6 flex items-center justify-center"><Icon name="minus" className="w-4 h-4"/></button>

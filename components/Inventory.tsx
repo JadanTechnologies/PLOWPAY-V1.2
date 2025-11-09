@@ -321,7 +321,7 @@ const Inventory: React.FC = () => {
                                     {filteredProducts.map((product) => (
                                         <React.Fragment key={product.id}>
                                             <tr className="border-b border-slate-800 bg-slate-900/50">
-                                                <td colSpan={4 + branches.length + 2} className="p-3 font-semibold text-white">
+                                                <td colSpan={4 + branches.length + 1} className="p-3 font-semibold text-white">
                                                     {product.name} <span className="text-sm font-normal text-slate-400 ml-2">({categoryMap.get(product.categoryId)})</span>
                                                 </td>
                                             </tr>
