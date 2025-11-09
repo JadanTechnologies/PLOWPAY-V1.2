@@ -1,5 +1,6 @@
 
 
+
 import React, { useMemo, useState } from 'react';
 import {
     ResponsiveContainer,
@@ -16,6 +17,7 @@ import {
 } from 'recharts';
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from '../icons/index.tsx';
+import { useCurrency } from '../../hooks/useCurrency';
 
 const MetricCard: React.FC<{ title: string; value: string; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-700">
@@ -31,6 +33,7 @@ const MetricCard: React.FC<{ title: string; value: string; iconName: string; ico
 
 const PlatformDashboard: React.FC = () => {
     const { tenants, subscriptionPlans, processExpiredTrials, sendExpiryReminders } = useAppContext();
+    const { formatCurrency } = useCurrency();
     const [trialJobStatus, setTrialJobStatus] = useState('');
     const [reminderJobStatus, setReminderJobStatus] = useState('');
 
@@ -125,7 +128,7 @@ const PlatformDashboard: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                <MetricCard title="Monthly Recurring Revenue" value={`$${platformMetrics.mrr.toLocaleString()}`} iconName="cash" iconBgColor="bg-gradient-to-br from-teal-500 to-green-600" />
+                <MetricCard title="Monthly Recurring Revenue" value={formatCurrency(platformMetrics.mrr)} iconName="cash" iconBgColor="bg-gradient-to-br from-teal-500 to-green-600" />
                 <MetricCard title="Active Tenants" value={platformMetrics.activeTenants.toLocaleString()} iconName="briefcase" iconBgColor="bg-gradient-to-br from-cyan-500 to-sky-600" />
                 <MetricCard title="New Tenants (30d)" value={platformMetrics.newTenants.toLocaleString()} iconName="user" iconBgColor="bg-gradient-to-br from-amber-500 to-orange-600" />
                 <MetricCard title="Churn Rate" value="2.1%" iconName="chart-bar" iconBgColor="bg-gradient-to-br from-rose-500 to-red-600" />
@@ -164,14 +167,14 @@ const PlatformDashboard: React.FC = () => {
                                 fill="#8884d8"
                                 dataKey="value"
                                 nameKey="name"
-                                // The 'percent' property from recharts can be undefined. Coalescing to 0 before multiplication prevents a runtime error.
-                                label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+                                // The 'percent' property from recharts can be undefined or NaN. Using || 0 handles both cases.
+                                label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                             >
                                 {revenueByPlanData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
-                            <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155' }} formatter={(value: number) => `$${value.toLocaleString()}`} />
+                            <Tooltip contentStyle={{ backgroundColor: '#0f172a', border: '1px solid #334155' }} formatter={(value: number) => formatCurrency(value)} />
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
