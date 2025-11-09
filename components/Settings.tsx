@@ -105,21 +105,62 @@ const SettingCard: React.FC<{ title: string, icon: string, description: string, 
 );
 
 const Localization: React.FC = () => {
-    const { currentTenant, systemSettings, updateCurrentTenantSettings } = useAppContext();
+    const { currentTenant, systemSettings, updateCurrentTenantSettings, setNotification } = useAppContext();
 
-    const handleSettingChange = (setting: 'currency' | 'language' | 'timezone', value: string) => {
-        if (!currentTenant) return;
-        updateCurrentTenantSettings({ [setting]: value });
+    const [formState, setFormState] = useState({
+        currency: currentTenant?.currency || systemSettings.defaultCurrency,
+        language: currentTenant?.language || systemSettings.defaultLanguage,
+        timezone: currentTenant?.timezone || systemSettings.defaultTimezone,
+    });
+    
+    // Sync local state if currentTenant changes from outside
+    useEffect(() => {
+        if (currentTenant) {
+            setFormState({
+                currency: currentTenant.currency || systemSettings.defaultCurrency,
+                language: currentTenant.language || systemSettings.defaultLanguage,
+                timezone: currentTenant.timezone || systemSettings.defaultTimezone,
+            });
+        }
+    }, [currentTenant, systemSettings]);
+    
+    const handleFormChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const { name, value } = e.target;
+        setFormState(prev => ({ ...prev, [name]: value }));
     };
+    
+    const handleSave = () => {
+        updateCurrentTenantSettings(formState);
+        setNotification({ type: 'success', message: 'Localization settings saved successfully!' });
+    };
+    
+    const isDirty = useMemo(() => {
+        if (!currentTenant) return false;
+        return (
+            formState.currency !== (currentTenant.currency || systemSettings.defaultCurrency) ||
+            formState.language !== (currentTenant.language || systemSettings.defaultLanguage) ||
+            formState.timezone !== (currentTenant.timezone || systemSettings.defaultTimezone)
+        );
+    }, [formState, currentTenant, systemSettings]);
 
     return (
-        <SettingCard title="Localization" icon="globe" description="Set your preferred language, currency, and timezone.">
+        <SettingCard 
+            title="Localization" 
+            icon="globe" 
+            description="Set your preferred language, currency, and timezone."
+            actions={
+                <button onClick={handleSave} disabled={!isDirty} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed">
+                    Save
+                </button>
+            }
+        >
             <div className="space-y-4 max-w-sm">
                 <div>
                     <label className="block text-sm font-medium text-slate-400">Currency</label>
                     <select
-                        value={currentTenant?.currency || systemSettings.defaultCurrency}
-                        onChange={(e) => handleSettingChange('currency', e.target.value)}
+                        name="currency"
+                        value={formState.currency}
+                        onChange={handleFormChange}
                         className="w-full mt-1 bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                     >
                         {systemSettings.currencies.filter(c => c.enabled).map(c => (
@@ -130,8 +171,9 @@ const Localization: React.FC = () => {
                 <div>
                     <label className="block text-sm font-medium text-slate-400">Language</label>
                     <select
-                        value={currentTenant?.language || systemSettings.defaultLanguage}
-                        onChange={(e) => handleSettingChange('language', e.target.value)}
+                        name="language"
+                        value={formState.language}
+                        onChange={handleFormChange}
                         className="w-full mt-1 bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                     >
                         {systemSettings.languages.filter(l => l.enabled).map(l => (
@@ -142,8 +184,9 @@ const Localization: React.FC = () => {
                  <div>
                     <label className="block text-sm font-medium text-slate-400">Timezone</label>
                     <select
-                        value={currentTenant?.timezone || systemSettings.defaultTimezone}
-                        onChange={(e) => handleSettingChange('timezone', e.target.value)}
+                        name="timezone"
+                        value={formState.timezone}
+                        onChange={handleFormChange}
                         className="w-full mt-1 bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                     >
                         {allTimezones.map(t => (

@@ -7,618 +7,977 @@ import {
     PurchaseOrder, Account, JournalEntry, Announcement, SystemSettings, Customer, 
     Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, 
     InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, 
-    AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost,
-    FeaturedUpdateSettings,
-    LocalSession,
-    Profile,
-    // FIX: Import `allPermissions` to be used for sample data.
-    allPermissions,
-    // FIX: Import missing types.
-    ProductVariant,
-    TenantAutomations,
-    TenantStatus
+    AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost, 
+    LocalSession, Profile, allPermissions, IpGeolocationProvider, MapProvider, AISettings, SupabaseSettings
 } from '../types';
-import { allCurrencies, allLanguages, allTimezones } from '../utils/data';
 
-export const AppContext = createContext<AppContextType | undefined>(undefined);
-
-const getInitialTheme = (): 'light' | 'dark' => {
-    if (typeof window !== 'undefined' && window.localStorage) {
-        const storedPrefs = window.localStorage.getItem('theme');
-        if (typeof storedPrefs === 'string') {
-            return storedPrefs as 'light' | 'dark';
-        }
-        const userMedia = window.matchMedia('(prefers-color-scheme: light)');
-        if (userMedia.matches) {
-            return 'light';
-        }
-    }
-    return 'dark';
-};
-
-// --- START SAMPLE DATA ---
-const sampleAdminRoles: AdminRole[] = [
-    { id: 'role-super', name: 'Admin', permissions: allPermissions },
-    { id: 'role-support', name: 'Support', permissions: ['viewPlatformDashboard', 'manageTenants', 'manageSupport'] }
+// Initial Data
+const branches: Branch[] = [
+  { id: 'branch-1', name: 'Downtown', location: { lat: 37.7749, lng: -122.4194 } },
+  { id: 'branch-2', name: 'Uptown', location: { lat: 37.7949, lng: -122.4294 } },
 ];
 
-const sampleAdminUsers: AdminUser[] = [
-    { id: 'user-super', name: 'Platform Owner', email: 'super@flowpay.com', username: 'super', password: '12345', roleId: 'role-super', status: 'ACTIVE', joinDate: new Date('2023-01-15') }
+const staffRoles: StaffRole[] = [
+    { id: 'role-admin', name: 'Admin', permissions: allTenantPermissions },
+    { id: 'role-cashier', name: 'Cashier', permissions: ['accessPOS', 'makeDeposits'] },
+    { id: 'role-stock', name: 'Stock Manager', permissions: ['manageInventory', 'managePurchases', 'viewAuditLogs'] },
+]
+
+const staff: Staff[] = [
+  { id: 'staff-1', name: 'Jane Doe', email: 'jane@example.com', username: 'jane', roleId: 'role-admin', branchId: 'branch-1' },
+  { id: 'staff-2', name: 'John Smith', email: 'john@example.com', username: 'john', roleId: 'role-cashier', branchId: 'branch-1' },
 ];
 
-const sampleSubscriptionPlans: SubscriptionPlan[] = [
-    { id: 'plan-basic', name: 'Basic', price: 29, priceYearly: 290, features: ['1 Branch', '2 Staff', 'POS & Inventory', 'Basic Reporting'], description: 'For small businesses just getting started.', recommended: false },
-    { id: 'plan-pro', name: 'Pro', price: 79, priceYearly: 790, features: ['5 Branches', '10 Staff', 'All Features', 'Advanced Reporting', 'API Access'], description: 'For growing businesses that need more power.', recommended: true }
+const categories: Category[] = [
+    { id: 'cat-1', name: 'Electronics' },
+    { id: 'cat-2', name: 'Groceries' },
+    { id: 'cat-3', name: 'Apparel' },
+]
+
+const products: Product[] = [
+  { id: 'prod-1', name: 'Laptop', categoryId: 'cat-1', variants: [
+      { id: 'var-1a', name: '13-inch', sku: 'LP13', sellingPrice: 1200, costPrice: 800, stockByBranch: { 'branch-1': 10, 'branch-2': 5 }, batchNumber: 'B123', expiryDate: '2025-12-31' },
+      { id: 'var-1b', name: '15-inch', sku: 'LP15', sellingPrice: 1500, costPrice: 1000, stockByBranch: { 'branch-1': 8, 'branch-2': 3 } }
+  ], isFavorite: true },
+  { id: 'prod-2', name: 'Milk', categoryId: 'cat-2', variants: [
+      { id: 'var-2a', name: '1 Gallon', sku: 'MK1G', sellingPrice: 4, costPrice: 2.5, stockByBranch: { 'branch-1': 50, 'branch-2': 30 }, consignmentStockByBranch: { 'branch-1': 20 }, reorderPointByBranch: {'branch-1': 10}, expiryDate: '2024-08-15' }
+  ], isFavorite: true },
+  { id: 'prod-3', name: 'T-Shirt', categoryId: 'cat-3', variants: [
+      { id: 'var-3a', name: 'Medium', sku: 'TSM', sellingPrice: 25, costPrice: 10, stockByBranch: { 'branch-1': 100, 'branch-2': 80 } },
+      { id: 'var-3b', name: 'Large', sku: 'TSL', sellingPrice: 25, costPrice: 10, stockByBranch: { 'branch-1': 90, 'branch-2': 70 } }
+  ] },
+  { id: 'prod-4', name: 'Keyboard', categoryId: 'cat-1', variants: [
+      { id: 'var-4a', name: 'Standard', sku: 'KB104', sellingPrice: 75, costPrice: 40, stockByBranch: { 'branch-1': 25, 'branch-2': 15 } }
+  ] },
 ];
 
-const sampleTenants: Tenant[] = [
-    { 
-        id: 'tenant-1', businessName: 'The Coffee Corner', ownerName: 'Tenant Admin', email: 'tenant@example.com', username: 'tenant', password: '12345',
-        status: 'ACTIVE', planId: 'plan-pro', joinDate: new Date('2023-05-20'), isVerified: true, billingCycle: 'monthly',
-        currency: 'NGN', language: 'en', timezone: 'Africa/Lagos'
-    }
-];
-
-const sampleBranches: Branch[] = [
-    { id: 'branch-1', name: 'Main Street Cafe', location: { lat: 34.0522, lng: -118.2437 } }
-];
-
-const sampleStaffRoles: StaffRole[] = [
-    { id: 'srole-admin', name: 'Tenant Admin', permissions: allTenantPermissions },
-    { id: 'srole-cashier', name: 'Cashier', permissions: ['accessPOS', 'makeDeposits', 'accessReturns'] }
-];
-
-const sampleStaff: Staff[] = [
-    { id: 'staff-1', name: 'Tenant Admin', email: 'tenant@example.com', username: 'tenant', password: '12345', roleId: 'srole-admin', branchId: 'branch-1' },
-    { id: 'staff-2', name: 'Cashier User', email: 'cashier@example.com', username: 'cashier', password: '12345', roleId: 'srole-cashier', branchId: 'branch-1' },
-];
-
-const sampleCategories: Category[] = [
-    { id: 'cat-1', name: 'Beverages' },
-    { id: 'cat-2', name: 'Pastries' }
-];
-
-const sampleProducts: Product[] = [
-    {
-        id: 'prod-1', name: 'Espresso', categoryId: 'cat-1',
-        variants: [
-            { id: 'var-1', name: 'Single', sku: 'ESP-S', sellingPrice: 2.5, costPrice: 0.5, stockByBranch: { 'branch-1': 100 } },
-            { id: 'var-2', name: 'Double', sku: 'ESP-D', sellingPrice: 3.5, costPrice: 1.0, stockByBranch: { 'branch-1': 100 } }
-        ],
-        isFavorite: true
-    },
-    {
-        id: 'prod-2', name: 'Croissant', categoryId: 'cat-2',
-        variants: [
-            { id: 'var-3', name: 'Plain', sku: 'CRO-P', sellingPrice: 3.0, costPrice: 1.2, stockByBranch: { 'branch-1': 50 } },
-            { id: 'var-4', name: 'Chocolate', sku: 'CRO-C', sellingPrice: 3.75, costPrice: 1.5, stockByBranch: { 'branch-1': 40 } }
-        ]
-    }
-];
-
-const sampleCustomers: Customer[] = [
+const customers: Customer[] = [
     { id: 'cust-walkin', name: 'Walk-in Customer', creditBalance: 0 },
-    { id: 'cust-1', name: 'John Doe', phone: '555-1234', creditBalance: 25.50, creditLimit: 200 }
+    { id: 'cust-1', name: 'Alice Johnson', phone: '555-0101', email: 'alice@example.com', creditBalance: 250, creditLimit: 1000 },
+    { id: 'cust-2', name: 'Bob Williams', phone: '555-0102', email: 'bob@example.com', creditBalance: 0 },
 ];
-// --- END SAMPLE DATA ---
 
-// Combine all data into a single structure for easier state management and persistence
-interface LocalStorageData {
-    products: Product[]; sales: Sale[]; branches: Branch[]; staff: Staff[]; staffRoles: StaffRole[]; stockLogs: StockLog[];
-    tenants: Tenant[]; subscriptionPlans: SubscriptionPlan[]; adminUsers: AdminUser[]; adminRoles: AdminRole[]; brandConfig: BrandConfig;
-    pageContent: PageContent; blogPosts: BlogPost[]; paymentSettings: PaymentSettings; notificationSettings: NotificationSettings;
-    systemSettings: SystemSettings; trucks: Truck[]; shipments: Shipment[]; trackerProviders: TrackerProvider[]; suppliers: Supplier[];
-    purchaseOrders: PurchaseOrder[]; accounts: Account[]; journalEntries: JournalEntry[]; announcements: Announcement[]; customers: Customer[];
-    consignments: Consignment[]; deposits: Deposit[]; categories: Category[]; paymentTransactions: PaymentTransaction[]; emailTemplates: EmailTemplate[];
-    smsTemplates: SmsTemplate[]; inAppNotifications: InAppNotification[]; auditLogs: AuditLog[]; supportTickets: SupportTicket[];
-}
+const sales: Sale[] = [
+  { id: 'sale-1', date: new Date(new Date().setDate(new Date().getDate() - 1)), items: [
+      { productId: 'prod-1', variantId: 'var-1a', name: 'Laptop', variantName: '13-inch', quantity: 1, sellingPrice: 1200, costPrice: 800 },
+      { productId: 'prod-4', variantId: 'var-4a', name: 'Keyboard', variantName: 'Standard', quantity: 1, sellingPrice: 75, costPrice: 40 }
+  ], total: 1275, branchId: 'branch-1', customerId: 'cust-1', payments: [{ method: 'Card', amount: 1275 }], change: 0, staffId: 'staff-1', status: 'PAID', amountDue: 0 },
+  { id: 'sale-2', date: new Date(new Date().setDate(new Date().getDate() - 2)), items: [
+      { productId: 'prod-2', variantId: 'var-2a', name: 'Milk', variantName: '1 Gallon', quantity: 2, sellingPrice: 4, costPrice: 2.5 }
+  ], total: 8, branchId: 'branch-2', customerId: 'cust-walkin', payments: [{ method: 'Cash', amount: 10 }], change: 2, staffId: 'staff-2', status: 'PAID', amountDue: 0 },
+  { id: 'sale-3', date: new Date(new Date().setDate(new Date().getDate() - 3)), items: [
+      { productId: 'prod-3', variantId: 'var-3a', name: 'T-Shirt', variantName: 'Medium', quantity: 5, sellingPrice: 25, costPrice: 10 }
+  ], total: 125, branchId: 'branch-1', customerId: 'cust-1', payments: [], change: 0, staffId: 'staff-1', status: 'UNPAID', amountDue: 125 },
+];
 
-const LOCAL_STORAGE_KEY = 'flowpay_demo_data';
+const stockLogs: StockLog[] = [
+    { id: 'log-1', date: new Date(new Date().setDate(new Date().getDate() - 1)), productId: 'prod-1', variantId: 'var-1a', productName: 'Laptop', variantName: '13-inch', action: 'SALE', quantity: -1, branchId: 'branch-1' },
+];
 
-const getInitialData = (): LocalStorageData => {
-    const defaultData: LocalStorageData = {
-        products: sampleProducts, sales: [], branches: sampleBranches, staff: sampleStaff, staffRoles: sampleStaffRoles, stockLogs: [],
-        tenants: sampleTenants, subscriptionPlans: sampleSubscriptionPlans, adminUsers: sampleAdminUsers, adminRoles: sampleAdminRoles,
-        brandConfig: { name: "FlowPay", logoUrl: "", faviconUrl: "/vite.svg" },
-        pageContent: { about: 'About us content here.', contact: 'Contact us content here.', terms: 'Terms of service here.', privacy: 'Privacy policy here.', refund: 'Refund policy here.', faqs: [{id: 'faq-1', question: 'What is FlowPay?', answer: 'An awesome POS.'}], helpCenter: 'Help center content.', apiDocs: 'API docs content.', blog: 'Blog intro here.' },
-        blogPosts: [], paymentSettings: { stripe: { enabled: true, publicKey: '', secretKey: '' }, flutterwave: { enabled: false, publicKey: '', secretKey: '' }, paystack: { enabled: false, publicKey: '', secretKey: '' }, manual: { enabled: true, details: 'Bank: Demo Bank\nAccount: 123456789\nName: FlowPay Inc.' } },
-        notificationSettings: { email: { provider: 'resend', resend: { apiKey: '' }, smtp: { host: 0, port: 0, user: '', pass: '' } }, sms: { twilio: { enabled: false, accountSid: '', apiKey: '', fromNumber: '' } }, push: { firebase: { enabled: false, serverKey: '', vapidKey: '' }, oneSignal: { enabled: false, appId: '', apiKey: '' } } },
-        systemSettings: { currencies: allCurrencies.map(c => ({...c, enabled: true})), defaultCurrency: 'USD', languages: allLanguages.map(l => ({...l, enabled: true})), defaultLanguage: 'en', defaultTimezone: 'UTC', maintenanceSettings: { isActive: false, message: 'We are currently down for maintenance. Please check back soon.' }, accessControlSettings: { mode: 'ALLOW_ALL', ipWhitelist: [], ipBlacklist: [], countryWhitelist: [], countryBlacklist: [], regionWhitelist: [], regionBlacklist: [], browserWhitelist: [], browserBlacklist: [], deviceWhitelist: [], deviceBlacklist: [] }, landingPageMetrics: { businesses: { value: 100, label: 'Businesses Trust Us' }, users: { value: 500, label: 'Active Users Daily' }, revenue: { value: 1, label: 'Million in Revenue Processed' } }, featuredUpdate: { isActive: false, title: '', content: '' }, mapProviders: [{id: 'google', name: 'Google Maps', apiKey: ''}], activeMapProviderId: 'google', ipGeolocationProviders: [{ id: 'ipinfo', name: 'IPinfo.io', apiKey: '', apiEndpoint: 'https://ipinfo.io/' }], activeIpGeolocationProviderId: 'ipinfo', aiSettings: { provider: 'gemini', gemini: { apiKey: '' }, openai: { apiKey: '' } }, supabaseSettings: { projectUrl: '', anonKey: '' } },
-        trucks: [], shipments: [], 
-        trackerProviders: [
-            { id: 'teltonika', name: 'Teltonika', apiKey: '', apiEndpoint: '' },
-            { id: 'ruptela', name: 'Ruptela', apiKey: '', apiEndpoint: '' },
-            { id: 'queclink', name: 'Queclink', apiKey: '', apiEndpoint: '' },
-            { id: 'calamp', name: 'CalAmp', apiKey: '', apiEndpoint: '' },
-            { id: 'meitrack', name: 'Meitrack', apiKey: '', apiEndpoint: '' },
-            { id: 'concox', name: 'Concox (Jimi IoT)', apiKey: '', apiEndpoint: '' },
-            { id: 'suntech', name: 'Suntech', apiKey: '', apiEndpoint: '' },
-            { id: 'gosafe', name: 'Gosafe', apiKey: '', apiEndpoint: '' },
-            { id: 'atrack', name: 'ATrack', apiKey: '', apiEndpoint: '' },
-            { id: 'systech', name: 'Systech', apiKey: '', apiEndpoint: '' },
-            { id: 'topflytech', name: 'Topflytech', apiKey: '', apiEndpoint: '' },
-        ],
-        suppliers: [], purchaseOrders: [], accounts: [], journalEntries: [], announcements: [],
-        customers: sampleCustomers, consignments: [], deposits: [], categories: sampleCategories, paymentTransactions: [], emailTemplates: [],
-        smsTemplates: [], inAppNotifications: [], auditLogs: [], supportTickets: [],
-    };
+const subscriptionPlans: SubscriptionPlan[] = [
+    { id: 'plan-basic', name: 'Basic', price: 29, priceYearly: 290, features: ['1 Branch', '2 Staff Accounts', 'Basic Reporting'], description: 'Perfect for new businesses getting started.', recommended: false },
+    { id: 'plan-pro', name: 'Pro', price: 79, priceYearly: 790, features: ['5 Branches', '10 Staff Accounts', 'Advanced Reporting', 'Logistics Management'], description: 'For growing businesses expanding their operations.', recommended: true },
+    { id: 'plan-enterprise', name: 'Enterprise', price: 199, priceYearly: 1990, features: ['Unlimited Branches', 'Unlimited Staff', 'All Features Included', 'Dedicated Support'], description: 'For large-scale businesses with complex needs.', recommended: false },
+];
 
-    try {
-        const storedData = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (storedData) {
-            const parsed = JSON.parse(storedData);
-            // Quick check to see if structure is valid
-            if (parsed.products && parsed.tenants) {
-                // Re-hydrate dates
-                parsed.tenants.forEach((t: Tenant) => { t.joinDate = new Date(t.joinDate); if (t.trialEndDate) t.trialEndDate = new Date(t.trialEndDate); });
-                parsed.adminUsers.forEach((u: AdminUser) => u.joinDate = new Date(u.joinDate));
-                return parsed;
-            }
-        }
-    } catch (error) {
-        console.error("Failed to load data from localStorage", error);
-    }
-    
-    // If no stored data or it's invalid, save the default
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(defaultData));
-    return defaultData;
+const tenant1: Tenant = {
+    id: 'tenant-123',
+    businessName: 'Innovate Creations',
+    ownerName: 'Demo Tenant',
+    email: 'tenant@flowpay.com',
+    username: 'tenant',
+    companyAddress: '123 Innovation Drive, Tech City',
+    companyPhone: '(555) 123-4567',
+    companyLogoUrl: 'https://tailwindui.com/img/logos/mark.svg?color=cyan&shade=500',
+    status: 'TRIAL',
+    planId: 'plan-pro',
+    joinDate: new Date(new Date().setDate(new Date().getDate() - 5)),
+    trialEndDate: new Date(new Date().setDate(new Date().getDate() + 9)),
+    currency: 'NGN',
+    language: 'en',
+    timezone: 'Africa/Lagos',
+    isVerified: true,
+    billingCycle: 'monthly',
+    automations: { generateEODReport: true, sendLowStockAlerts: false },
+    logisticsConfig: { activeTrackerProviderId: 'teltonika' }
 };
 
+const tenants: Tenant[] = [ tenant1 ];
 
-export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+const adminUsers: AdminUser[] = [
+    { id: 'admin-super', name: 'Super Admin', email: 'super@flowpay.com', username: 'super', roleId: 'role-super-admin', status: 'ACTIVE', joinDate: new Date(), avatarUrl: 'https://picsum.photos/seed/admin/100' },
+    { id: 'admin-support', name: 'Support Agent', email: 'support@flowpay.com', roleId: 'role-support', status: 'ACTIVE', joinDate: new Date(), avatarUrl: 'https://picsum.photos/seed/support/100' },
+];
+
+const adminRoles: AdminRole[] = [
+    { id: 'role-super-admin', name: 'Admin', permissions: allPermissions },
+    { id: 'role-support', name: 'Support', permissions: ['viewPlatformDashboard', 'manageTenants', 'manageSupport'] },
+    { id: 'role-dev', name: 'Developer', permissions: ['manageSystemSettings'] },
+];
+
+const initialBrandConfig: BrandConfig = { name: 'FlowPay', logoUrl: '', faviconUrl: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💸</text></svg>' };
+
+const initialPageContent: PageContent = {
+    about: 'About FlowPay...', contact: 'Contact us at support@flowpay.com', terms: 'Terms of Service...', privacy: 'Privacy Policy...', refund: 'Refund Policy...',
+    faqs: [
+        { id: 'faq-1', question: 'What is FlowPay?', answer: 'A SaaS POS solution.' },
+        { id: 'faq-2', question: 'How does billing work?', answer: 'You can choose monthly or yearly plans.' }
+    ],
+    helpCenter: 'Welcome to the help center.',
+    apiDocs: 'API documentation...',
+    blog: 'Welcome to our blog!'
+};
+
+const blogPosts: BlogPost[] = [
+    { id: 'blog-1', title: 'Getting Started with FlowPay', content: 'Here is how you get started...', authorId: 'admin-super', authorName: 'Super Admin', createdAt: new Date(), status: 'PUBLISHED', featuredImage: 'https://images.unsplash.com/photo-1556740758-90de374c12ad?q=80&w=2070&auto=format&fit=crop' }
+];
+
+const initialPaymentSettings: PaymentSettings = {
+    stripe: { enabled: true, publicKey: 'pk_test_stripe', secretKey: 'sk_test_stripe' },
+    flutterwave: { enabled: true, publicKey: 'pk_test_flutterwave', secretKey: 'sk_test_flutterwave' },
+    paystack: { enabled: true, publicKey: 'pk_test_paystack', secretKey: 'sk_test_paystack' },
+    manual: { enabled: true, details: 'Bank: FlowPay Bank\nAccount: 1234567890\nName: FlowPay Inc.' }
+};
+
+const initialNotificationSettings: NotificationSettings = {
+    email: { provider: 'resend', resend: { apiKey: 're_test_key' }, smtp: { host: 0, port: 0, user: '', pass: '' } },
+    sms: { twilio: { enabled: true, accountSid: 'AC_test_sid', apiKey: 'twilio_test_key', fromNumber: '+15551234567' } },
+    push: { firebase: { enabled: true, serverKey: 'firebase_test_key', vapidKey: 'firebase_vapid_key'}, oneSignal: { enabled: false, appId: '', apiKey: '' } }
+};
+
+const initialSystemSettings: SystemSettings = {
+    currencies: [
+      { code: 'USD', name: 'United States Dollar', symbol: '$', enabled: true },
+      { code: 'EUR', name: 'Euro', symbol: '€', enabled: true },
+      { code: 'GBP', name: 'British Pound', symbol: '£', enabled: true },
+      { code: 'NGN', name: 'Nigerian Naira', symbol: '₦', enabled: true },
+    ],
+    defaultCurrency: 'NGN',
+    languages: [
+        { code: 'en', name: 'English', enabled: true },
+        { code: 'es', name: 'Spanish', enabled: true },
+        { code: 'fr', name: 'French', enabled: true },
+    ],
+    defaultLanguage: 'en',
+    defaultTimezone: 'Africa/Lagos',
+    maintenanceSettings: { isActive: false, message: 'We are currently undergoing scheduled maintenance. We should be back shortly. Thank you for your patience.' },
+    accessControlSettings: {
+        mode: 'ALLOW_ALL', ipWhitelist: [], ipBlacklist: [], countryWhitelist: [], countryBlacklist: [],
+        regionBlacklist:[], regionWhitelist:[], browserBlacklist:[], browserWhitelist:[], deviceBlacklist:[], deviceWhitelist:[],
+    },
+    landingPageMetrics: {
+        businesses: { value: 1500, label: 'Businesses Powered' },
+        users: { value: 12000, label: 'Active Users Daily' },
+        revenue: { value: 5, label: 'Processed for Clients' }
+    },
+    featuredUpdate: { isActive: false, title: '', content: '' },
+    mapProviders: [
+        { id: 'google', name: 'Google Maps', apiKey: '' },
+        { id: 'mapbox', name: 'Mapbox', apiKey: '' },
+    ],
+    activeMapProviderId: 'google',
+    ipGeolocationProviders: [
+        { id: 'ipinfo', name: 'IPinfo.io', apiKey: '', apiEndpoint: 'https://ipinfo.io/' },
+    ],
+    activeIpGeolocationProviderId: 'ipinfo',
+    aiSettings: { provider: 'gemini', gemini: { apiKey: '' }, openai: { apiKey: '' } },
+    supabaseSettings: { projectUrl: 'https://your-project-url.supabase.co', anonKey: 'your-anon-key' },
+};
+
+const trucks: Truck[] = [
+    { id: 'truck-1', licensePlate: 'TRK-001', driverName: 'Mike Ross', status: 'IN_TRANSIT', currentLocation: { lat: 38.8951, lng: -77.0364, address: 'Washington D.C.' }, lastUpdate: new Date(), currentLoad: 15000, maxLoad: 20000, tenantId: 'tenant-123' },
+    { id: 'truck-2', licensePlate: 'TRK-002', driverName: 'Harvey Specter', status: 'IDLE', currentLocation: { lat: 40.7128, lng: -74.0060, address: 'New York, NY' }, lastUpdate: new Date(), currentLoad: 0, maxLoad: 20000, tenantId: 'tenant-123' },
+];
+
+const shipments: Shipment[] = [
+    { id: 'ship-1', shipmentCode: 'SHP-A1B2', origin: 'New York, NY', destination: 'branch-1', truckId: 'truck-1', status: 'IN_TRANSIT', items: [{ productId: 'prod-1', variantId: 'var-1b', productName: 'Laptop 15-inch', quantity: 20, sellingPrice: 1500 }], estimatedDelivery: new Date(new Date().setDate(new Date().getDate() + 2)) },
+];
+
+const trackerProviders: TrackerProvider[] = [
+    { id: 'teltonika', name: 'Teltonika', apiKey: '', apiEndpoint: '' },
+    { id: 'ruptela', name: 'Ruptela', apiKey: '', apiEndpoint: '' },
+    { id: 'queclink', name: 'Queclink', apiKey: '', apiEndpoint: '' },
+    { id: 'meitrack', name: 'Meitrack', apiKey: '', apiEndpoint: '' },
+    { id: 'calamp', name: 'CalAmp', apiKey: '', apiEndpoint: '' },
+    { id: 'geotab', name: 'Geotab', apiKey: '', apiEndpoint: '' },
+    { id: 'samsara', name: 'Samsara', apiKey: '', apiEndpoint: '' },
+    { id: 'atrak', name: 'ATrack', apiKey: '', apiEndpoint: '' },
+    { id: 'fleetcomplete', name: 'Fleet Complete', apiKey: '', apiEndpoint: '' },
+    { id: 'verizon', name: 'Verizon Connect', apiKey: '', apiEndpoint: '' },
+    { id: 'other', name: 'Other', apiKey: '', apiEndpoint: '' },
+];
+
+const suppliers: Supplier[] = [
+    { id: 'sup-1', name: 'Global Electronics', contactPerson: 'Sarah Connor', email: 'sarah@global.com', phone: '555-1111' },
+    { id: 'sup-2', name: 'Fresh Farms Inc.', contactPerson: 'Peter Parker', email: 'pete@fresh.com', phone: '555-2222' },
+];
+
+const purchaseOrders: PurchaseOrder[] = [
+    { id: 'po-1', poNumber: 'PO-2024-001', supplierId: 'sup-1', destinationBranchId: 'branch-1', items: [{ variantId: 'var-1a', productName: 'Laptop', variantName: '13-inch', quantity: 10, cost: 790 }], total: 7900, status: 'RECEIVED', createdAt: new Date(new Date().setDate(new Date().getDate() - 10)) }
+];
+
+const consignments: Consignment[] = [
+    { id: 'con-1', supplierId: 'sup-2', branchId: 'branch-1', receivedDate: new Date(new Date().setDate(new Date().getDate() - 5)), items: [{ variantId: 'var-2a', productName: 'Milk', variantName: '1 Gallon', quantityReceived: 20, quantitySold: 5, costPrice: 2.2 }], status: 'ACTIVE' }
+];
+
+const accounts: Account[] = [
+    { id: 'acct-cash', name: 'Cash on Hand', type: 'ASSET', balance: 15000 },
+    { id: 'acct-sales', name: 'Sales Revenue', type: 'REVENUE', balance: -25000 },
+    { id: 'acct-cogs', name: 'Cost of Goods Sold', type: 'EXPENSE', balance: 12000 },
+];
+
+const journalEntries: JournalEntry[] = [
+    { id: 'je-1', date: new Date(), description: 'Daily sales summary', transactions: [{ accountId: 'acct-cash', amount: 1399 }, { accountId: 'acct-sales', amount: -1399 }] },
+];
+
+const announcements: Announcement[] = [
+    { id: 'anno-1', title: 'New Feature: Logistics Management', content: 'You can now track your fleet and shipments in real-time!', targetAudience: 'TENANTS', createdAt: new Date(new Date().setDate(new Date().getDate() - 2)), readBy: [] }
+];
+
+const paymentTransactions: PaymentTransaction[] = [
+    { id: 'pt-1', tenantId: 'tenant-123', planId: 'plan-pro', amount: 79, method: 'Stripe', status: 'COMPLETED', createdAt: new Date(new Date().setMonth(new Date().getMonth() - 1)) },
+    { id: 'pt-2', tenantId: 'tenant-123', planId: 'plan-pro', amount: 79, method: 'Manual', status: 'PENDING', createdAt: new Date(), proofOfPaymentUrl: '/uploads/proof.jpg' }
+];
+
+const emailTemplates: EmailTemplate[] = [
+    { id: 'tmpl-welcome', name: 'Welcome Email', subject: 'Welcome to FlowPay!', body: 'Hello {{tenantName}}, welcome aboard!' },
+    { id: 'tmpl-expiry', name: 'Trial Expiry Reminder', subject: 'Your trial is ending soon', body: 'Hi {{tenantName}}, your trial for the {{planName}} plan is ending soon.' },
+];
+
+const smsTemplates: SmsTemplate[] = [
+    { id: 'tmpl-sms-receipt', name: 'Sale Receipt SMS', body: 'Thank you for your purchase of {{amount}} at {{businessName}}!' }
+];
+
+const auditLogs: AuditLog[] = [
+    { id: 'audit-1', timestamp: new Date(), userId: 'staff-1', userName: 'Jane Doe', userType: 'STAFF', tenantId: 'tenant-123', action: 'CREATED_SALE', details: 'Created sale #sale-1 for $1275' },
+    { id: 'audit-2', timestamp: new Date(), userId: 'admin-super', userName: 'Super Admin', userType: 'SUPER_ADMIN', action: 'UPDATED_PLAN', details: 'Updated plan "Basic" price' }
+];
+
+const deposits: Deposit[] = [
+    { id: 'dep-1', customerId: 'cust-2', amount: 500, date: new Date(new Date().setDate(new Date().getDate() - 3)), staffId: 'staff-1', branchId: 'branch-1', status: 'ACTIVE' },
+];
+
+const supportTickets: SupportTicket[] = [
+    { id: 'ticket-1', tenantId: 'tenant-123', subject: 'Problem with printer', department: 'Technical', priority: 'High', status: 'Open', createdAt: new Date(), updatedAt: new Date(), messages: [{id: 'msg-1', sender: 'TENANT', message: 'My receipt printer is not working.', timestamp: new Date()}] }
+];
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+    const [isLoading, setIsLoading] = useState(true);
     const [session, setSession] = useState<LocalSession | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
     
-    const [data, setData] = useState<LocalStorageData>(getInitialData);
+    // Global App State
+    const [productsState, setProductsState] = useState<Product[]>(products);
+    const [salesState, setSalesState] = useState<Sale[]>(sales);
+    const [branchesState, setBranchesState] = useState<Branch[]>(branches);
+    const [staffState, setStaffState] = useState<Staff[]>(staff);
+    const [staffRolesState, setStaffRolesState] = useState<StaffRole[]>(staffRoles);
+    const [stockLogsState, setStockLogsState] = useState<StockLog[]>(stockLogs);
+    const [tenantsState, setTenantsState] = useState<Tenant[]>(tenants);
+    const [subscriptionPlansState, setSubscriptionPlansState] = useState<SubscriptionPlan[]>(subscriptionPlans);
+    const [adminUsersState, setAdminUsersState] = useState<AdminUser[]>(adminUsers);
+    const [adminRolesState, setAdminRolesState] = useState<AdminRole[]>(adminRoles);
+    const [brandConfigState, setBrandConfigState] = useState<BrandConfig>(initialBrandConfig);
+    const [pageContentState, setPageContentState] = useState<PageContent>(initialPageContent);
+    const [blogPostsState, setBlogPostsState] = useState<BlogPost[]>(blogPosts);
+    const [paymentSettingsState, setPaymentSettingsState] = useState<PaymentSettings>(initialPaymentSettings);
+    const [notificationSettingsState, setNotificationSettingsState] = useState<NotificationSettings>(initialNotificationSettings);
+    const [systemSettingsState, setSystemSettingsState] = useState<SystemSettings>(initialSystemSettings);
+    const [trucksState, setTrucksState] = useState<Truck[]>(trucks);
+    const [shipmentsState, setShipmentsState] = useState<Shipment[]>(shipments);
+    const [trackerProvidersState, setTrackerProvidersState] = useState<TrackerProvider[]>(trackerProviders);
+    const [suppliersState, setSuppliersState] = useState<Supplier[]>(suppliers);
+    const [purchaseOrdersState, setPurchaseOrdersState] = useState<PurchaseOrder[]>(purchaseOrders);
+    const [accountsState, setAccountsState] = useState<Account[]>(accounts);
+    const [journalEntriesState, setJournalEntriesState] = useState<JournalEntry[]>(journalEntries);
+    const [announcementsState, setAnnouncementsState] = useState<Announcement[]>(announcements);
+    const [customersState, setCustomersState] = useState<Customer[]>(customers);
+    const [consignmentsState, setConsignmentsState] = useState<Consignment[]>(consignments);
+    const [categoriesState, setCategoriesState] = useState<Category[]>(categories);
+    const [paymentTransactionsState, setPaymentTransactionsState] = useState<PaymentTransaction[]>(paymentTransactions);
+    const [emailTemplatesState, setEmailTemplatesState] = useState<EmailTemplate[]>(emailTemplates);
+    const [smsTemplatesState, setSmsTemplatesState] = useState<SmsTemplate[]>(smsTemplates);
+    const [auditLogsState, setAuditLogsState] = useState<AuditLog[]>(auditLogs);
+    const [depositsState, setDepositsState] = useState<Deposit[]>(deposits);
+    const [supportTicketsState, setSupportTicketsState] = useState<SupportTicket[]>(supportTickets);
 
-    const [notification, setNotification] = useState<NotificationType | null>(null);
+
     const [searchTerm, setSearchTerm] = useState('');
-    const [theme, setTheme] = useState<'light' | 'dark'>(getInitialTheme);
-    const [currentLanguage, setCurrentLanguage] = useState<string>(data.systemSettings.defaultLanguage);
-    const [currentCurrency, setCurrentCurrency] = useState<string>(data.systemSettings.defaultCurrency);
+    const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+    
+    // Multi-tenancy State
+    const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
+    const [currentAdminUser, setCurrentAdminUser] = useState<AdminUser | null>(null);
     const [impersonatedUser, setImpersonatedUser] = useState<Tenant | null>(null);
-
-    // Persist state changes to localStorage
-    const saveData = (updatedData: LocalStorageData) => {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedData));
-        setData(updatedData);
-    };
-
-    // Auth & Profile loading from localStorage
+    const [notification, setNotification] = useState<NotificationType | null>(null);
+    
+    const [currentLanguage, setCurrentLanguage] = useState(systemSettingsState.defaultLanguage);
+    const [currentCurrency, setCurrentCurrency] = useState(systemSettingsState.defaultCurrency);
+    
+    // This effect ensures the app's language and currency are in sync with the logged-in tenant's preferences.
     useEffect(() => {
-        const storedSession = localStorage.getItem('session');
-        if (storedSession) {
-            try {
-                const parsedSession: LocalSession = JSON.parse(storedSession);
-                setSession(parsedSession);
-                setProfile(parsedSession.profile);
-            } catch (e) {
-                localStorage.removeItem('session');
+        if (currentTenant) {
+            setCurrentLanguage(currentTenant.language || systemSettingsState.defaultLanguage);
+            setCurrentCurrency(currentTenant.currency || systemSettingsState.defaultCurrency);
+        } else {
+            // Reset to system defaults when no tenant is logged in (e.g., after logout)
+            setCurrentLanguage(systemSettingsState.defaultLanguage);
+            setCurrentCurrency(systemSettingsState.defaultCurrency);
+        }
+    }, [currentTenant, systemSettingsState.defaultLanguage, systemSettingsState.defaultCurrency]);
+
+    const logAction = useCallback((action: string, details: string, user?: { id: string; name: string; type: 'STAFF' | 'TENANT' | 'SUPER_ADMIN' }) => {
+        let logUser = {
+            id: 'system',
+            name: 'System',
+            type: 'SUPER_ADMIN' as 'STAFF' | 'TENANT' | 'SUPER_ADMIN'
+        };
+
+        if(user) {
+            logUser = user;
+        } else if (currentAdminUser) {
+            logUser = { id: currentAdminUser.id, name: currentAdminUser.name, type: 'SUPER_ADMIN' };
+        } else if (currentTenant) {
+            logUser = { id: currentTenant.id, name: currentTenant.ownerName, type: 'TENANT' };
+        } else if (session?.profile) {
+            // Fallback for user identified by session but not yet loaded into state
+            logUser = { id: session.profile.id, name: session.user.email, type: session.profile.is_super_admin ? 'SUPER_ADMIN' : 'TENANT' };
+        }
+        
+        const newLog: AuditLog = {
+            id: `log-${Date.now()}`,
+            timestamp: new Date(),
+            userId: logUser.id,
+            userName: logUser.name,
+            userType: logUser.type,
+            tenantId: currentTenant?.id,
+            action,
+            details
+        };
+        setAuditLogsState(prev => [newLog, ...prev]);
+    }, [currentAdminUser, currentTenant, session]);
+
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', theme === 'dark');
+    }, [theme]);
+    
+     // Simulate loading initial data
+    useEffect(() => {
+        const loadData = () => {
+             // In a real app, this would be an API call.
+             // Here we just use the initial data.
+            setIsLoading(false);
+        };
+        loadData();
+    }, []);
+    
+    // Simulate auth state change
+    useEffect(() => {
+        const sessionData = localStorage.getItem('flowpay_session');
+        if (sessionData) {
+            const parsed = JSON.parse(sessionData) as LocalSession;
+            setSession(parsed);
+            setProfile(parsed.profile);
+             if (parsed.profile.is_super_admin) {
+                const admin = adminUsersState.find(u => u.email === parsed.user.email);
+                setCurrentAdminUser(admin || null);
+                setCurrentTenant(null); // Super admin is not a tenant
+            } else if (parsed.profile.tenant_id) {
+                const tenant = tenantsState.find(t => t.id === parsed.profile.tenant_id);
+                setCurrentTenant(tenant || null);
+                setCurrentAdminUser(null);
             }
         }
         setIsLoading(false);
     }, []);
 
-    // UI Effects
-    useEffect(() => {
-        const root = window.document.documentElement;
-        root.classList.remove(theme === 'dark' ? 'light' : 'dark');
-        root.classList.add(theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
-    
-    // Memoized derived state
-    const currentTenant = useMemo(() => {
-        if (impersonatedUser) return impersonatedUser;
-        if (session && profile && !profile.is_super_admin && profile.tenant_id) {
-            return data.tenants.find(t => t.id === profile.tenant_id) || null;
-        }
-        return null;
-    }, [session, profile, data.tenants, impersonatedUser]);
+    const login = async (username: string, password: string): Promise<{ success: boolean; message: string }> => {
+        // This is a mock login function for demo purposes.
+        const superAdmin = adminUsersState.find(u => u.username === username);
+        const tenantUser = tenantsState.find(t => t.username === username);
 
-    const currentAdminUser = useMemo(() => {
-        if (session && profile?.is_super_admin) {
-            return data.adminUsers.find(u => u.id === profile.id) || null;
+        if (password !== '12345') {
+            return { success: false, message: 'Invalid username or password.' };
         }
-        return null;
-    }, [session, profile, data.adminUsers]);
 
-    const currentStaffUser = useMemo(() => {
-        if (session && profile && !profile.is_super_admin && profile.tenant_id) {
-            return data.staff.find(s => s.id === profile.id) || null;
-        }
-        return null;
-    }, [session, profile, data.staff]);
-    
-    // --- START FUNCTION IMPLEMENTATIONS ---
-
-    const logAction = useCallback((action: string, details: string, user?: { id: string; name: string; type: 'STAFF' | 'TENANT' | 'SUPER_ADMIN' }) => {
-        const currentUser = user || currentStaffUser || currentAdminUser;
-        const userType = currentAdminUser ? 'SUPER_ADMIN' : 'STAFF';
+        let user: { id: string, email: string } | null = null;
+        let profileData: Profile | null = null;
         
-        if (!currentUser) return;
-        
-        const newLog: AuditLog = {
-            id: `log-${Date.now()}`,
-            timestamp: new Date(),
-            userId: currentUser.id,
-            userName: currentUser.name,
-            userType: userType,
-            tenantId: currentTenant?.id,
-            action,
-            details,
-        };
-        setData(prev => {
-            const newData = { ...prev, auditLogs: [newLog, ...prev.auditLogs] };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
-            return newData;
-        });
-    }, [currentAdminUser, currentStaffUser, currentTenant]);
-    
-    const updateLastLogin = useCallback((email: string, ip: string) => {
-        setData(prev => {
-            let userUpdated = false;
-            const newAdmins = prev.adminUsers.map(u => {
-                if(u.email === email) {
-                    userUpdated = true;
-                    return {...u, lastLoginDate: new Date(), lastLoginIp: ip };
-                }
-                return u;
-            });
-            const newTenants = prev.tenants.map(t => {
-                 if(t.email === email) {
-                    userUpdated = true;
-                    return {...t, lastLoginDate: new Date(), lastLoginIp: ip };
-                }
-                return t;
-            });
-            if (userUpdated) {
-                const newData = { ...prev, adminUsers: newAdmins, tenants: newTenants };
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
-                return newData;
+        if (superAdmin) {
+            user = { id: superAdmin.id, email: superAdmin.email };
+            profileData = { id: superAdmin.id, is_super_admin: true, tenant_id: null };
+            setCurrentAdminUser(superAdmin);
+            setCurrentTenant(null);
+        } else if (tenantUser) {
+            if (!tenantUser.isVerified) {
+                return { success: false, message: 'Account not verified. Please check your email.' };
             }
-            return prev;
-        });
-    }, []);
-
-    const login = useCallback(async (username: string, password: string): Promise<{ success: boolean; message: string }> => {
-        const lowerUsername = username.toLowerCase();
-        
-        const adminUser = data.adminUsers.find(u => u.username?.toLowerCase() === lowerUsername);
-        if (adminUser) {
-            if (adminUser.password === password) {
-                const profile: Profile = { id: adminUser.id, is_super_admin: true, tenant_id: null };
-                const localSession: LocalSession = { user: { id: adminUser.id, email: adminUser.email }, profile };
-                localStorage.setItem('session', JSON.stringify(localSession));
-                setSession(localSession);
-                setProfile(profile);
-                updateLastLogin(adminUser.email, '127.0.0.1');
-                return { success: true, message: 'Logged in successfully.' };
-            }
-        }
-    
-        const staffUser = data.staff.find(s => s.username.toLowerCase() === lowerUsername);
-        if (staffUser) {
-            if (staffUser.password === password) {
-                const tenantId = 'tenant-1'; // Hardcoded for demo
-                const tenant = data.tenants.find(t => t.id === tenantId);
-                if (tenant && tenant.status !== 'ACTIVE' && tenant.status !== 'TRIAL') {
-                    return { success: false, message: `Account is ${tenant.status}. Please contact support.` };
-                }
-                const profile: Profile = { id: staffUser.id, is_super_admin: false, tenant_id: tenantId };
-                const localSession: LocalSession = { user: { id: staffUser.id, email: staffUser.email }, profile };
-                localStorage.setItem('session', JSON.stringify(localSession));
-                setSession(localSession);
-                setProfile(profile);
-                if (tenant) updateLastLogin(tenant.email, '127.0.0.1');
-                return { success: true, message: 'Logged in successfully.' };
-            }
-        }
-    
-        return { success: false, message: 'Invalid username or password.' };
-    }, [data, updateLastLogin]);
-    
-    const logout = useCallback(async () => {
-        localStorage.removeItem('session');
-        setSession(null);
-        setProfile(null);
-        setImpersonatedUser(null);
-    }, []);
-    
-    const stopImpersonating = () => setImpersonatedUser(null);
-    const handleImpersonate = (tenant: Tenant) => {
-        const adminStaff = data.staff.find(s => s.email === tenant.email);
-        if(adminStaff) {
-            const profile: Profile = { id: adminStaff.id, is_super_admin: false, tenant_id: tenant.id };
-            const localSession: LocalSession = { user: {id: adminStaff.id, email: adminStaff.email}, profile};
-            setImpersonatedUser(tenant);
-            setSession(localSession);
-            setProfile(profile);
+            user = { id: tenantUser.id, email: tenantUser.email };
+            profileData = { id: tenantUser.id, is_super_admin: false, tenant_id: tenantUser.id };
+            setCurrentTenant(tenantUser);
+            setCurrentAdminUser(null);
         } else {
-            setNotification({type: 'error', message: "Cannot impersonate: Tenant admin staff account not found."});
+             return { success: false, message: 'Invalid username or password.' };
         }
+        
+        if (user && profileData) {
+            const sessionData: LocalSession = { user, profile: profileData };
+            localStorage.setItem('flowpay_session', JSON.stringify(sessionData));
+            setSession(sessionData);
+            setProfile(profileData);
+            return { success: true, message: 'Logged in successfully.' };
+        }
+
+        return { success: false, message: 'An unexpected error occurred.' };
     };
     
-    const simpleUpdate = <T,>(key: keyof LocalStorageData, value: T) => {
-        setData(prev => {
-            const newData = { ...prev, [key]: value };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
-            return newData;
-        });
-    }
-    
-    const addToArray = <T,>(key: keyof LocalStorageData, item: T) => {
-        setData(prev => {
-            // FIX: Cast `prev[key]` to `unknown` before casting to `T[]` to satisfy TypeScript's strictness.
-            const currentArray = prev[key] as unknown as T[];
-            const newData = { ...prev, [key]: [...currentArray, item] };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
-            return newData;
-        });
-    }
+    const logout = () => {
+        localStorage.removeItem('flowpay_session');
+        setSession(null);
+        setProfile(null);
+        setCurrentAdminUser(null);
+        setCurrentTenant(null);
+        setImpersonatedUser(null);
+    };
 
-    const updateArray = <T extends {id: string}>(key: keyof LocalStorageData, itemId: string, updates: Partial<T>) => {
-        setData(prev => {
-            // FIX: Cast `prev[key]` to `unknown` before casting to `T[]` to satisfy TypeScript's strictness.
-            const currentArray = prev[key] as unknown as T[];
-            const newArray = currentArray.map(item => item.id === itemId ? { ...item, ...updates } : item);
-            const newData = { ...prev, [key]: newArray };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
-            return newData;
-        });
-    }
+    const handleImpersonate = (tenant: Tenant) => {
+        setImpersonatedUser(tenant);
+        setCurrentTenant(tenant); // Set current tenant context for the app
+    };
     
-    const deleteFromArray = (key: keyof LocalStorageData, itemId: string) => {
-        setData(prev => {
-            const currentArray = prev[key] as {id: string}[];
-            const newArray = currentArray.filter(item => item.id !== itemId);
-            const newData = { ...prev, [key]: newArray };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
-            return newData;
-        });
-    }
+    const stopImpersonating = () => {
+        setImpersonatedUser(null);
+        setCurrentTenant(null); // Clear tenant context
+    };
     
-    // --- All functions implemented using the patterns above ---
-    // FIX: Define formatCurrency utility to resolve 'Cannot find name' error.
-    const formatCurrency = useCallback((value: number): string => {
-        const currencyInfo = data.systemSettings.currencies.find(c => c.code === currentCurrency);
-        const symbol = currencyInfo ? currencyInfo.symbol : '$';
-        return `${symbol}${value.toFixed(2)}`;
-    }, [currentCurrency, data.systemSettings.currencies]);
+    const currentStaffUser = staff[0];
 
     const getMetric = (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => {
-        switch(metric) {
-            case 'totalRevenue': return data.sales.reduce((sum, s) => sum + s.total, 0);
-            case 'salesVolume': return data.sales.length;
-            case 'newCustomers': return data.customers.filter(c => c.id !== 'cust-walkin').length; // Simplified for demo
-            case 'activeBranches': return data.branches.length;
+        switch (metric) {
+            case 'totalRevenue': return salesState.reduce((sum, sale) => sum + sale.total, 0);
+            case 'salesVolume': return salesState.length;
+            case 'newCustomers': return customersState.length - 1; // Exclude walk-in
+            case 'activeBranches': return branchesState.length;
             default: return 0;
         }
     };
+    
     const addSale = async (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'>): Promise<{success: boolean, message: string, newSale?: Sale}> => {
+        const { items, total, payments, customerId } = saleData;
+
+        // Stock validation
+        for (const item of items) {
+            if (item.quantity > 0) { // Only check for sales, not returns
+                const product = productsState.find(p => p.id === item.productId);
+                const variant = product?.variants.find(v => v.id === item.variantId);
+                if (!variant) return { success: false, message: `Product variant for ${item.name} not found.` };
+
+                const totalStock = (variant.stockByBranch[saleData.branchId] || 0) + (variant.consignmentStockByBranch?.[saleData.branchId] || 0);
+                if (item.quantity > totalStock) {
+                    return { success: false, message: `Not enough stock for ${item.name} (${item.variantName}). Available: ${totalStock}, Requested: ${item.quantity}.` };
+                }
+            }
+        }
+        
+        const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
+        const amountDue = total - totalPaid;
+        const status: Sale['status'] = amountDue <= 0 ? 'PAID' : (totalPaid > 0 ? 'PARTIALLY_PAID' : 'UNPAID');
+
+        if(customerId !== 'cust-walkin' && amountDue > 0) {
+            setCustomersState(prev => prev.map(c => c.id === customerId ? { ...c, creditBalance: c.creditBalance + amountDue } : c));
+        }
+
+        // Apply deposit if used
+        const depositPayment = payments.find(p => p.method === 'Deposit');
+        if (depositPayment && customerId !== 'cust-walkin') {
+            let amountToApply = depositPayment.amount;
+            const customerDeposits = depositsState.filter(d => d.customerId === customerId && d.status === 'ACTIVE').sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+            
+            for (const deposit of customerDeposits) {
+                if(amountToApply <= 0) break;
+                const appliedAmount = Math.min(deposit.amount, amountToApply);
+                // In a real app, you would probably want to split deposits or mark them as partially used. Here we simplify.
+                if (appliedAmount >= deposit.amount) {
+                    updateDeposit(deposit.id, { status: 'APPLIED' });
+                }
+                amountToApply -= appliedAmount;
+            }
+        }
+
         const newSale: Sale = {
-            ...saleData, id: `sale-${Date.now()}`, date: new Date(),
-            status: saleData.total - saleData.payments.reduce((sum, p) => sum + p.amount, 0) <= 0.01 ? 'PAID' : 'UNPAID',
-            amountDue: Math.max(0, saleData.total - saleData.payments.reduce((sum, p) => sum + p.amount, 0)),
+            id: `sale-${Date.now()}`,
+            date: new Date(),
+            ...saleData,
+            status,
+            amountDue,
         };
 
-        setData(prev => {
-            // Stock update logic
-            const newProducts = [...prev.products];
-            newSale.items.forEach(item => {
-                const product = newProducts.find(p => p.id === item.productId);
-                if(product) {
-                    const variant = product.variants.find(v => v.id === item.variantId);
-                    if(variant) {
-                        variant.stockByBranch[newSale.branchId] = (variant.stockByBranch[newSale.branchId] || 0) - item.quantity;
+        setSalesState(prev => [newSale, ...prev]);
+        
+        // Update stock and logs
+        newSale.items.forEach(item => {
+            adjustStock(item.productId, item.variantId, newSale.branchId, -item.quantity, 'Sale');
+        });
+
+        logAction('CREATED_SALE', `Created sale #${newSale.id} for ${formatCurrency(newSale.total)}`, {id: newSale.staffId, name: 'Staff User', type: 'STAFF'});
+        
+        return { success: true, message: 'Sale completed successfully!', newSale };
+    };
+    
+    const updateTenant = (tenantId: string, tenantData: Partial<Tenant>) => {
+        setTenantsState(prev => prev.map(t => t.id === tenantId ? { ...t, ...tenantData } : t));
+    };
+
+    const updateCurrentTenantSettings = (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout' | 'timezone'>>) => {
+        if (currentTenant) {
+            const updatedTenant = { ...currentTenant, ...newSettings };
+            updateTenant(currentTenant.id, newSettings);
+            setCurrentTenant(updatedTenant);
+            logAction('UPDATED_TENANT_SETTINGS', `Updated settings: ${Object.keys(newSettings).join(', ')}`);
+            // Note: In a real app, this should also update the session/profile data in the backend/localStorage.
+        }
+    };
+
+    const updateAdminUser = (userId: string, userData: Partial<AdminUser>) => {
+        setAdminUsersState(prev => prev.map(u => u.id === userId ? { ...u, ...userData } : u));
+    };
+    
+    // Most functions are defined via useCallback to maintain reference equality
+    const memoizedSetters = {
+        // ... other setters
+        updateBrandConfig: useCallback((newConfig: Partial<BrandConfig>) => setBrandConfigState(prev => ({...prev, ...newConfig})), []),
+        updatePageContent: useCallback((newPageContent: Partial<PageContent>) => setPageContentState(prev => ({...prev, ...newPageContent})), []),
+        updateFaqs: useCallback((newFaqs: FaqItem[]) => setPageContentState(prev => ({...prev, faqs: newFaqs})), []),
+        updatePaymentSettings: useCallback((newSettings: PaymentSettings) => setPaymentSettingsState(newSettings), []),
+        updateNotificationSettings: useCallback((newSettings: NotificationSettings) => setNotificationSettingsState(newSettings), []),
+        updateSystemSettings: useCallback((newSettings: Partial<SystemSettings>) => setSystemSettingsState(prev => ({...prev, ...newSettings})), []),
+        updateMaintenanceSettings: useCallback((settings: MaintenanceSettings) => setSystemSettingsState(prev => ({...prev, maintenanceSettings: settings})), []),
+        updateAccessControlSettings: useCallback((settings: AccessControlSettings) => setSystemSettingsState(prev => ({...prev, accessControlSettings: settings})), []),
+        updateLandingPageMetrics: useCallback((metrics: LandingPageMetrics) => setSystemSettingsState(prev => ({...prev, landingPageMetrics: metrics})), []),
+        updateTenantLogisticsConfig: useCallback((config) => {
+             if (currentTenant) {
+                const newConfig = { ...currentTenant.logisticsConfig, ...config };
+                updateTenant(currentTenant.id, { logisticsConfig: newConfig });
+                setCurrentTenant(prev => prev ? ({ ...prev, logisticsConfig: newConfig }) : null);
+             }
+        }, [currentTenant]),
+        updateTenantAutomations: useCallback((newAutomations: Partial<Tenant['automations']>) => {
+            if (currentTenant) {
+                const updatedAutomations = { ...currentTenant.automations, ...newAutomations };
+                updateTenant(currentTenant.id, { automations: updatedAutomations });
+                setCurrentTenant(prev => prev ? ({ ...prev, automations: updatedAutomations }) : null);
+            }
+        }, [currentTenant]),
+        addSubscriptionPlan: useCallback((planData: Omit<SubscriptionPlan, 'id'>) => setSubscriptionPlansState(prev => [...prev, { ...planData, id: `plan-${Date.now()}` }]), []),
+        updateSubscriptionPlan: useCallback((planId: string, planData: Partial<SubscriptionPlan>) => setSubscriptionPlansState(prev => prev.map(p => p.id === planId ? { ...p, ...planData } : p)), []),
+        deleteSubscriptionPlan: useCallback((planId: string) => setSubscriptionPlansState(prev => prev.filter(p => p.id !== planId)), []),
+        addTruck: useCallback((truckData: Omit<Truck, 'id' | 'lastUpdate'>) => setTrucksState(prev => [...prev, { ...truckData, id: `truck-${Date.now()}`, lastUpdate: new Date() }]), []),
+        updateTruck: useCallback((truckId: string, truckData: Partial<Truck>) => setTrucksState(prev => prev.map(t => t.id === truckId ? { ...t, ...truckData, lastUpdate: new Date() } : t)), []),
+        deleteTruck: useCallback((truckId: string) => setTrucksState(prev => prev.filter(t => t.id !== truckId)), []),
+        updateTruckVitals: useCallback((truckId: string) => {
+            setTrucksState(prev => prev.map(t => t.id === truckId ? { ...t, currentLocation: { ...t.currentLocation, lat: t.currentLocation.lat + 0.01 }, lastUpdate: new Date() } : t));
+        }, []),
+        addShipment: useCallback((shipmentData: Omit<Shipment, 'id'>) => setShipmentsState(prev => [...prev, { ...shipmentData, id: `ship-${Date.now()}` }]), []),
+        updateShipmentStatus: useCallback((shipmentId: string, status: Shipment['status']) => setShipmentsState(prev => prev.map(s => s.id === shipmentId ? { ...s, status } : s)), []),
+        updateTrackerProviders: useCallback((providers: TrackerProvider[]) => setTrackerProvidersState(providers), []),
+        addBranch: useCallback((branchName: string) => setBranchesState(prev => [...prev, { id: `branch-${Date.now()}`, name: branchName, location: { lat: 0, lng: 0 } }]), []),
+        updateBranchLocation: useCallback((branchId: string, location: { lat: number, lng: number }) => setBranchesState(prev => prev.map(b => b.id === branchId ? { ...b, location } : b)), []),
+        addStaff: useCallback((staffData: Omit<Staff, 'id'>) => setStaffState(prev => [...prev, { ...staffData, id: `staff-${Date.now()}` }]), []),
+        deleteStaff: useCallback((staffId: string) => setStaffState(prev => prev.filter(s => s.id !== staffId)), []),
+        sellShipment: useCallback(async (shipmentId: string, customer: Pick<Customer, 'name' | 'phone'>) => {
+            const shipment = shipmentsState.find(s => s.id === shipmentId);
+            if (!shipment) return { success: false, message: 'Shipment not found' };
+
+            const newCustomer: Customer = { id: `cust-${Date.now()}`, name: customer.name, phone: customer.phone, creditBalance: 0 };
+            setCustomersState(prev => [...prev, newCustomer]);
+            
+            const saleTotal = shipment.items.reduce((acc, item) => acc + (item.sellingPrice * item.quantity), 0);
+            
+            const saleResult = await addSale({
+                items: shipment.items.map(i => ({...i, costPrice: 0})),
+                total: saleTotal,
+                branchId: shipment.destination,
+                customerId: newCustomer.id,
+                payments: [{method: 'Direct Sale', amount: saleTotal}],
+                change: 0,
+                staffId: 'staff-1', // Assuming an admin action
+                discount: 0
+            });
+            
+            if (saleResult.success) {
+                updateShipmentStatus(shipmentId, 'SOLD_IN_TRANSIT');
+                return { success: true, message: 'Shipment sold successfully' };
+            }
+            return { success: false, message: saleResult.message };
+        }, [shipmentsState]),
+        receiveShipment: useCallback((shipmentId: string) => {
+            const shipment = shipmentsState.find(s => s.id === shipmentId);
+            if (!shipment) return;
+            shipment.items.forEach(item => {
+                adjustStock(item.productId, item.variantId, shipment.destination, item.quantity, `Received from Shipment ${shipment.shipmentCode}`);
+            });
+            updateShipmentStatus(shipmentId, 'DELIVERED');
+        }, [shipmentsState]),
+        addPurchaseOrder: useCallback((poData: Omit<PurchaseOrder, 'id' | 'poNumber' | 'total' | 'createdAt'>) => {
+            const total = poData.items.reduce((sum, item) => sum + (item.cost * item.quantity), 0);
+            const newPO: PurchaseOrder = {
+                ...poData,
+                id: `po-${Date.now()}`,
+                poNumber: `PO-${new Date().getFullYear()}-${purchaseOrdersState.length + 1}`,
+                total,
+                createdAt: new Date(),
+            };
+            setPurchaseOrdersState(prev => [newPO, ...prev]);
+        }, [purchaseOrdersState.length]),
+        updatePurchaseOrderStatus: useCallback((poId: string, status: PurchaseOrder['status']) => {
+            setPurchaseOrdersState(prev => prev.map(po => {
+                if (po.id === poId) {
+                    if (status === 'RECEIVED') {
+                        po.items.forEach(item => {
+                             adjustStock(products.find(p => p.variants.some(v => v.id === item.variantId))!.id, item.variantId, po.destinationBranchId, item.quantity, `Received from PO ${po.poNumber}`);
+                        });
+                    }
+                    return { ...po, status };
+                }
+                return po;
+            }));
+        }, [products]),
+        addStaffRole: useCallback((roleData: Omit<StaffRole, 'id'>) => setStaffRolesState(prev => [...prev, { ...roleData, id: `role-${Date.now()}` }]), []),
+        updateStaffRole: useCallback((roleId: string, permissions: TenantPermission[]) => setStaffRolesState(prev => prev.map(r => r.id === roleId ? { ...r, permissions } : r)), []),
+        deleteStaffRole: useCallback((roleId: string) => setStaffRolesState(prev => prev.filter(r => r.id !== roleId)), []),
+        addAccount: useCallback((accountData: Omit<Account, 'id' | 'balance'>) => setAccountsState(prev => [...prev, { ...accountData, id: `acct-${Date.now()}`, balance: 0 }]), []),
+        addJournalEntry: useCallback((entryData: Omit<JournalEntry, 'id' | 'date'>) => {
+            const newEntry: JournalEntry = { ...entryData, id: `je-${Date.now()}`, date: new Date() };
+            setJournalEntriesState(prev => [newEntry, ...prev]);
+            setAccountsState(prev => {
+                const newAccounts = [...prev];
+                newEntry.transactions.forEach(tx => {
+                    const accountIndex = newAccounts.findIndex(a => a.id === tx.accountId);
+                    if (accountIndex !== -1) {
+                        newAccounts[accountIndex].balance += tx.amount;
+                    }
+                });
+                return newAccounts;
+            });
+        }, []),
+        addTenant: useCallback(async (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'>, logoBase64: string): Promise<{ success: boolean; message: string }> => {
+            const newTenant: Tenant = {
+                ...tenantData,
+                id: `tenant-${Date.now()}`,
+                joinDate: new Date(),
+                status: 'UNVERIFIED',
+                trialEndDate: new Date(new Date().setDate(new Date().getDate() + 14)),
+                isVerified: false,
+                billingCycle: 'monthly',
+                companyLogoUrl: logoBase64, // Use the base64 string directly
+                currency: systemSettingsState.defaultCurrency,
+                language: systemSettingsState.defaultLanguage,
+            };
+            setTenantsState(prev => [...prev, newTenant]);
+            return { success: true, message: 'Tenant created successfully. Please verify email.' };
+        }, [systemSettingsState]),
+        verifyTenant: useCallback((email: string) => {
+            setTenantsState(prev => prev.map(t => t.email === email ? { ...t, isVerified: true, status: 'TRIAL' } : t));
+        }, []),
+        updateTenantProfile: useCallback((tenantData: Partial<Tenant>) => {
+            if (currentTenant) {
+                updateTenant(currentTenant.id, tenantData);
+                setCurrentTenant(prev => prev ? { ...prev, ...tenantData } : null);
+            }
+        }, [currentTenant]),
+        updateAdminProfile: useCallback((adminData: Partial<AdminUser>) => {
+            if (currentAdminUser) {
+                updateAdminUser(currentAdminUser.id, adminData);
+                setCurrentAdminUser(prev => prev ? { ...prev, ...adminData } : null);
+            }
+        }, [currentAdminUser]),
+        addAnnouncement: useCallback((announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => {
+            const newAnno: Announcement = { ...announcementData, id: `anno-${Date.now()}`, createdAt: new Date(), readBy: [] };
+            setAnnouncementsState(prev => [newAnno, ...prev]);
+        }, []),
+        markAnnouncementAsRead: useCallback((announcementId: string, userId: string) => {
+            setAnnouncementsState(prev => prev.map(a => a.id === announcementId ? { ...a, readBy: [...a.readBy, userId] } : a));
+        }, []),
+        addCustomer: useCallback((customerData: Omit<Customer, 'id' | 'creditBalance'>) => setCustomersState(prev => [...prev, { ...customerData, id: `cust-${Date.now()}`, creditBalance: 0 }]), []),
+        deleteCustomer: useCallback((customerId: string) => setCustomersState(prev => prev.filter(c => c.id !== customerId)), []),
+        recordCreditPayment: useCallback((customerId: string, amount: number) => {
+            setCustomersState(prev => prev.map(c => c.id === customerId ? { ...c, creditBalance: Math.max(0, c.creditBalance - amount) } : c));
+        }, []),
+        addDeposit: useCallback(async (depositData: Omit<Deposit, 'id' | 'date' | 'status'>): Promise<{success: boolean, message: string}> => {
+            const newDeposit: Deposit = { ...depositData, id: `dep-${Date.now()}`, date: new Date(), status: 'ACTIVE' };
+            setDepositsState(prev => [newDeposit, ...prev]);
+            return { success: true, message: 'Deposit recorded successfully!' };
+        }, []),
+        updateDeposit: useCallback((depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes' | 'appliedSaleId'>>) => {
+            setDepositsState(prev => prev.map(d => d.id === depositId ? { ...d, ...updates } : d));
+        }, []),
+        addConsignment: useCallback((consignmentData: Omit<Consignment, 'id' | 'status'>) => {
+            const newConsignment: Consignment = { ...consignmentData, id: `con-${Date.now()}`, status: 'ACTIVE' };
+            setConsignmentsState(prev => [newConsignment, ...prev]);
+        }, []),
+        addCategory: useCallback((categoryName: string) => setCategoriesState(prev => [...prev, { id: `cat-${Date.now()}`, name: categoryName }]), []),
+        updateCategory: useCallback((categoryId: string, newName: string) => setCategoriesState(prev => prev.map(c => c.id === categoryId ? { ...c, name: newName } : c)), []),
+        deleteCategory: useCallback((categoryId: string) => setCategoriesState(prev => prev.filter(c => c.id !== categoryId)), []),
+        extendTrial: useCallback((tenantId: string, days: number) => {
+            setTenantsState(prev => prev.map(t => {
+                if (t.id === tenantId && t.trialEndDate) {
+                    const newEndDate = new Date(t.trialEndDate);
+                    newEndDate.setDate(newEndDate.getDate() + days);
+                    return { ...t, trialEndDate: newEndDate };
+                }
+                return t;
+            }));
+        }, []),
+        activateSubscription: useCallback((tenantId: string, planId: string, billingCycle: 'monthly' | 'yearly') => {
+            setTenantsState(prev => prev.map(t => t.id === tenantId ? { ...t, status: 'ACTIVE', planId, billingCycle, trialEndDate: undefined } : t));
+        }, []),
+        changeSubscriptionPlan: useCallback((tenantId: string, newPlanId: string, billingCycle: 'monthly' | 'yearly') => {
+             setTenantsState(prev => prev.map(t => t.id === tenantId ? { ...t, planId: newPlanId, billingCycle } : t));
+        }, []),
+        processExpiredTrials: useCallback(() => {
+            let processed = 0;
+            let suspended = 0;
+            setTenantsState(prev => prev.map(t => {
+                if (t.status === 'TRIAL' && t.trialEndDate && new Date(t.trialEndDate) < new Date()) {
+                    processed++;
+                    suspended++;
+                    return { ...t, status: 'SUSPENDED' };
+                }
+                if (t.status === 'TRIAL') processed++;
+                return t;
+            }));
+            return { processed, suspended };
+        }, []),
+        sendExpiryReminders: useCallback(() => {
+            // This is a simulation. In a real app, it would trigger emails/notifications.
+            let sent = 0;
+            tenantsState.forEach(t => {
+                if(t.status === 'TRIAL' && t.trialEndDate) {
+                    const daysRemaining = (new Date(t.trialEndDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24);
+                    if (daysRemaining > 0 && daysRemaining <= 3) {
+                        sent++;
+                        // Create in-app notification
+                        const newNotif: InAppNotification = { id: `notif-${Date.now()}-${t.id}`, userId: t.id, message: `Your free trial is ending in ${Math.ceil(daysRemaining)} days. Upgrade now to keep your access.`, read: false, createdAt: new Date() };
+                        // In a real app, you would avoid direct state update in a non-setter function like this.
+                        // For demo, we do it.
+                        setInAppNotifications(prev => [newNotif, ...prev]);
                     }
                 }
             });
-
-            const newData = { ...prev, sales: [newSale, ...prev.sales], products: newProducts };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
-            return newData;
-        });
-        
-        logAction('SALE_RECORDED', `New sale ${newSale.id} for ${formatCurrency(newSale.total)}`);
-        setNotification({ type: 'success', message: 'Sale recorded!' });
-        return { success: true, message: 'Sale completed successfully.', newSale };
+            return { sent };
+        }, [tenantsState]),
+        processSubscriptionPayment: useCallback(async (tenantId: string, planId: string, method: string, amount: number, billingCycle: 'monthly' | 'yearly', success: boolean, proofOfPaymentUrl?: string) => {
+            const newTransaction: PaymentTransaction = {
+                id: `pt-${Date.now()}`, tenantId, planId, amount, method, status: 'PENDING', createdAt: new Date(), proofOfPaymentUrl
+            };
+            if(method !== 'Manual') {
+                newTransaction.status = success ? 'COMPLETED' : 'FAILED';
+            }
+            setPaymentTransactionsState(prev => [newTransaction, ...prev]);
+            
+            if (success && method !== 'Manual') {
+                activateSubscription(tenantId, planId, billingCycle);
+                return { success: true, message: `Payment successful! Your ${planMap.get(planId)} plan is now active.` };
+            } else if (method === 'Manual') {
+                 return { success: true, message: 'Your payment has been submitted for review. Your plan will be activated upon confirmation.' };
+            } else {
+                 return { success: false, message: 'Your payment could not be processed. Please try again or contact support.' };
+            }
+        }, [activateSubscription]),
+        updatePaymentTransactionStatus: useCallback((transactionId: string, newStatus: 'COMPLETED' | 'REJECTED') => {
+            setPaymentTransactionsState(prev => prev.map(tx => {
+                if (tx.id === transactionId) {
+                    if (newStatus === 'COMPLETED' && tx.status === 'PENDING') {
+                        // Activate subscription for the tenant
+                        const plan = subscriptionPlans.find(p => p.id === tx.planId);
+                        if (plan) {
+                           activateSubscription(tx.tenantId, tx.planId, plan.price === tx.amount ? 'monthly' : 'yearly');
+                        }
+                    }
+                    return { ...tx, status: newStatus };
+                }
+                return tx;
+            }));
+        }, [subscriptionPlans, activateSubscription]),
+        updateEmailTemplate: useCallback((templateId: string, newSubject: string, newBody: string) => setEmailTemplatesState(prev => prev.map(t => t.id === templateId ? {...t, subject: newSubject, body: newBody } : t)), []),
+        updateSmsTemplate: useCallback((templateId: string, newBody: string) => setSmsTemplatesState(prev => prev.map(t => t.id === templateId ? {...t, body: newBody } : t)), []),
+        markInAppNotificationAsRead: useCallback((notificationId: string) => setInAppNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, read: true } : n)), []),
+        submitSupportTicket: useCallback((ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'status' | 'messages'> & { messages: Omit<TicketMessage, 'id'| 'timestamp'>[] }) => {
+            if (!currentTenant) return;
+            const newTicket: SupportTicket = {
+                ...ticketData,
+                id: `ticket-${Date.now()}`,
+                tenantId: currentTenant.id,
+                status: 'Open',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+                messages: ticketData.messages.map(m => ({...m, id: `msg-${Date.now()}`, timestamp: new Date()}))
+            };
+            setSupportTicketsState(prev => [newTicket, ...prev]);
+        }, [currentTenant]),
+        replyToSupportTicket: useCallback((ticketId: string, message: Omit<TicketMessage, 'id' | 'timestamp'>) => {
+            setSupportTicketsState(prev => prev.map(t => t.id === ticketId ? { ...t, status: message.sender === 'ADMIN' ? 'In Progress' : 'Open', updatedAt: new Date(), messages: [...t.messages, { ...message, id: `msg-${Date.now()}`, timestamp: new Date() }] } : t));
+        }, []),
+        updateTicketStatus: useCallback((ticketId: string, status: SupportTicket['status']) => {
+            setSupportTicketsState(prev => prev.map(t => t.id === ticketId ? { ...t, status, updatedAt: new Date() } : t));
+        }, []),
+        addBlogPost: useCallback((postData: Omit<BlogPost, 'id'|'createdAt'|'authorName'>) => {
+            const author = adminUsers.find(u => u.id === postData.authorId);
+            const newPost: BlogPost = { ...postData, id: `blog-${Date.now()}`, createdAt: new Date(), authorName: author?.name || 'Admin' };
+            setBlogPostsState(prev => [newPost, ...prev]);
+        }, [adminUsers]),
+        updateBlogPost: useCallback((postId: string, postData: Partial<BlogPost>) => setBlogPostsState(prev => prev.map(p => p.id === postId ? { ...p, ...postData } : p)), []),
+        deleteBlogPost: useCallback((postId: string) => setBlogPostsState(prev => prev.filter(p => p.id !== postId)), []),
+        updateLastLogin: useCallback((email: string, ip: string) => {
+            const now = new Date();
+            setTenantsState(prev => prev.map(t => t.email === email ? { ...t, lastLoginDate: now, lastLoginIp: ip } : t));
+            setAdminUsersState(prev => prev.map(u => u.email === email ? { ...u, lastLoginDate: now, lastLoginIp: ip } : u));
+        }, []),
+         generateInsights: useCallback(async () => {
+            // Simulate API call delay
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            // In a real app, this would use the Gemini API. For this demo, we return a mock response.
+            return `**Key Observations:**
+            - **Top Seller:** The "Laptop (13-inch)" is your best-performing item, contributing significantly to revenue.
+            - **Sales Trend:** There was a noticeable dip in sales 2 days ago.
+            - **Customer Behavior:** Customer 'Alice Johnson' is a high-value customer, involved in multiple high-ticket purchases.
+            
+            **Recommendations:**
+            - Consider running a promotion on keyboards to bundle with laptop sales.
+            - Investigate the sales dip. Was it a weekend? A holiday?
+            - Offer a loyalty discount to 'Alice Johnson' to encourage repeat business.`;
+        }, []),
     };
+    
+    // Non-memoized setters
+    const addProduct = (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => {
+        const newProduct: Product = {
+            ...productData,
+            id: `prod-${Date.now()}`,
+            isFavorite: false,
+            variants: productData.variants.map(v => ({ ...v, id: `var-${Date.now()}-${Math.random()}`}))
+        };
+        setProductsState(prev => [...prev, newProduct]);
+    };
+
+    const updateProductVariant = (productId: string, variantId: string, variantData: Partial<Omit<ProductVariant, 'id' | 'stockByBranch'>>) => {
+        setProductsState(prev => prev.map(p => {
+            if (p.id === productId) {
+                return {
+                    ...p,
+                    variants: p.variants.map(v => v.id === variantId ? { ...v, ...variantData } : v)
+                };
+            }
+            return p;
+        }));
+    };
+    
     const adjustStock = (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => {
-        setData(prev => {
-            let oldStock = 0;
-            let productName = '', variantName = '';
-            const newProducts = prev.products.map(p => {
-                if(p.id === productId) {
-                    productName = p.name;
-                    return {...p, variants: p.variants.map(v => {
+        let oldStock = 0;
+        let productName = '';
+        let variantName = '';
+
+        setProductsState(prev => prev.map(p => {
+            if (p.id === productId) {
+                productName = p.name;
+                return {
+                    ...p,
+                    variants: p.variants.map(v => {
                         if (v.id === variantId) {
                             variantName = v.name;
                             oldStock = v.stockByBranch[branchId] || 0;
-                            return {...v, stockByBranch: {...v.stockByBranch, [branchId]: newStock}};
+                            return { ...v, stockByBranch: { ...v.stockByBranch, [branchId]: newStock } };
                         }
                         return v;
-                    })};
-                }
-                return p;
-            });
-            const newLog: StockLog = { id: `log-${Date.now()}`, date: new Date(), productId, variantId, productName, variantName, action: 'ADJUSTMENT', quantity: newStock - oldStock, branchId, reason };
-            const newData = { ...prev, products: newProducts, stockLogs: [newLog, ...prev.stockLogs] };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
-            return newData;
-        });
-        logAction('STOCK_ADJUSTMENT', `Adjusted stock for ${variantId} in branch ${branchId}.`);
-    };
-    const transferStock = (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => {
-        setData(prev => {
-             let productName = '', variantName = '';
-            const newProducts = prev.products.map(p => {
-                if(p.id === productId) {
-                    productName = p.name;
-                    return {...p, variants: p.variants.map(v => {
-                        if (v.id === variantId) {
-                            variantName = v.name;
-                            const fromStock = (v.stockByBranch[fromBranchId] || 0) - quantity;
-                            const toStock = (v.stockByBranch[toBranchId] || 0) + quantity;
-                            return {...v, stockByBranch: {...v.stockByBranch, [fromBranchId]: fromStock, [toBranchId]: toStock}};
-                        }
-                        return v;
-                    })};
-                }
-                return p;
-            });
-            const newLog: StockLog = { id: `log-${Date.now()}`, date: new Date(), productId, variantId, productName, variantName, action: 'TRANSFER', quantity, fromBranchId, toBranchId };
-            const newData = { ...prev, products: newProducts, stockLogs: [newLog, ...prev.stockLogs] };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
-            return newData;
-        });
-         logAction('STOCK_TRANSFER', `Transferred ${quantity} of ${variantId} from ${fromBranchId} to ${toBranchId}.`);
-    };
-    // FIX: Match signature in `AppContextType`.
-    const addProduct = (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => addToArray('products', { ...productData, id: `prod-${Date.now()}`, isFavorite: false });
-    const updateProductVariant = (productId: string, variantId: string, variantData: Partial<Omit<ProductVariant, 'id' | 'stockByBranch'>>) => {
-        setData(prev => {
-            const newProducts = prev.products.map(p => {
-                if(p.id === productId) {
-                    return {...p, variants: p.variants.map(v => v.id === variantId ? {...v, ...variantData} : v)};
-                }
-                return p;
-            });
-            const newData = { ...prev, products: newProducts };
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData));
-            return newData;
-        });
-    };
-    const addAdminUser = (userData: Omit<AdminUser, 'id' | 'joinDate' | 'status' | 'lastLoginIp' | 'lastLoginDate'>) => addToArray('adminUsers', { ...userData, id: `admin-${Date.now()}`, joinDate: new Date(), status: 'ACTIVE' });
-    const updateAdminUser = (userId: string, userData: Partial<AdminUser>) => updateArray<AdminUser>('adminUsers', userId, userData);
-    const updateAdminRole = (roleId: string, permissions: Permission[]) => updateArray<AdminRole>('adminRoles', roleId, { permissions });
-    const addAdminRole = (roleData: Omit<AdminRole, 'id'>) => addToArray('adminRoles', { ...roleData, id: `arole-${Date.now()}` });
-    const deleteAdminRole = (roleId: string) => deleteFromArray('adminRoles', roleId);
-    const updateBrandConfig = (newConfig: Partial<BrandConfig>) => setData(prev => { const newData = {...prev, brandConfig: {...prev.brandConfig, ...newConfig}}; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData)); return newData; });
-    const updatePageContent = (newPageContent: Partial<Omit<PageContent, 'faqs'>>) => setData(prev => { const newData = {...prev, pageContent: {...prev.pageContent, ...newPageContent}}; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData)); return newData; });
-    const updateFaqs = (newFaqs: FaqItem[]) => setData(prev => { const newData = {...prev, pageContent: {...prev.pageContent, faqs: newFaqs}}; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData)); return newData; });
-    const updatePaymentSettings = (newSettings: PaymentSettings) => simpleUpdate('paymentSettings', newSettings);
-    const updateNotificationSettings = (newSettings: NotificationSettings) => simpleUpdate('notificationSettings', newSettings);
-    const updateSystemSettings = (newSettings: Partial<SystemSettings>) => setData(prev => { const newData = {...prev, systemSettings: {...prev.systemSettings, ...newSettings}}; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData)); return newData; });
-    const updateMaintenanceSettings = (settings: MaintenanceSettings) => updateSystemSettings({ maintenanceSettings: settings });
-    const updateAccessControlSettings = (settings: AccessControlSettings) => updateSystemSettings({ accessControlSettings: settings });
-    const updateLandingPageMetrics = (metrics: LandingPageMetrics) => updateSystemSettings({ landingPageMetrics: metrics });
-    const updateCurrentTenantSettings = (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout' | 'timezone'>>) => { if(currentTenant) { updateArray<Tenant>('tenants', currentTenant.id, newSettings); setNotification({ type: 'success', message: 'Settings updated successfully.' }); }};
-    const updateTenantLogisticsConfig = (config: { activeTrackerProviderId: string; }) => { if(currentTenant) updateArray<Tenant>('tenants', currentTenant.id, { logisticsConfig: config }); };
-    const updateTenantAutomations = (newAutomations: Partial<TenantAutomations>) => { if(currentTenant) updateArray<Tenant>('tenants', currentTenant.id, { automations: {...currentTenant?.automations, ...newAutomations} }); };
-    const addSubscriptionPlan = (planData: Omit<SubscriptionPlan, 'id'>) => addToArray('subscriptionPlans', { ...planData, id: `plan-${Date.now()}` });
-    const updateSubscriptionPlan = (planId: string, planData: Partial<SubscriptionPlan>) => updateArray<SubscriptionPlan>('subscriptionPlans', planId, planData);
-    const deleteSubscriptionPlan = (planId: string) => deleteFromArray('subscriptionPlans', planId);
-    const addTruck = (truckData: Omit<Truck, 'id' | 'lastUpdate'>) => addToArray('trucks', { ...truckData, id: `truck-${Date.now()}`, lastUpdate: new Date() });
-    const updateTruck = (truckId: string, truckData: Partial<Truck>) => updateArray<Truck>('trucks', truckId, truckData);
-    const deleteTruck = (truckId: string) => deleteFromArray('trucks', truckId);
-    const updateTruckVitals = (truckId: string) => updateArray<Truck>('trucks', truckId, { lastUpdate: new Date(), currentLocation: { lat: 34 + Math.random(), lng: -118 + Math.random(), address: 'Simulated Location' } });
-    const addShipment = (shipmentData: Omit<Shipment, 'id'>) => addToArray('shipments', { ...shipmentData, id: `ship-${Date.now()}` });
-    const updateShipmentStatus = (shipmentId: string, status: Shipment['status']) => updateArray<Shipment>('shipments', shipmentId, { status });
-    const updateTrackerProviders = (providers: TrackerProvider[]) => simpleUpdate('trackerProviders', providers);
-    const addBranch = (branchName: string) => addToArray('branches', { id: `branch-${Date.now()}`, name: branchName, location: { lat: 0, lng: 0 } });
-    const updateBranchLocation = (branchId: string, location: { lat: number; lng: number; }) => updateArray<Branch>('branches', branchId, { location });
-    const addStaff = (staffData: Omit<Staff, 'id'>) => addToArray('staff', { ...staffData, id: `staff-${Date.now()}` });
-    const deleteStaff = (staffId: string) => deleteFromArray('staff', staffId);
-    const sellShipment = async (shipmentId: string, customer: Pick<Customer, 'name' | 'phone'>): Promise<{success: boolean; message: string;}> => { 
-        updateShipmentStatus(shipmentId, 'SOLD_IN_TRANSIT');
-        return { success: true, message: 'Shipment sold successfully.' };
-    };
-    const receiveShipment = (shipmentId: string) => updateShipmentStatus(shipmentId, 'DELIVERED');
-    const addPurchaseOrder = (poData: Omit<PurchaseOrder, 'id' | 'poNumber' | 'total' | 'createdAt'>) => {
-        const total = poData.items.reduce((sum, item) => sum + (item.cost * item.quantity), 0);
-        addToArray('purchaseOrders', { ...poData, id: `po-${Date.now()}`, poNumber: `PO-${Date.now()}`, total, createdAt: new Date() });
-    };
-    const updatePurchaseOrderStatus = (poId: string, status: PurchaseOrder['status']) => updateArray<PurchaseOrder>('purchaseOrders', poId, { status });
-    const addStaffRole = (roleData: Omit<StaffRole, 'id'>) => addToArray('staffRoles', { ...roleData, id: `srole-${Date.now()}` });
-    const updateStaffRole = (roleId: string, permissions: TenantPermission[]) => updateArray<StaffRole>('staffRoles', roleId, { permissions });
-    const deleteStaffRole = (roleId: string) => deleteFromArray('staffRoles', roleId);
-    const addAccount = (accountData: Omit<Account, 'id' | 'balance'>) => addToArray('accounts', { ...accountData, id: `acc-${Date.now()}`, balance: 0 });
-    const addJournalEntry = (entryData: Omit<JournalEntry, 'id' | 'date'>) => addToArray('journalEntries', { ...entryData, id: `je-${Date.now()}`, date: new Date() });
-    const addTenant = async (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'>, logoBase64: string): Promise<{ success: boolean; message: string }> => {
-        const existingTenant = data.tenants.find(t => t.email.toLowerCase() === tenantData.email.toLowerCase() || t.username.toLowerCase() === tenantData.username.toLowerCase());
-        if (existingTenant) return { success: false, message: 'A tenant with this email or username already exists.' };
+                    })
+                };
+            }
+            return p;
+        }));
         
-        const trialEndDate = new Date(); trialEndDate.setDate(trialEndDate.getDate() + 14);
-        const newTenant: Tenant = { ...tenantData, id: `tenant-${Date.now()}`, joinDate: new Date(), status: 'UNVERIFIED', trialEndDate, isVerified: false, billingCycle: 'monthly', companyLogoUrl: logoBase64, currency: 'NGN', language: 'en', timezone: 'Africa/Lagos' };
-        const newStaff: Staff = { id: `staff-${Date.now()}`, name: tenantData.ownerName, email: tenantData.email, username: tenantData.username, password: tenantData.password, roleId: 'srole-admin', branchId: 'branch-1' };
-        setData(prev => { const newData = {...prev, tenants: [...prev.tenants, newTenant], staff: [...prev.staff, newStaff]}; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData)); return newData; });
-        return { success: true, message: 'Tenant created successfully.' };
+        const quantityChange = newStock - oldStock;
+
+        const newLog: StockLog = {
+            id: `log-${Date.now()}`,
+            date: new Date(),
+            productId, variantId, productName, variantName,
+            action: 'ADJUSTMENT',
+            quantity: quantityChange,
+            branchId,
+            reason,
+        };
+        setStockLogsState(prev => [newLog, ...prev]);
     };
-    const updateTenant = (tenantId: string, tenantData: Partial<Tenant>) => updateArray<Tenant>('tenants', tenantId, tenantData);
-    const verifyTenant = (email: string) => setData(prev => { const newTenants = prev.tenants.map(t => t.email === email ? {...t, isVerified: true, status: 'TRIAL' as TenantStatus} : t); const newData = {...prev, tenants: newTenants}; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData)); return newData; });
-    const updateTenantProfile = (tenantData: Partial<Tenant>) => { if(currentTenant) updateArray<Tenant>('tenants', currentTenant.id, tenantData); };
-    const updateAdminProfile = (adminData: Partial<AdminUser>) => { if(currentAdminUser) updateArray<AdminUser>('adminUsers', currentAdminUser.id, adminData); };
-    const addAnnouncement = (announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => addToArray('announcements', { ...announcementData, id: `anno-${Date.now()}`, createdAt: new Date(), readBy: [] });
-    const markAnnouncementAsRead = (announcementId: string, userId: string) => setData(prev => { const newAnns = prev.announcements.map(a => a.id === announcementId ? {...a, readBy: [...a.readBy, userId]} : a); const newData = {...prev, announcements: newAnns}; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData)); return newData; });
-    const addCustomer = (customerData: Omit<Customer, 'id' | 'creditBalance'>) => addToArray('customers', { ...customerData, id: `cust-${Date.now()}`, creditBalance: 0 });
-    const deleteCustomer = (customerId: string) => deleteFromArray('customers', customerId);
-    const recordCreditPayment = (customerId: string, amount: number) => setData(prev => { const newCusts = prev.customers.map(c => c.id === customerId ? {...c, creditBalance: c.creditBalance - amount} : c); const newData = {...prev, customers: newCusts}; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData)); return newData; });
-    const addDeposit = async (depositData: Omit<Deposit, 'id' | 'date' | 'status'>): Promise<{success: boolean, message: string}> => {
-        addToArray('deposits', { ...depositData, id: `dep-${Date.now()}`, date: new Date(), status: 'ACTIVE' });
-        return { success: true, message: 'Deposit recorded.' };
+    
+     const transferStock = (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => {
+        let productName = '';
+        let variantName = '';
+        setProductsState(prev => prev.map(p => {
+            if(p.id === productId) {
+                productName = p.name;
+                return { ...p, variants: p.variants.map(v => {
+                    if(v.id === variantId) {
+                        variantName = v.name;
+                        const fromStock = v.stockByBranch[fromBranchId] || 0;
+                        const toStock = v.stockByBranch[toBranchId] || 0;
+                        return { ...v, stockByBranch: { ...v.stockByBranch, [fromBranchId]: fromStock - quantity, [toBranchId]: toStock + quantity }};
+                    }
+                    return v;
+                })};
+            }
+            return p;
+        }));
+
+        const newLog: StockLog = {
+             id: `log-${Date.now()}`, date: new Date(), productId, variantId, productName, variantName,
+             action: 'TRANSFER', quantity, fromBranchId, toBranchId
+        };
+        setStockLogsState(prev => [newLog, ...prev]);
     };
-    const updateDeposit = (depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes' | 'appliedSaleId'>>) => updateArray<Deposit>('deposits', depositId, updates);
-    const addConsignment = (consignmentData: Omit<Consignment, 'id' | 'status'>) => addToArray('consignments', { ...consignmentData, id: `con-${Date.now()}`, status: 'ACTIVE' });
-    const addCategory = (categoryName: string) => addToArray('categories', { id: `cat-${Date.now()}`, name: categoryName });
-    const updateCategory = (categoryId: string, newName: string) => updateArray<Category>('categories', categoryId, { name: newName });
-    const deleteCategory = (categoryId: string) => deleteFromArray('categories', categoryId);
-    const extendTrial = (tenantId: string, days: number) => setData(prev => { const newTenants = prev.tenants.map(t => { if(t.id === tenantId && t.trialEndDate) { const newDate = new Date(t.trialEndDate); newDate.setDate(newDate.getDate() + days); return {...t, trialEndDate: newDate}; } return t; }); const newData = {...prev, tenants: newTenants}; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData)); return newData; });
-    const activateSubscription = (tenantId: string, planId: string, billingCycle: 'monthly' | 'yearly') => updateArray<Tenant>('tenants', tenantId, { status: 'ACTIVE', planId, billingCycle, trialEndDate: undefined });
-    const changeSubscriptionPlan = (tenantId: string, newPlanId: string, billingCycle: 'monthly' | 'yearly') => updateArray<Tenant>('tenants', tenantId, { planId: newPlanId, billingCycle });
-    const processExpiredTrials = () => { updateArray<Tenant>('tenants', 'tenant-1', {status: 'SUSPENDED'}); return { processed: 1, suspended: 1 }; }; // Simplified
-    const sendExpiryReminders = () => { return { sent: 1 }; }; // Simplified
-    const processSubscriptionPayment = async (tenantId: string, planId: string, method: string, amount: number, billingCycle: 'monthly' | 'yearly', success: boolean) => {
-        const newTx: PaymentTransaction = { id: `tx-${Date.now()}`, tenantId, planId, amount, method, status: success ? (method === 'Manual' ? 'PENDING' : 'COMPLETED') : 'FAILED', createdAt: new Date() };
-        if (success && method !== 'Manual') activateSubscription(tenantId, planId, billingCycle);
-        addToArray('paymentTransactions', newTx);
-        const message = success ? (method === 'Manual' ? 'Manual payment submitted for review.' : 'Payment successful!') : 'Payment failed.';
-        return { success, message };
+
+    const addAdminUser = (userData: Omit<AdminUser, 'id' | 'joinDate' | 'status' | 'lastLoginIp' | 'lastLoginDate'>) => {
+        const newUser: AdminUser = { ...userData, id: `admin-${Date.now()}`, joinDate: new Date(), status: 'ACTIVE' };
+        setAdminUsersState(prev => [...prev, newUser]);
     };
-    const updatePaymentTransactionStatus = (transactionId: string, newStatus: 'COMPLETED' | 'REJECTED') => {
-        updateArray<PaymentTransaction>('paymentTransactions', transactionId, { status: newStatus });
-        if(newStatus === 'COMPLETED') {
-            const tx = data.paymentTransactions.find(t => t.id === transactionId);
-            if(tx) activateSubscription(tx.tenantId, tx.planId, 'monthly'); // Assume monthly
-        }
+    
+    const updateAdminRole = (roleId: string, permissions: Permission[]) => {
+        setAdminRolesState(prev => prev.map(r => r.id === roleId ? { ...r, permissions } : r));
     };
-    const updateEmailTemplate = (templateId: string, newSubject: string, newBody: string) => updateArray<EmailTemplate>('emailTemplates', templateId, { subject: newSubject, body: newBody });
-    const updateSmsTemplate = (templateId: string, newBody: string) => updateArray<SmsTemplate>('smsTemplates', templateId, { body: newBody });
-    const markInAppNotificationAsRead = (notificationId: string) => updateArray<InAppNotification>('inAppNotifications', notificationId, { read: true });
-    const submitSupportTicket = (ticketData: Omit<SupportTicket, 'id' | 'createdAt' | 'updatedAt' | 'tenantId' | 'status'>) => { if(currentTenant) addToArray('supportTickets', { ...ticketData, id: `tic-${Date.now()}`, createdAt: new Date(), updatedAt: new Date(), tenantId: currentTenant.id, status: 'Open' }); };
-    const replyToSupportTicket = (ticketId: string, message: Omit<TicketMessage, 'id' | 'timestamp'>) => { setData(prev => { const newTickets = prev.supportTickets.map(t => t.id === ticketId ? {...t, status: 'In Progress' as SupportTicket['status'], updatedAt: new Date(), messages: [...t.messages, {...message, id: `msg-${Date.now()}`, timestamp: new Date()}]} : t); const newData = {...prev, supportTickets: newTickets}; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData)); return newData; }); };
-    const updateTicketStatus = (ticketId: string, status: SupportTicket['status']) => updateArray<SupportTicket>('supportTickets', ticketId, { status, updatedAt: new Date() });
-    const addBlogPost = (postData: Omit<BlogPost, 'id' | 'createdAt' | 'authorName'>) => addToArray('blogPosts', { ...postData, id: `blog-${Date.now()}`, createdAt: new Date(), authorName: currentAdminUser?.name || 'Admin' });
-    const updateBlogPost = (postId: string, postData: Partial<BlogPost>) => updateArray<BlogPost>('blogPosts', postId, postData);
-    const deleteBlogPost = (postId: string) => deleteFromArray('blogPosts', postId);
-    const generateInsights = async () => 'AI insights are a premium feature, but here is a sample: Your top-selling product is Espresso (Double), generating 35% of your revenue. Consider promoting it further.';
+
+    const addAdminRole = (roleData: Omit<AdminRole, 'id'>) => {
+        const newRole: AdminRole = { ...roleData, id: `role-${Date.now()}` };
+        setAdminRolesState(prev => [...prev, newRole]);
+    };
+    
+    const deleteAdminRole = (roleId: string) => {
+        setAdminRolesState(prev => prev.filter(r => r.id !== roleId));
+    };
 
     const value: AppContextType = {
-        session, profile, isLoading,
-        ...data,
-        notification, setNotification, searchTerm, setSearchTerm, theme, setTheme,
+        products: productsState, sales: salesState, branches: branchesState, staff: staffState,
+        staffRoles: staffRolesState, stockLogs: stockLogsState, tenants: tenantsState, subscriptionPlans: subscriptionPlansState,
+        adminUsers: adminUsersState, adminRoles: adminRolesState, brandConfig: brandConfigState, pageContent: pageContentState,
+        paymentSettings: paymentSettingsState, notificationSettings: notificationSettingsState, systemSettings: systemSettingsState,
+        trucks: trucksState, shipments: shipmentsState, trackerProviders: trackerProvidersState, suppliers: suppliersState,
+        purchaseOrders: purchaseOrdersState, accounts: accountsState, journalEntries: journalEntriesState,
+        announcements: announcementsState, customers: customersState, consignments: consignmentsState,
+        categories: categoriesState, paymentTransactions: paymentTransactionsState, emailTemplates: emailTemplatesState,
+        smsTemplates: smsTemplatesState, auditLogs: auditLogsState, deposits: depositsState, supportTickets: supportTicketsState,
+        blogPosts: blogPostsState,
+        currentTenant, currentAdminUser, impersonatedUser,
+        notification, setNotification, logAction,
+        searchTerm, setSearchTerm, theme, setTheme,
         currentLanguage, setCurrentLanguage, currentCurrency, setCurrentCurrency,
-        impersonatedUser, stopImpersonating, handleImpersonate, login, logout,
-        currentTenant, currentAdminUser, currentStaffUser,
-        allPermissions, allTenantPermissions,
-        logAction, getMetric, addSale, adjustStock, transferStock, addProduct, updateProductVariant, addAdminUser, updateAdminUser, updateAdminRole,
-        addAdminRole, deleteAdminRole, updateBrandConfig, updatePageContent, updateFaqs, updatePaymentSettings, updateNotificationSettings,
-        updateSystemSettings, updateMaintenanceSettings, updateAccessControlSettings, updateLandingPageMetrics, updateCurrentTenantSettings,
-        updateTenantLogisticsConfig, updateTenantAutomations, addSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan, addTruck,
-        updateTruck, deleteTruck, updateTruckVitals, addShipment, updateShipmentStatus, updateTrackerProviders, addBranch, updateBranchLocation,
-        addStaff, deleteStaff, sellShipment, receiveShipment, addPurchaseOrder, updatePurchaseOrderStatus, addStaffRole, updateStaffRole,
-        deleteStaffRole, addAccount, addJournalEntry, addTenant, updateTenant, verifyTenant, updateTenantProfile, updateAdminProfile,
-        addAnnouncement, markAnnouncementAsRead, addCustomer, deleteCustomer, recordCreditPayment, addDeposit, updateDeposit,
-        addConsignment, addCategory, updateCategory, deleteCategory, extendTrial, activateSubscription, changeSubscriptionPlan,
-        processExpiredTrials, sendExpiryReminders, processSubscriptionPayment, updatePaymentTransactionStatus, updateEmailTemplate,
-        updateSmsTemplate, markInAppNotificationAsRead, submitSupportTicket, replyToSupportTicket, updateTicketStatus,
-        addBlogPost, updateBlogPost, deleteBlogPost, updateLastLogin, generateInsights
+        getMetric, addSale, adjustStock, transferStock, addProduct, updateProductVariant,
+        addAdminUser, updateAdminUser, updateAdminRole, addAdminRole, deleteAdminRole,
+        session, profile, isLoading, handleImpersonate, stopImpersonating, login, logout,
+        allTenantPermissions, allPermissions, currentStaffUser,
+        ...memoizedSetters,
     };
 
-    return (
-        <AppContext.Provider value={value}>
-            {children}
-        </AppContext.Provider>
-    );
+    return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
+
+export { AppContext, AppContextProvider };
