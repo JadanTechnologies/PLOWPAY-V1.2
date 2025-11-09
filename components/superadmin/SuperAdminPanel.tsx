@@ -260,7 +260,7 @@ const Settings: React.FC = () => {
                         {/* Currency Settings */}
                         <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
                             <h3 className="text-lg font-semibold text-white">Currency Settings</h3>
-                            <div className="space-y-2">
+                            <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                                 {currencies.map(currency => (
                                     <div key={currency.code} className="flex justify-between items-center p-2 rounded-md hover:bg-slate-700/50">
                                         <div><span className="font-semibold">{currency.name}</span><span className="text-slate-400 ml-2">({currency.code} - {currency.symbol})</span></div>
@@ -280,7 +280,7 @@ const Settings: React.FC = () => {
                         {/* Language Settings */}
                         <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
                             <h3 className="text-lg font-semibold text-white">Language Settings</h3>
-                            <div className="space-y-2">
+                            <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
                                 {languages.map(lang => (
                                     <div key={lang.code} className="flex justify-between items-center p-2 rounded-md hover:bg-slate-700/50">
                                         <div><span className="font-semibold">{lang.name}</span><span className="text-slate-400 ml-2">({lang.code})</span></div>

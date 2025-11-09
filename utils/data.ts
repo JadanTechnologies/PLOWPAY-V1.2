@@ -85,18 +85,18 @@ export const allCurrencies = [
 ];
 
 export const allLanguages = [
-  { code: 'en', name: 'English' },
-  { code: 'es', name: 'Español (Spanish)' },
-  { code: 'fr', name: 'Français (French)' },
-  { code: 'de', name: 'Deutsch (German)' },
-  { code: 'it', name: 'Italiano (Italian)' },
-  { code: 'pt', name: 'Português (Portuguese)' },
-  { code: 'ru', name: 'Русский (Russian)' },
-  { code: 'zh', name: '中文 (Chinese)' },
-  { code: 'ja', name: '日本語 (Japanese)' },
-  { code: 'ko', name: '한국어 (Korean)' },
-  { code: 'ar', name: 'العربية (Arabic)' },
-  { code: 'hi', name: 'हिन्दी (Hindi)' },
+  { code: 'en', name: '🇺🇸 English' },
+  { code: 'es', name: '🇪🇸 Español' },
+  { code: 'fr', name: '🇫🇷 Français' },
+  { code: 'de', name: '🇩🇪 Deutsch' },
+  { code: 'it', name: '🇮🇹 Italiano' },
+  { code: 'pt', name: '🇵🇹 Português' },
+  { code: 'ru', name: '🇷🇺 Русский' },
+  { code: 'zh', name: '🇨🇳 中文' },
+  { code: 'ja', name: '🇯🇵 日本語' },
+  { code: 'ko', name: '🇰🇷 한국어' },
+  { code: 'ar', name: '🇦🇪 العربية' },
+  { code: 'hi', name: '🇮🇳 हिन्दी' },
 ];
 
 export const allTimezones = [

@@ -1,6 +1,7 @@
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost, MapProvider } from '../types';
 import { GoogleGenAI } from "@google/genai";
+import { allCurrencies, allLanguages } from '../utils/data';
 
 export const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -438,18 +439,15 @@ const mockNotificationSettings: NotificationSettings = {
 };
 
 const mockSystemSettings: SystemSettings = {
-    currencies: [
-        { code: 'USD', name: 'United States Dollar', symbol: '$', enabled: true },
-        { code: 'NGN', name: 'Nigerian Naira', symbol: '₦', enabled: true },
-        { code: 'EUR', name: 'Euro', symbol: '€', enabled: true },
-        { code: 'GBP', name: 'British Pound', symbol: '£', enabled: false },
-    ],
+    currencies: allCurrencies.map(c => ({
+        ...c,
+        enabled: ['USD', 'EUR', 'GBP', 'NGN'].includes(c.code)
+    })),
     defaultCurrency: 'USD',
-    languages: [
-        { code: 'en', name: 'English', enabled: true },
-        { code: 'es', name: 'Español', enabled: true },
-        { code: 'fr', name: 'Français', enabled: false },
-    ],
+    languages: allLanguages.map(l => ({
+        ...l,
+        enabled: ['en', 'es', 'fr', 'de'].includes(l.code)
+    })),
     defaultLanguage: 'en',
     defaultTimezone: 'US/Eastern',
     maintenanceSettings: {
