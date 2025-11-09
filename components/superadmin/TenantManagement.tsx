@@ -9,8 +9,8 @@ interface TenantManagementProps {
 }
 
 const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) => {
-    const { tenants, subscriptionPlans, addTenant, extendTrial, activateSubscription } = useAppContext();
-    const [modal, setModal] = useState<'NONE' | 'ADD_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE'>('NONE');
+    const { tenants, subscriptionPlans, addTenant, extendTrial, activateSubscription, updateTenant } = useAppContext();
+    const [modal, setModal] = useState<'NONE' | 'ADD_TENANT' | 'EDIT_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE'>('NONE');
     const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const ITEMS_PER_PAGE = 10;
@@ -40,12 +40,25 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
         setCurrentPage(prev => Math.min(prev + 1, totalPages));
     };
 
-    const openModal = (modalType: 'ADD_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE', tenant: Tenant | null = null) => {
+    const openModal = (modalType: 'ADD_TENANT' | 'EDIT_TENANT' | 'VIEW_TENANT' | 'EXTEND_TRIAL' | 'ACTIVATE', tenant: Tenant | null = null) => {
         setModal(modalType);
         if (tenant) {
             setSelectedTenant(tenant);
             if (modalType === 'ACTIVATE') {
                 setSelectedPlanId(tenant.planId);
+            }
+             if (modalType === 'EDIT_TENANT') {
+                setFormState({
+                    businessName: tenant.businessName,
+                    ownerName: tenant.ownerName,
+                    email: tenant.email,
+                    username: tenant.username,
+                    password: '', // Don't pre-fill password for security
+                    companyAddress: tenant.companyAddress || '',
+                    companyPhone: tenant.companyPhone || '',
+                    companyLogoUrl: tenant.companyLogoUrl || '',
+                    planId: tenant.planId,
+                });
             }
         } else {
             setFormState(initialFormState);
@@ -66,7 +79,15 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
     
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        addTenant(formState);
+        if (modal === 'EDIT_TENANT' && selectedTenant) {
+            const updateData: Partial<Tenant> = { ...formState };
+            if (!formState.password || formState.password.trim() === '') {
+                delete (updateData as any).password;
+            }
+            updateTenant(selectedTenant.id, updateData);
+        } else {
+            addTenant(formState);
+        }
         closeModal();
     };
 
@@ -141,7 +162,7 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
                                 <td className="p-3 text-center whitespace-nowrap space-x-2">
                                      <button onClick={() => onImpersonate(tenant)} title="Impersonate Tenant" className="text-cyan-400 hover:text-cyan-300 font-semibold px-2 py-1 rounded-md text-xs">Impersonate</button>
                                      <button onClick={() => openModal('VIEW_TENANT', tenant)} className="text-sky-400 hover:text-sky-300 font-semibold px-2 py-1 rounded-md text-xs">View</button>
-                                     <button className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-xs">Edit</button>
+                                     <button onClick={() => openModal('EDIT_TENANT', tenant)} className="text-yellow-400 hover:text-yellow-300 font-semibold px-2 py-1 rounded-md text-xs">Edit</button>
                                      {tenant.status === 'TRIAL' && (
                                         <>
                                             <button onClick={() => openModal('EXTEND_TRIAL', tenant)} className="text-green-400 hover:text-green-300 font-semibold px-2 py-1 rounded-md text-xs">Extend</button>
@@ -191,10 +212,10 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
                 />
             )}
 
-            {modal === 'ADD_TENANT' && (
+            {(modal === 'ADD_TENANT' || modal === 'EDIT_TENANT') && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
                     <form onSubmit={handleSubmit} className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] flex flex-col border border-slate-700">
-                        <h3 className="text-xl font-bold mb-4 text-white">Add New Tenant</h3>
+                        <h3 className="text-xl font-bold mb-4 text-white">{modal === 'EDIT_TENANT' ? 'Edit Tenant' : 'Add New Tenant'}</h3>
                         <div className="flex-grow overflow-y-auto pr-2 space-y-4">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
@@ -215,7 +236,7 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
                                 </div>
                                  <div>
                                     <label className="block text-sm font-medium text-slate-400">Password</label>
-                                    <input type="password" name="password" value={formState.password || ''} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
+                                    <input type="password" name="password" value={formState.password || ''} onChange={handleFormChange} placeholder={modal === 'EDIT_TENANT' ? 'Leave blank to keep current password' : ''} required={modal === 'ADD_TENANT'} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-400">Plan</label>
@@ -227,7 +248,9 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
                         </div>
                         <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-700">
                             <button type="button" onClick={closeModal} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500 font-semibold">Cancel</button>
-                            <button type="submit" className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold">Save Tenant</button>
+                            <button type="submit" className="px-4 py-2 rounded-md bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold">
+                                {modal === 'EDIT_TENANT' ? 'Save Changes' : 'Save Tenant'}
+                            </button>
                         </div>
                     </form>
                 </div>

@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { Product, Sale, AppContextType, ProductVariant, Branch, StockLog, Tenant, SubscriptionPlan, TenantStatus, AdminUser, AdminUserStatus, BrandConfig, PageContent, FaqItem, AdminRole, Permission, PaymentSettings, NotificationSettings, Truck, Shipment, TrackerProvider, Staff, CartItem, StaffRole, TenantPermission, allTenantPermissions, Supplier, PurchaseOrder, Account, JournalEntry, Payment, Announcement, SystemSettings, Currency, Language, TenantAutomations, Customer, Consignment, Category, PaymentTransaction, EmailTemplate, SmsTemplate, InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost, MapProvider } from '../types';
 import { GoogleGenAI } from "@google/genai";
@@ -1014,6 +1013,12 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
          setTenants(prev => prev.map(t => t.id === tenantId ? {...t, status: 'ACTIVE', planId, billingCycle, trialEndDate: undefined } : t));
     };
 
+    const updateTenant = (tenantId: string, tenantData: Partial<Omit<Tenant, 'id' | 'joinDate'>>) => {
+        setTenants(prev => prev.map(t => (t.id === tenantId ? { ...t, ...tenantData } : t)));
+        logAction('UPDATED_TENANT', `Updated details for tenant: ${tenantData.businessName || tenantId}`);
+        setNotification({ message: 'Tenant details updated successfully.', type: 'success' });
+    };
+
     const allOtherFunctions = {
         // This is a placeholder for all the other functions that were in the original file but are missing from the prompt copy
         // For the purpose of this task, I'll only add the ones that are explicitly used or modified.
@@ -1163,6 +1168,7 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                 setTenants(prev => [newTenant, ...prev]);
                 return { success: true, message: 'Tenant created!' };
             },
+            updateTenant,
             verifyTenant: (email: string) => {
                 setTenants(prev => prev.map(t => t.email.toLowerCase() === email.toLowerCase() ? {...t, isVerified: true, status: 'TRIAL', trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000) } : t));
             },

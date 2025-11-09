@@ -163,7 +163,7 @@ const PlatformDashboard: React.FC = () => {
                                 fill="#8884d8"
                                 dataKey="value"
                                 nameKey="name"
-                                // FIX: Added a fallback for 'percent' to ensure it's a number before performing arithmetic operations, resolving a potential TypeScript error.
+                                // FIX: The 'percent' property from recharts can be undefined. Coalescing to 0 prevents a TypeScript error during arithmetic operations.
                                 label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                             >
                                 {revenueByPlanData.map((entry, index) => (

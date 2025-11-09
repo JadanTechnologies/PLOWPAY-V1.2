@@ -22,6 +22,7 @@ import SuperAdminProfile from './Profile';
 import SuperAdminAuditLogs from './AuditLogs';
 import SupportManagement from './SupportManagement';
 import BlogManagement from './BlogManagement';
+import { allTimezones } from '../../utils/data';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
     return (
@@ -41,7 +42,7 @@ const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void 
 };
 
 const Settings: React.FC = () => {
-    type SettingsTab = 'branding' | 'content' | 'faqs' | 'currencies' | 'languages' | 'landing' | 'featured_update';
+    type SettingsTab = 'branding' | 'content' | 'faqs' | 'localization' | 'ai_settings' | 'landing' | 'featured_update';
     const [activeTab, setActiveTab] = useState<SettingsTab>('branding');
     const { brandConfig, pageContent, systemSettings, updateBrandConfig, updatePageContent, updateFaqs, updateSystemSettings, updateLandingPageMetrics, setNotification } = useAppContext();
 
@@ -119,9 +120,13 @@ const Settings: React.FC = () => {
     const handleDefaultLanguageChange = (code: string) => {
         setSystemSettingsForm(prev => ({ ...prev, defaultLanguage: code }));
     };
+    
+    const handleDefaultTimezoneChange = (value: string) => {
+        setSystemSettingsForm(prev => ({ ...prev, defaultTimezone: value }));
+    };
 
-    const handleLocalizationSave = () => {
-        // Ensure default currency/language is still enabled
+    const handleSystemSettingsSave = () => {
+        // Validation for localization tab
         const defaultCurrencyIsEnabled = systemSettingsForm.currencies.find(c => c.code === systemSettingsForm.defaultCurrency)?.enabled;
         if (!defaultCurrencyIsEnabled) {
             setNotification({ message: 'The selected default currency is disabled. Please enable it before saving.', type: 'error' });
@@ -132,9 +137,10 @@ const Settings: React.FC = () => {
             setNotification({ message: 'The selected default language is disabled. Please enable it before saving.', type: 'error' });
             return;
         }
-        if(window.confirm("Are you sure you want to save localization settings?")){
+        
+        if(window.confirm("Are you sure you want to save these system settings?")){
             updateSystemSettings(systemSettingsForm);
-            setNotification({ message: 'Localization settings saved!', type: 'success' });
+            setNotification({ message: 'System settings saved!', type: 'success' });
         }
     };
     
@@ -168,6 +174,28 @@ const Settings: React.FC = () => {
         }
     };
 
+    const handleAiSettingsChange = (provider: 'gemini' | 'openai', field: 'apiKey', value: string) => {
+        setSystemSettingsForm(prev => ({
+            ...prev,
+            aiSettings: {
+                ...prev.aiSettings,
+                [provider]: {
+                    ...prev.aiSettings[provider],
+                    [field]: value,
+                }
+            }
+        }));
+    };
+    
+    const handleAiProviderChange = (provider: 'gemini' | 'openai') => {
+        setSystemSettingsForm(prev => ({
+            ...prev,
+            aiSettings: {
+                ...prev.aiSettings,
+                provider: provider
+            }
+        }));
+    };
 
     const renderTabContent = () => {
         switch (activeTab) {
@@ -228,9 +256,9 @@ const Settings: React.FC = () => {
                         </div>
                     </div>
                 );
-            case 'currencies':
+            case 'localization':
                  return (
-                    <div className="space-y-6">
+                    <div className="space-y-8">
                         <div>
                             <h3 className="text-lg font-semibold text-white mb-2">Enabled Currencies</h3>
                             <div className="space-y-2 bg-slate-900/50 p-4 rounded-md border border-slate-700">
@@ -253,14 +281,7 @@ const Settings: React.FC = () => {
                                 ))}
                             </select>
                         </div>
-                        <div className="text-right">
-                            <button onClick={handleLocalizationSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Currencies</button>
-                        </div>
-                    </div>
-                );
-            case 'languages':
-                 return (
-                    <div className="space-y-6">
+                        <hr className="border-slate-700" />
                         <div>
                             <h3 className="text-lg font-semibold text-white mb-2">Enabled Languages</h3>
                             <div className="space-y-2 bg-slate-900/50 p-4 rounded-md border border-slate-700">
@@ -283,8 +304,40 @@ const Settings: React.FC = () => {
                                 ))}
                             </select>
                         </div>
+                        <hr className="border-slate-700" />
+                        <div>
+                             <label htmlFor="defaultTimezone" className="block text-sm font-medium text-slate-400">Default Platform Timezone</label>
+                             <select id="defaultTimezone" value={systemSettingsForm.defaultTimezone} onChange={e => handleDefaultTimezoneChange(e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500">
+                                 {allTimezones.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                             </select>
+                        </div>
                         <div className="text-right">
-                            <button onClick={handleLocalizationSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Languages</button>
+                            <button onClick={handleSystemSettingsSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save Localization Settings</button>
+                        </div>
+                    </div>
+                );
+            case 'ai_settings':
+                 return (
+                    <div className="space-y-6">
+                        <div>
+                            <label className="block text-sm font-medium text-slate-400 mb-2">Default AI Provider</label>
+                            <div className="flex items-center bg-slate-900/50 border border-slate-700 rounded-lg p-1.5 max-w-xs">
+                                <button onClick={() => handleAiProviderChange('gemini')} className={`flex-1 px-3 py-1.5 rounded-md text-sm font-semibold ${systemSettingsForm.aiSettings.provider === 'gemini' ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700'}`}>Gemini</button>
+                                <button onClick={() => handleAiProviderChange('openai')} className={`flex-1 px-3 py-1.5 rounded-md text-sm font-semibold ${systemSettingsForm.aiSettings.provider === 'openai' ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow' : 'text-slate-300 hover:bg-slate-700'}`}>OpenAI</button>
+                            </div>
+                        </div>
+                         <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
+                            <h4 className="font-semibold text-white">Google Gemini Settings</h4>
+                            <label className="block text-sm font-medium text-slate-400">API Key</label>
+                            <input type="password" value={systemSettingsForm.aiSettings.gemini.apiKey} onChange={e => handleAiSettingsChange('gemini', 'apiKey', e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
+                        </div>
+                        <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
+                            <h4 className="font-semibold text-white">OpenAI Settings</h4>
+                            <label className="block text-sm font-medium text-slate-400">API Key</label>
+                             <input type="password" value={systemSettingsForm.aiSettings.openai.apiKey} onChange={e => handleAiSettingsChange('openai', 'apiKey', e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
+                        </div>
+                        <div className="text-right">
+                            <button onClick={handleSystemSettingsSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save AI Settings</button>
                         </div>
                     </div>
                 );
@@ -344,9 +397,9 @@ const Settings: React.FC = () => {
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 <div className="lg:col-span-1">
                     <nav className="flex flex-col space-y-2">
-                        {(['branding', 'content', 'faqs', 'currencies', 'languages', 'landing', 'featured_update'] as SettingsTab[]).map(tab => (
+                        {(['branding', 'content', 'faqs', 'localization', 'ai_settings', 'landing', 'featured_update'] as SettingsTab[]).map(tab => (
                             <button key={tab} onClick={() => setActiveTab(tab)} className={`w-full text-left p-3 rounded-md font-medium text-sm ${activeTab === tab ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>
-                                {tab.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                {tab.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                             </button>
                         ))}
                     </nav>

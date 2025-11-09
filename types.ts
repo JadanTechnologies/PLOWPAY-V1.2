@@ -1,7 +1,3 @@
-
-
-
-
 // FIX: The 'L' variable from Leaflet.js needs to be declared in the global scope for TypeScript to recognize it on the 'window' object across all files.
 declare global {
   var L: any;
@@ -724,6 +720,7 @@ export interface AppContextType {
   addAccount: (accountData: Omit<Account, 'id' | 'balance'>) => void;
   addJournalEntry: (entryData: Omit<JournalEntry, 'id' | 'date'>) => void;
   addTenant: (tenantData: Omit<Tenant, 'id' | 'joinDate' | 'status' | 'trialEndDate' | 'isVerified' | 'billingCycle' | 'lastLoginIp' | 'lastLoginDate'>) => Promise<{ success: boolean; message: string }>;
+  updateTenant: (tenantId: string, tenantData: Partial<Omit<Tenant, 'id' | 'joinDate'>>) => void;
   verifyTenant: (email: string) => void;
   updateTenantProfile: (tenantData: Partial<Omit<Tenant, 'id'>>) => void;
   updateAdminProfile: (adminData: Partial<Omit<AdminUser, 'id'>>) => void;
