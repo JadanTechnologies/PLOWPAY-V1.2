@@ -9,6 +9,74 @@ import { useCurrency } from '../hooks/useCurrency';
 import { useTranslation } from '../hooks/useTranslation';
 import AIInsights from './AIInsights';
 
+const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
+    <div className={`animate-pulse bg-slate-200 dark:bg-slate-700 rounded ${className}`} />
+);
+
+const DashboardSkeleton = () => (
+    <div className="space-y-6">
+        {/* AI Insights Skeleton */}
+        <div className="p-6 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-4">
+                <Skeleton className="h-6 w-2/5" />
+                <Skeleton className="h-10 w-44 rounded-md" />
+            </div>
+            <Skeleton className="h-24 w-full" />
+        </div>
+
+        {/* Metric Cards Skeleton */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+                <div key={i} className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-200 dark:border-slate-700">
+                    <Skeleton className="h-12 w-12 rounded-full mr-4" />
+                    <div className="flex-1">
+                        <Skeleton className="h-4 w-1/2 mb-2" />
+                        <Skeleton className="h-6 w-3/4" />
+                    </div>
+                </div>
+            ))}
+        </div>
+
+        {/* Charts Skeleton */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
+                <Skeleton className="h-6 w-1/4 mb-4" />
+                <Skeleton className="h-[300px] w-full" />
+            </div>
+            <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
+                <Skeleton className="h-6 w-1/4 mb-4" />
+                <Skeleton className="h-[300px] w-full" />
+            </div>
+        </div>
+        
+        {/* Recent Sales Table Skeleton */}
+        <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
+            <Skeleton className="h-6 w-1/4 mb-4" />
+            <div className="space-y-4 mt-4">
+                {/* Header */}
+                <div className="flex space-x-4 px-3">
+                    <Skeleton className="h-4 w-1/6" />
+                    <Skeleton className="h-4 w-1/6" />
+                    <Skeleton className="h-4 w-1/6" />
+                    <Skeleton className="h-4 w-1/6" />
+                    <Skeleton className="h-4 w-1/6" />
+                </div>
+                {/* Rows */}
+                {[...Array(5)].map((_, i) => (
+                    <div key={i} className="flex space-x-4 p-3 border-t border-slate-200 dark:border-slate-700">
+                        <Skeleton className="h-5 w-1/6" />
+                        <Skeleton className="h-5 w-1/6" />
+                        <Skeleton className="h-5 w-1/6" />
+                        <Skeleton className="h-5 w-1/6" />
+                        <Skeleton className="h-5 w-1/6" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    </div>
+);
+
+
 const MetricCard: React.FC<{ title: string; value: string; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-200 dark:border-slate-700">
     <div className={`p-3 rounded-full ${iconBgColor} mr-4`}>
@@ -22,7 +90,7 @@ const MetricCard: React.FC<{ title: string; value: string; iconName: string; ico
 );
 
 const Dashboard: React.FC = () => {
-  const { sales, getMetric, branches, customers, staff } = useAppContext();
+  const { sales, getMetric, branches, customers, staff, isLoading } = useAppContext();
   const { formatCurrency } = useCurrency();
   const { t } = useTranslation();
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -38,6 +106,10 @@ const Dashboard: React.FC = () => {
         return newSet;
     });
   };
+
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
 
   const totalRevenue = getMetric('totalRevenue');
   const salesVolume = getMetric('salesVolume');

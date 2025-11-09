@@ -5,6 +5,57 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recha
 import { Sale, Customer, PurchaseOrder, Consignment, Supplier } from '../types';
 import { useCurrency } from '../hooks/useCurrency';
 
+const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
+    <div className={`animate-pulse bg-slate-700 rounded ${className}`} />
+);
+
+const ReportsSkeleton = () => (
+    <div className="space-y-6">
+        {/* Filters Skeleton */}
+        <div className="p-4 bg-gray-800 rounded-lg shadow-md">
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <Skeleton className="h-8 w-20 rounded-md" />
+                        <Skeleton className="h-8 w-24 rounded-md" />
+                        <Skeleton className="h-8 w-28 rounded-md" />
+                        <Skeleton className="h-8 w-28 rounded-md" />
+                        <Skeleton className="h-8 w-24 rounded-md" />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Skeleton className="h-8 w-36 rounded-md" />
+                        <span className="text-slate-400">to</span>
+                        <Skeleton className="h-8 w-36 rounded-md" />
+                    </div>
+                    <Skeleton className="h-8 w-48 rounded-md" />
+                </div>
+                <Skeleton className="h-10 w-36 rounded-md" />
+            </div>
+        </div>
+
+        {/* Metric Cards Skeleton */}
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {[...Array(4)].map((_, i) => (
+                 <div key={i} className="p-4 bg-gray-800 rounded-lg shadow-md flex items-center">
+                    <Skeleton className="h-12 w-12 rounded-full mr-4" />
+                    <div className="flex-1">
+                        <Skeleton className="h-4 w-1/2 mb-2" />
+                        <Skeleton className="h-6 w-3/4" />
+                    </div>
+                </div>
+            ))}
+        </div>
+
+        {/* Report Content Skeleton */}
+        <div className="p-6 bg-gray-800 rounded-lg shadow-md">
+            <div className="flex flex-wrap gap-2 border-b border-gray-700 mb-6 pb-2">
+                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-9 w-32 rounded-md" />)}
+            </div>
+            <Skeleton className="h-96 w-full" />
+        </div>
+    </div>
+);
+
 type ReportTab = 'profit_loss' | 'sales' | 'credit' | 'purchases' | 'consignment' | 'deposit_sales';
 
 const MetricCard: React.FC<{ title: string; value: string | number; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
@@ -323,7 +374,7 @@ const ConsignmentReport: React.FC<{ data: any[], formatCurrency: (val: number) =
 
 
 const Reports: React.FC = () => {
-  const { sales, products, branches, staff, categories, customers, purchaseOrders, consignments, suppliers, brandConfig } = useAppContext();
+  const { sales, products, branches, staff, categories, customers, purchaseOrders, consignments, suppliers, brandConfig, isLoading } = useAppContext();
   const { formatCurrency } = useCurrency();
   
   const [dateRange, setDateRange] = useState(() => {
@@ -335,6 +386,10 @@ const Reports: React.FC = () => {
   const [activeFilter, setActiveFilter] = useState('Last Month');
   const [activeReport, setActiveReport] = useState<ReportTab>('profit_loss');
   const [branchFilter, setBranchFilter] = useState('ALL');
+
+  if (isLoading) {
+    return <ReportsSkeleton />;
+  }
 
   const setDateFilter = (filter: string) => {
     setActiveFilter(filter);
