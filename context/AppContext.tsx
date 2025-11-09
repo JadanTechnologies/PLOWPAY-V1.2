@@ -1104,24 +1104,53 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
                 setAdminRoles(prev => prev.filter(r => r.id !== roleId));
                 setNotification({ message: `Role "${roleToDelete.name}" deleted successfully.`, type: 'success' });
             },
-            updateBrandConfig: (newConfig: Partial<BrandConfig>) => setBrandConfig(prev => ({...prev, ...newConfig})),
-            updatePageContent: (newPageContent: Partial<Omit<PageContent, 'faqs'>>) => setPageContent(prev => ({...prev, ...newPageContent})),
-            updateFaqs: (newFaqs: FaqItem[]) => setPageContent(prev => ({...prev, faqs: newFaqs})),
-            updatePaymentSettings: (newSettings: PaymentSettings) => setPaymentSettings(newSettings),
-            updateNotificationSettings: (newSettings: NotificationSettings) => setNotificationSettings(newSettings),
-            updateSystemSettings: (newSettings: Partial<SystemSettings>) => setSystemSettings(prev => ({...prev, ...newSettings})),
-            updateMaintenanceSettings: (settings: MaintenanceSettings) => setSystemSettings(prev => ({...prev, maintenanceSettings: settings})),
-            updateAccessControlSettings: (settings: AccessControlSettings) => setSystemSettings(prev => ({...prev, accessControlSettings: settings})),
-            updateLandingPageMetrics: (metrics: LandingPageMetrics) => setSystemSettings(prev => ({...prev, landingPageMetrics: metrics})),
+            updateBrandConfig: (newConfig: Partial<BrandConfig>) => {
+                setBrandConfig(prev => ({...prev, ...newConfig}));
+                setNotification({ message: 'Branding settings saved!', type: 'success' });
+            },
+            updatePageContent: (newPageContent: Partial<Omit<PageContent, 'faqs'>>) => {
+                setPageContent(prev => ({...prev, ...newPageContent}));
+                setNotification({ message: 'Page content saved!', type: 'success' });
+            },
+            updateFaqs: (newFaqs: FaqItem[]) => {
+                setPageContent(prev => ({...prev, faqs: newFaqs}));
+                setNotification({ message: 'FAQs saved!', type: 'success' });
+            },
+            updatePaymentSettings: (newSettings: PaymentSettings) => {
+                setPaymentSettings(newSettings);
+                setNotification({ message: 'Payment settings saved!', type: 'success' });
+            },
+            updateNotificationSettings: (newSettings: NotificationSettings) => {
+                setNotificationSettings(newSettings);
+                setNotification({ message: 'Notification settings saved!', type: 'success' });
+            },
+            updateSystemSettings: (newSettings: Partial<SystemSettings>) => {
+                setSystemSettings(prev => ({...prev, ...newSettings}));
+                setNotification({ message: 'System settings updated.', type: 'success' });
+            },
+            updateMaintenanceSettings: (settings: MaintenanceSettings) => {
+                setSystemSettings(prev => ({...prev, maintenanceSettings: settings}));
+                setNotification({ message: 'Maintenance settings updated.', type: 'success' });
+            },
+            updateAccessControlSettings: (settings: AccessControlSettings) => {
+                setSystemSettings(prev => ({...prev, accessControlSettings: settings}));
+                setNotification({ message: 'Access control settings updated.', type: 'success' });
+            },
+            updateLandingPageMetrics: (metrics: LandingPageMetrics) => {
+                setSystemSettings(prev => ({...prev, landingPageMetrics: metrics}));
+                setNotification({ message: 'Landing page metrics updated!', type: 'success'});
+            },
             updateCurrentTenantSettings: (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout' | 'timezone'>>) => {
                  setTenants(prev => prev.map(t => t.id === currentTenant?.id ? { ...t, ...newSettings } : t));
                  setNotification({ message: 'Settings saved.', type: 'success' });
             },
             updateTenantLogisticsConfig: (config: { activeTrackerProviderId: string; }) => {
                 setTenants(prev => prev.map(t => t.id === currentTenant?.id ? { ...t, logisticsConfig: config } : t));
+                setNotification({ message: 'Logistics settings saved.', type: 'success' });
             },
             updateTenantAutomations: (newAutomations: Partial<TenantAutomations>) => {
                  setTenants(prev => prev.map(t => t.id === currentTenant?.id ? { ...t, automations: {...t.automations, ...newAutomations} } : t));
+                 setNotification({ message: 'Automation settings saved.', type: 'success' });
             },
             addSubscriptionPlan: (planData: Omit<SubscriptionPlan, 'id'>) => {
                 setSubscriptionPlans(prev => [...prev, {...planData, id: `plan-${Date.now()}`}]);
@@ -1144,7 +1173,10 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             },
             addShipment: (shipmentData: Omit<Shipment, 'id'>) => setShipments(prev => [...prev, {...shipmentData, id: `shp-${Date.now()}`}]),
             updateShipmentStatus,
-            updateTrackerProviders: (providers: TrackerProvider[]) => setTrackerProviders(providers),
+            updateTrackerProviders: (providers: TrackerProvider[]) => {
+                setTrackerProviders(providers);
+                setNotification({ message: 'Tracker provider settings saved.', type: 'success' });
+            },
             addBranch: (branchName: string) => setBranches(prev => [...prev, { id: `branch-${Date.now()}`, name: branchName, location: { lat: 0, lng: 0 } }]),
             updateBranchLocation: (branchId: string, location: { lat: number; lng: number; }) => {
                 setBranches(prev => prev.map(b => b.id === branchId ? {...b, location} : b));
@@ -1189,12 +1221,15 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             },
             updateTenantProfile: (tenantData: Partial<Omit<Tenant, 'id'>>) => {
                 setTenants(prev => prev.map(t => t.id === currentTenant?.id ? {...t, ...tenantData} : t));
+                setNotification({ message: 'Profile updated successfully!', type: 'success' });
             },
             updateAdminProfile: (adminData: Partial<Omit<AdminUser, 'id'>>) => {
                  setAdminUsers(prev => prev.map(u => u.id === currentAdminUser?.id ? {...u, ...adminData} : u));
+                 setNotification({ message: 'Profile updated successfully!', type: 'success' });
             },
             addAnnouncement: (announcementData: Omit<Announcement, 'id' | 'createdAt' | 'readBy'>) => {
                 setAnnouncements(prev => [{...announcementData, id: `anno-${Date.now()}`, createdAt: new Date(), readBy: []}, ...prev]);
+                setNotification({ message: 'Announcement published successfully.', type: 'success' });
             },
             markAnnouncementAsRead: (announcementId: string, userId: string) => {
                 setAnnouncements(prev => prev.map(a => a.id === announcementId ? {...a, readBy: [...a.readBy, userId]} : a));
@@ -1265,12 +1300,15 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             },
             updatePaymentTransactionStatus: (transactionId: string, newStatus: 'COMPLETED' | 'REJECTED') => {
                 setPaymentTransactions(prev => prev.map(tx => tx.id === transactionId ? {...tx, status: newStatus} : tx));
+                setNotification({ message: 'Transaction status updated.', type: 'success' });
             },
             updateEmailTemplate: (templateId: string, newSubject: string, newBody: string) => {
                 setEmailTemplates(prev => prev.map(t => t.id === templateId ? {...t, subject: newSubject, body: newBody} : t));
+                setNotification({ message: 'Email template updated.', type: 'success' });
             },
             updateSmsTemplate: (templateId: string, newBody: string) => {
                 setSmsTemplates(prev => prev.map(t => t.id === templateId ? {...t, body: newBody} : t));
+                setNotification({ message: 'SMS template updated.', type: 'success' });
             },
             markInAppNotificationAsRead: (notificationId: string) => {
                 setInAppNotifications(prev => prev.map(n => n.id === notificationId ? {...n, read: true} : n));
@@ -1290,19 +1328,26 @@ export const AppContextProvider: React.FC<AppContextProviderProps> = ({ children
             },
             replyToSupportTicket: (ticketId: string, message: Omit<TicketMessage, 'id' | 'timestamp'>) => {
                  setSupportTickets(prev => prev.map(t => t.id === ticketId ? {...t, updatedAt: new Date(), status: message.sender === 'ADMIN' ? 'In Progress' : 'Open', messages: [...t.messages, {...message, id: `msg-${Date.now()}`, timestamp: new Date()}]} : t));
+                 setNotification({ message: 'Reply sent successfully.', type: 'success' });
             },
             updateTicketStatus: (ticketId: string, status: SupportTicket['status']) => {
                 setSupportTickets(prev => prev.map(t => t.id === ticketId ? {...t, status, updatedAt: new Date()} : t));
+                setNotification({ message: 'Ticket status updated.', type: 'success' });
             },
             addBlogPost: (postData: Omit<BlogPost, 'id' | 'createdAt' | 'authorName'>) => {
                 const author = adminUsers.find(u => u.id === postData.authorId);
                 const newPost: BlogPost = { ...postData, id: `blog-${Date.now()}`, createdAt: new Date(), authorName: author?.name || 'Admin'};
                 setBlogPosts(prev => [newPost, ...prev]);
+                setNotification({ message: 'Blog post created.', type: 'success' });
             },
             updateBlogPost: (postId: string, postData: Partial<Omit<BlogPost, 'id' | 'authorId' | 'authorName' | 'createdAt'>>) => {
                 setBlogPosts(prev => prev.map(p => p.id === postId ? {...p, ...postData} : p));
+                setNotification({ message: 'Blog post updated.', type: 'success' });
             },
-            deleteBlogPost: (postId: string) => setBlogPosts(prev => prev.filter(p => p.id !== postId)),
+            deleteBlogPost: (postId: string) => {
+                setBlogPosts(prev => prev.filter(p => p.id !== postId));
+                setNotification({ message: 'Blog post deleted.', type: 'success' });
+            },
             updateLastLogin: (email: string, ip: string) => {
                  const lowerEmail = email.toLowerCase();
                  setAdminUsers(prev => prev.map(u => (u.email.toLowerCase() === lowerEmail || u.username?.toLowerCase() === lowerEmail) ? {...u, lastLoginIp: ip, lastLoginDate: new Date()} : u));

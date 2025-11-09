@@ -122,7 +122,7 @@ const Localization: React.FC = () => {
                         onChange={(e) => handleSettingChange('currency', e.target.value)}
                         className="w-full mt-1 bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                     >
-                        {allCurrencies.map(c => (
+                        {systemSettings.currencies.filter(c => c.enabled).map(c => (
                             <option key={c.code} value={c.code}>{c.name} ({c.symbol})</option>
                         ))}
                     </select>
@@ -134,7 +134,7 @@ const Localization: React.FC = () => {
                         onChange={(e) => handleSettingChange('language', e.target.value)}
                         className="w-full mt-1 bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                     >
-                        {allLanguages.map(l => (
+                        {systemSettings.languages.filter(l => l.enabled).map(l => (
                             <option key={l.code} value={l.code}>{l.name}</option>
                         ))}
                     </select>
@@ -162,7 +162,6 @@ const Security: React.FC = () => {
 
     const handleSave = () => {
         updateCurrentTenantSettings({ logoutTimeout });
-        alert('Security settings saved!');
     };
     
     return (

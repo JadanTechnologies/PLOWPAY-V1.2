@@ -80,21 +80,18 @@ const Settings: React.FC = () => {
     const handleBrandSave = () => {
         if(window.confirm("Are you sure you want to save branding settings?")){
             updateBrandConfig(brandForm);
-            setNotification({ message: 'Branding settings saved!', type: 'success' });
         }
     };
 
     const handleContentSave = () => {
         if(window.confirm("Are you sure you want to save page content?")){
             updatePageContent(contentForm);
-            setNotification({ message: 'Page content saved!', type: 'success' });
         }
     };
 
     const handleFaqsSave = () => {
         if(window.confirm("Are you sure you want to save FAQs?")){
             updateFaqs(faqs);
-            setNotification({ message: 'FAQs saved!', type: 'success' });
         }
     };
 
@@ -124,7 +121,6 @@ const Settings: React.FC = () => {
         }
         if (window.confirm("Are you sure you want to save currency settings?")) {
             updateSystemSettings({ currencies, defaultCurrency });
-            setNotification({ message: 'Currency settings saved successfully!', type: 'success' });
         }
     };
 
@@ -135,14 +131,12 @@ const Settings: React.FC = () => {
         }
         if (window.confirm("Are you sure you want to save language settings?")) {
             updateSystemSettings({ languages, defaultLanguage });
-            setNotification({ message: 'Language settings saved successfully!', type: 'success' });
         }
     };
     
     const handleTimezoneSave = () => {
         if (window.confirm("Are you sure you want to save the default timezone?")) {
             updateSystemSettings({ defaultTimezone });
-            setNotification({ message: 'Default timezone saved successfully!', type: 'success' });
         }
     };
 
@@ -154,7 +148,6 @@ const Settings: React.FC = () => {
     const handleMetricsSave = () => {
         if(window.confirm("Are you sure you want to update landing page metrics?")){
             updateLandingPageMetrics(landingMetrics);
-            setNotification({ message: 'Landing page metrics updated!', type: 'success'});
         }
     };
     
@@ -165,7 +158,6 @@ const Settings: React.FC = () => {
     const handleFeaturedUpdateSave = () => {
          if(window.confirm("Are you sure you want to update the featured update banner?")){
             updateSystemSettings({ ...systemSettings, featuredUpdate });
-            setNotification({ message: 'Featured update saved!', type: 'success'});
         }
     };
 
@@ -200,7 +192,6 @@ const Settings: React.FC = () => {
 
         if (window.confirm("Are you sure you want to save AI settings?")) {
             updateSystemSettings({ aiSettings });
-            setNotification({ message: 'AI settings saved successfully!', type: 'success' });
         }
     };
 
