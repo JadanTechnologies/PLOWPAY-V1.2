@@ -166,8 +166,8 @@ const PlatformDashboard: React.FC = () => {
                                 fill="#8884d8"
                                 dataKey="value"
                                 nameKey="name"
-                                // FIX: The 'percent' property from recharts can be undefined or NaN. Using Number.isFinite for robust type checking.
-                                label={({ name, percent }) => `${name} ${Number.isFinite(percent) ? (percent * 100).toFixed(0) : 0}%`}
+                                // FIX: Use a `typeof` check to ensure `percent` is a number before performing arithmetic operations. This is a robust type guard that also allows `Number.isFinite` to correctly check for NaN/Infinity values.
+                                label={({ name, percent }) => `${name} ${typeof percent === 'number' && Number.isFinite(percent) ? (percent * 100).toFixed(0) : 0}%`}
                             >
                                 {revenueByPlanData.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
