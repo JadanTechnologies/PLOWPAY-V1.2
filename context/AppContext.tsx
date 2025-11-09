@@ -55,7 +55,7 @@ const sampleTenants: Tenant[] = [
     { 
         id: 'tenant-1', businessName: 'The Coffee Corner', ownerName: 'Tenant Admin', email: 'tenant@example.com', username: 'tenant', password: '12345',
         status: 'ACTIVE', planId: 'plan-pro', joinDate: new Date('2023-05-20'), isVerified: true, billingCycle: 'monthly',
-        currency: 'USD', language: 'en', timezone: 'America/Los_Angeles'
+        currency: 'NGN', language: 'en', timezone: 'Africa/Lagos'
     }
 ];
 
@@ -124,7 +124,21 @@ const getInitialData = (): LocalStorageData => {
         blogPosts: [], paymentSettings: { stripe: { enabled: true, publicKey: '', secretKey: '' }, flutterwave: { enabled: false, publicKey: '', secretKey: '' }, paystack: { enabled: false, publicKey: '', secretKey: '' }, manual: { enabled: true, details: 'Bank: Demo Bank\nAccount: 123456789\nName: FlowPay Inc.' } },
         notificationSettings: { email: { provider: 'resend', resend: { apiKey: '' }, smtp: { host: 0, port: 0, user: '', pass: '' } }, sms: { twilio: { enabled: false, accountSid: '', apiKey: '', fromNumber: '' } }, push: { firebase: { enabled: false, serverKey: '', vapidKey: '' }, oneSignal: { enabled: false, appId: '', apiKey: '' } } },
         systemSettings: { currencies: allCurrencies.map(c => ({...c, enabled: true})), defaultCurrency: 'USD', languages: allLanguages.map(l => ({...l, enabled: true})), defaultLanguage: 'en', defaultTimezone: 'UTC', maintenanceSettings: { isActive: false, message: 'We are currently down for maintenance. Please check back soon.' }, accessControlSettings: { mode: 'ALLOW_ALL', ipWhitelist: [], ipBlacklist: [], countryWhitelist: [], countryBlacklist: [], regionWhitelist: [], regionBlacklist: [], browserWhitelist: [], browserBlacklist: [], deviceWhitelist: [], deviceBlacklist: [] }, landingPageMetrics: { businesses: { value: 100, label: 'Businesses Trust Us' }, users: { value: 500, label: 'Active Users Daily' }, revenue: { value: 1, label: 'Million in Revenue Processed' } }, featuredUpdate: { isActive: false, title: '', content: '' }, mapProviders: [{id: 'google', name: 'Google Maps', apiKey: ''}], activeMapProviderId: 'google', ipGeolocationProviders: [{ id: 'ipinfo', name: 'IPinfo.io', apiKey: '', apiEndpoint: 'https://ipinfo.io/' }], activeIpGeolocationProviderId: 'ipinfo', aiSettings: { provider: 'gemini', gemini: { apiKey: '' }, openai: { apiKey: '' } }, supabaseSettings: { projectUrl: '', anonKey: '' } },
-        trucks: [], shipments: [], trackerProviders: [], suppliers: [], purchaseOrders: [], accounts: [], journalEntries: [], announcements: [],
+        trucks: [], shipments: [], 
+        trackerProviders: [
+            { id: 'teltonika', name: 'Teltonika', apiKey: '', apiEndpoint: '' },
+            { id: 'ruptela', name: 'Ruptela', apiKey: '', apiEndpoint: '' },
+            { id: 'queclink', name: 'Queclink', apiKey: '', apiEndpoint: '' },
+            { id: 'calamp', name: 'CalAmp', apiKey: '', apiEndpoint: '' },
+            { id: 'meitrack', name: 'Meitrack', apiKey: '', apiEndpoint: '' },
+            { id: 'concox', name: 'Concox (Jimi IoT)', apiKey: '', apiEndpoint: '' },
+            { id: 'suntech', name: 'Suntech', apiKey: '', apiEndpoint: '' },
+            { id: 'gosafe', name: 'Gosafe', apiKey: '', apiEndpoint: '' },
+            { id: 'atrack', name: 'ATrack', apiKey: '', apiEndpoint: '' },
+            { id: 'systech', name: 'Systech', apiKey: '', apiEndpoint: '' },
+            { id: 'topflytech', name: 'Topflytech', apiKey: '', apiEndpoint: '' },
+        ],
+        suppliers: [], purchaseOrders: [], accounts: [], journalEntries: [], announcements: [],
         customers: sampleCustomers, consignments: [], deposits: [], categories: sampleCategories, paymentTransactions: [], emailTemplates: [],
         smsTemplates: [], inAppNotifications: [], auditLogs: [], supportTickets: [],
     };
@@ -490,7 +504,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     const updateMaintenanceSettings = (settings: MaintenanceSettings) => updateSystemSettings({ maintenanceSettings: settings });
     const updateAccessControlSettings = (settings: AccessControlSettings) => updateSystemSettings({ accessControlSettings: settings });
     const updateLandingPageMetrics = (metrics: LandingPageMetrics) => updateSystemSettings({ landingPageMetrics: metrics });
-    const updateCurrentTenantSettings = (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout' | 'timezone'>>) => { if(currentTenant) updateArray<Tenant>('tenants', currentTenant.id, newSettings); };
+    const updateCurrentTenantSettings = (newSettings: Partial<Pick<Tenant, 'currency' | 'language' | 'logoutTimeout' | 'timezone'>>) => { if(currentTenant) { updateArray<Tenant>('tenants', currentTenant.id, newSettings); setNotification({ type: 'success', message: 'Settings updated successfully.' }); }};
     const updateTenantLogisticsConfig = (config: { activeTrackerProviderId: string; }) => { if(currentTenant) updateArray<Tenant>('tenants', currentTenant.id, { logisticsConfig: config }); };
     const updateTenantAutomations = (newAutomations: Partial<TenantAutomations>) => { if(currentTenant) updateArray<Tenant>('tenants', currentTenant.id, { automations: {...currentTenant?.automations, ...newAutomations} }); };
     const addSubscriptionPlan = (planData: Omit<SubscriptionPlan, 'id'>) => addToArray('subscriptionPlans', { ...planData, id: `plan-${Date.now()}` });
@@ -527,7 +541,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         if (existingTenant) return { success: false, message: 'A tenant with this email or username already exists.' };
         
         const trialEndDate = new Date(); trialEndDate.setDate(trialEndDate.getDate() + 14);
-        const newTenant: Tenant = { ...tenantData, id: `tenant-${Date.now()}`, joinDate: new Date(), status: 'UNVERIFIED', trialEndDate, isVerified: false, billingCycle: 'monthly', companyLogoUrl: logoBase64 };
+        const newTenant: Tenant = { ...tenantData, id: `tenant-${Date.now()}`, joinDate: new Date(), status: 'UNVERIFIED', trialEndDate, isVerified: false, billingCycle: 'monthly', companyLogoUrl: logoBase64, currency: 'NGN', language: 'en', timezone: 'Africa/Lagos' };
         const newStaff: Staff = { id: `staff-${Date.now()}`, name: tenantData.ownerName, email: tenantData.email, username: tenantData.username, password: tenantData.password, roleId: 'srole-admin', branchId: 'branch-1' };
         setData(prev => { const newData = {...prev, tenants: [...prev.tenants, newTenant], staff: [...prev.staff, newStaff]}; localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(newData)); return newData; });
         return { success: true, message: 'Tenant created successfully.' };

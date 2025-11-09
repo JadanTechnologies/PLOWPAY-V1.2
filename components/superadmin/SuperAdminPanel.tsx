@@ -94,18 +94,21 @@ const Settings: React.FC = () => {
     const handleBrandSave = () => {
         if(window.confirm("Are you sure you want to save branding settings?")){
             updateBrandConfig(brandForm);
+            setNotification({ type: 'success', message: 'Branding settings saved successfully.' });
         }
     };
 
     const handleContentSave = () => {
         if(window.confirm("Are you sure you want to save page content?")){
             updatePageContent(contentForm);
+            setNotification({ type: 'success', message: 'Page content saved successfully.' });
         }
     };
 
     const handleFaqsSave = () => {
         if(window.confirm("Are you sure you want to save FAQs?")){
             updateFaqs(faqs);
+            setNotification({ type: 'success', message: 'FAQs saved successfully.' });
         }
     };
 
@@ -164,6 +167,7 @@ const Settings: React.FC = () => {
         }
         if (window.confirm("Are you sure you want to save currency settings?")) {
             updateSystemSettings({ currencies, defaultCurrency });
+            setNotification({ type: 'success', message: 'Currency settings saved successfully.' });
         }
     };
 
@@ -178,12 +182,14 @@ const Settings: React.FC = () => {
         }
         if (window.confirm("Are you sure you want to save language settings?")) {
             updateSystemSettings({ languages, defaultLanguage });
+            setNotification({ type: 'success', message: 'Language settings saved successfully.' });
         }
     };
     
     const handleTimezoneSave = () => {
         if (window.confirm("Are you sure you want to save the default timezone?")) {
             updateSystemSettings({ defaultTimezone });
+            setNotification({ type: 'success', message: 'Default timezone saved successfully.' });
         }
     };
 
@@ -195,6 +201,7 @@ const Settings: React.FC = () => {
     const handleMetricsSave = () => {
         if(window.confirm("Are you sure you want to update landing page metrics?")){
             updateLandingPageMetrics(landingMetrics);
+            setNotification({ type: 'success', message: 'Landing page metrics saved successfully.' });
         }
     };
     
@@ -205,6 +212,7 @@ const Settings: React.FC = () => {
     const handleFeaturedUpdateSave = () => {
          if(window.confirm("Are you sure you want to update the featured update banner?")){
             updateSystemSettings({ ...systemSettings, featuredUpdate });
+            setNotification({ type: 'success', message: 'Featured update saved successfully.' });
         }
     };
 
@@ -239,12 +247,14 @@ const Settings: React.FC = () => {
 
         if (window.confirm("Are you sure you want to save AI settings?")) {
             updateSystemSettings({ aiSettings });
+            setNotification({ type: 'success', message: 'AI settings saved successfully.' });
         }
     };
 
     const handleSupabaseSettingsSave = () => {
         if (window.confirm("Are you sure you want to save these Supabase settings? Note: This will NOT update the primary app connection. See instructions.")) {
             updateSystemSettings({ supabaseSettings });
+            setNotification({ type: 'success', message: 'Supabase settings saved successfully.' });
         }
     };
 
@@ -256,6 +266,7 @@ const Settings: React.FC = () => {
                 ipGeolocationProviders: ipGeoProviders,
                 activeIpGeolocationProviderId: activeIpGeoProviderId 
             });
+            setNotification({ type: 'success', message: 'Provider settings saved successfully.' });
         }
     };
 
