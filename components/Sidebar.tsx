@@ -33,12 +33,10 @@ const NavItem: React.FC<{
         }}
         className={`group flex items-center p-3 my-1 rounded-lg transition-all duration-200 relative ${
           isActive
-            ? 'dark:text-white text-cyan-700'
+            ? 'bg-gradient-to-r from-cyan-500 to-teal-500 text-white shadow-lg shadow-cyan-500/20'
             : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-700/50 hover:text-slate-900 dark:hover:text-white'
         }`}
       >
-        {isActive && <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-teal-500 opacity-20 dark:opacity-30 rounded-lg"></div>}
-         {isActive && <div className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-1 bg-cyan-500 dark:bg-cyan-400 rounded-r-full"></div>}
         <Icon name={iconName} className="w-6 h-6 flex-shrink-0" />
         <span
           className={`ml-4 whitespace-nowrap transition-all duration-200 ${
