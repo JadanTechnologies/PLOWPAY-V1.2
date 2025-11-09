@@ -24,17 +24,17 @@ const TeamManagement: React.FC = () => {
     const { hasPermission } = usePermissions();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
-    const [formData, setFormData] = useState({ name: '', email: '', roleId: adminRoles[1]?.id || '' });
+    const [formData, setFormData] = useState({ name: '', email: '', username: '', password: '', roleId: adminRoles[1]?.id || '' });
 
     const roleMap = new Map(adminRoles.map(r => [r.id, r.name]));
 
     const openModal = (user: AdminUser | null = null) => {
         if (user) {
             setEditingUser(user);
-            setFormData({ name: user.name, email: user.email, roleId: user.roleId });
+            setFormData({ name: user.name, email: user.email, username: user.username || '', password: '', roleId: user.roleId });
         } else {
             setEditingUser(null);
-            setFormData({ name: '', email: '', roleId: adminRoles.find(r => r.name === 'Support')?.id || adminRoles[0]?.id || '' });
+            setFormData({ name: '', email: '', username: '', password: '', roleId: adminRoles.find(r => r.name === 'Support')?.id || adminRoles[0]?.id || '' });
         }
         setIsModalOpen(true);
     };
@@ -52,9 +52,24 @@ const TeamManagement: React.FC = () => {
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingUser) {
-            updateAdminUser(editingUser.id, { name: formData.name, email: formData.email, roleId: formData.roleId });
+            const updateData: Partial<Omit<AdminUser, 'id' | 'joinDate'>> = {
+                name: formData.name,
+                email: formData.email,
+                username: formData.username,
+                roleId: formData.roleId
+            };
+            if (formData.password) {
+                updateData.password = formData.password;
+            }
+            updateAdminUser(editingUser.id, updateData);
         } else {
-            addAdminUser({ name: formData.name, email: formData.email, roleId: formData.roleId });
+            addAdminUser({
+                name: formData.name,
+                email: formData.email,
+                username: formData.username,
+                password: formData.password,
+                roleId: formData.roleId
+            });
         }
         closeModal();
     };
@@ -140,6 +155,14 @@ const TeamManagement: React.FC = () => {
                             <div>
                                 <label htmlFor="email" className="block text-sm font-medium text-gray-400">Email Address</label>
                                 <input type="email" id="email" name="email" value={formData.email} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+                            </div>
+                            <div>
+                                <label htmlFor="username" className="block text-sm font-medium text-gray-400">Username</label>
+                                <input type="text" id="username" name="username" value={formData.username} onChange={handleFormChange} required className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+                            </div>
+                            <div>
+                                <label htmlFor="password" className="block text-sm font-medium text-gray-400">Password</label>
+                                <input type="password" id="password" name="password" value={formData.password} onChange={handleFormChange} required={!editingUser} placeholder={editingUser ? 'Leave blank to keep current password' : ''} className="w-full mt-1 py-2 px-3 text-white bg-gray-700 border border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500" />
                             </div>
                              <div>
                                 <label htmlFor="roleId" className="block text-sm font-medium text-gray-400">Role</label>
