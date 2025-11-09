@@ -53,6 +53,8 @@ const Settings: React.FC = () => {
     const [landingMetrics, setLandingMetrics] = useState(systemSettings.landingPageMetrics);
     const [featuredUpdate, setFeaturedUpdate] = useState<FeaturedUpdateSettings>(systemSettings.featuredUpdate);
     const [aiSettings, setAiSettings] = useState<AISettings>(systemSettings.aiSettings);
+    const [showGeminiKey, setShowGeminiKey] = useState(false);
+    const [showOpenAiKey, setShowOpenAiKey] = useState(false);
     
     // State for localization
     const [currencies, setCurrencies] = useState<Currency[]>(systemSettings.currencies);
@@ -176,6 +178,26 @@ const Settings: React.FC = () => {
     };
 
     const handleAiSettingsSave = () => {
+        const { provider, gemini, openai } = aiSettings;
+
+        if (provider === 'gemini' && !gemini.apiKey.trim()) {
+            setNotification({ message: 'Gemini API key is required when it is the selected provider.', type: 'error' });
+            return;
+        }
+        if (provider === 'openai' && !openai.apiKey.trim()) {
+            setNotification({ message: 'OpenAI API key is required when it is the selected provider.', type: 'error' });
+            return;
+        }
+
+        if (gemini.apiKey.trim() && !gemini.apiKey.startsWith('AIza')) {
+            setNotification({ message: 'Invalid Gemini API key format. It should start with "AIza".', type: 'error' });
+            return;
+        }
+        if (openai.apiKey.trim() && !openai.apiKey.startsWith('sk-')) {
+            setNotification({ message: 'Invalid OpenAI API key format. It should start with "sk-".', type: 'error' });
+            return;
+        }
+
         if (window.confirm("Are you sure you want to save AI settings?")) {
             updateSystemSettings({ aiSettings });
             setNotification({ message: 'AI settings saved successfully!', type: 'success' });
@@ -310,12 +332,22 @@ const Settings: React.FC = () => {
                          <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
                             <h4 className="font-semibold text-white">Google Gemini Settings</h4>
                             <label className="block text-sm font-medium text-slate-400">API Key</label>
-                            <input type="password" value={aiSettings.gemini.apiKey} onChange={e => handleAiSettingsChange('gemini', 'apiKey', e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
+                            <div className="relative">
+                                <input type={showGeminiKey ? 'text' : 'password'} value={aiSettings.gemini.apiKey} onChange={e => handleAiSettingsChange('gemini', 'apiKey', e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 pr-10 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
+                                <button type="button" onClick={() => setShowGeminiKey(!showGeminiKey)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                                    <Icon name={showGeminiKey ? 'eye-slash' : 'eye'} className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
                         <div className="space-y-4 p-4 border border-slate-700 rounded-lg bg-slate-900/50">
                             <h4 className="font-semibold text-white">OpenAI Settings</h4>
                             <label className="block text-sm font-medium text-slate-400">API Key</label>
-                             <input type="password" value={aiSettings.openai.apiKey} onChange={e => handleAiSettingsChange('openai', 'apiKey', e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
+                            <div className="relative">
+                                 <input type={showOpenAiKey ? 'text' : 'password'} value={aiSettings.openai.apiKey} onChange={e => handleAiSettingsChange('openai', 'apiKey', e.target.value)} className="mt-1 block w-full bg-slate-700 border border-slate-600 rounded-md shadow-sm py-2 px-3 pr-10 text-white focus:outline-none focus:ring-cyan-500 focus:border-cyan-500" />
+                                 <button type="button" onClick={() => setShowOpenAiKey(!showOpenAiKey)} className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-white">
+                                    <Icon name={showOpenAiKey ? 'eye-slash' : 'eye'} className="w-5 h-5" />
+                                </button>
+                            </div>
                         </div>
                         <div className="text-right">
                             <button onClick={handleAiSettingsSave} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md">Save AI Settings</button>
