@@ -1,5 +1,4 @@
 
-
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Customer } from '../../types';
@@ -8,7 +7,7 @@ import { useCurrency } from '../../hooks/useCurrency';
 import ConfirmationModal from './ConfirmationModal';
 
 const CreditManagement: React.FC = () => {
-    const { customers, recordCreditPayment, addCustomer, deleteCustomer } = useAppContext();
+    const { customers, recordCreditPayment, addCustomer, deleteCustomer, setNotification } = useAppContext();
     const { formatCurrency } = useCurrency();
 
     const [isPaymentModalOpen, setPaymentModalOpen] = useState(false);
@@ -29,6 +28,7 @@ const CreditManagement: React.FC = () => {
             const amount = parseFloat(paymentAmount);
             if (amount > 0) {
                 recordCreditPayment(selectedCustomer.id, amount);
+                setNotification({ type: 'success', message: `Payment of ${formatCurrency(amount)} recorded for ${selectedCustomer.name}.` });
                 setPaymentModalOpen(false);
             }
         }
@@ -37,6 +37,7 @@ const CreditManagement: React.FC = () => {
     const handleAddCustomer = () => {
         if(customerForm.name) {
             addCustomer(customerForm);
+            setNotification({ type: 'success', message: `Customer '${customerForm.name}' added successfully.` });
             setCustomerModalOpen(false);
             setCustomerForm({ name: '', phone: '', email: '', address: '', creditLimit: 0 });
         }
@@ -127,6 +128,7 @@ const CreditManagement: React.FC = () => {
                 onConfirm={() => {
                     if (deletingCustomer) {
                         deleteCustomer(deletingCustomer.id);
+                        setNotification({ type: 'success', message: `Customer '${deletingCustomer.name}' has been deleted.` });
                     }
                 }}
                 title={`Delete Customer: ${deletingCustomer?.name}`}

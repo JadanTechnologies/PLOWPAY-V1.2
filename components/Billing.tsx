@@ -4,7 +4,7 @@ import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { SubscriptionPlan, TenantStatus } from '../types';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../hooks/useCurrency';
+import { useCurrency } from '../../hooks/useCurrency';
 
 const PlanCard: React.FC<{
     plan: SubscriptionPlan;
@@ -15,6 +15,7 @@ const PlanCard: React.FC<{
     const { formatCurrency } = useCurrency();
     const isRecommended = plan.recommended;
     const price = billingCycle === 'yearly' ? plan.priceYearly : plan.price;
+    const pricePerMonth = billingCycle === 'yearly' ? plan.priceYearly / 12 : plan.price;
 
     return (
         <div className={`bg-slate-800 p-8 rounded-lg border-2 ${isCurrent ? 'border-cyan-500' : isRecommended ? 'border-teal-500' : 'border-slate-700'} relative flex flex-col`}>
@@ -22,8 +23,9 @@ const PlanCard: React.FC<{
             <h3 className="text-2xl font-semibold text-white">{plan.name}</h3>
             <p className="text-slate-400 mt-2 h-10">{plan.description}</p>
             <div className="mt-4">
-                <span className="text-5xl font-extrabold text-white">{formatCurrency(price).replace(/\.00$/, '')}</span>
-                <span className="text-lg text-slate-400">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
+                <span className="text-5xl font-extrabold text-white">{formatCurrency(pricePerMonth).replace(/\.00$/, '')}</span>
+                <span className="text-lg text-slate-400">/mo</span>
+                {billingCycle === 'yearly' && <p className="text-sm text-slate-500">Billed as {formatCurrency(price)} per year</p>}
             </div>
             <ul className="mt-6 space-y-3 text-slate-400 flex-grow">
                 {plan.features.map((feature, i) => (
