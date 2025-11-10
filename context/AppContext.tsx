@@ -227,6 +227,7 @@ const accounts: Account[] = [
     { id: 'acct-cash', name: 'Cash on Hand', type: 'ASSET', balance: 15000 },
     { id: 'acct-sales', name: 'Sales Revenue', type: 'REVENUE', balance: -25000 },
     { id: 'acct-cogs', name: 'Cost of Goods Sold', type: 'EXPENSE', balance: 12000 },
+    { id: 'acct-office', name: 'Office Supplies', type: 'EXPENSE', balance: 0 },
 ];
 
 const journalEntries: JournalEntry[] = [

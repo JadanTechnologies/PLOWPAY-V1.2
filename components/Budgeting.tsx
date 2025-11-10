@@ -69,7 +69,6 @@ const Budgeting: React.FC = () => {
             const originalBudget = budgets.find(b => b.accountId === accountId && b.period === currentPeriod);
             const originalAmount = originalBudget ? originalBudget.amount : 0;
 
-            // FIX: The type of `amount` is inferred as `unknown`, so it needs to be cast to a number for operations.
             const numericAmount = Number(amount);
 
             if (numericAmount !== originalAmount) {
@@ -82,9 +81,9 @@ const Budgeting: React.FC = () => {
         });
     };
     
-    // FIX: The type of `amount` is inferred as `unknown`, so it needs to be cast to a number for the sum operation.
+    // Fix: The type of `amount` is inferred as `unknown`, so it needs to be cast to a number for the sum operation.
     const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + Number(amount), 0), [localBudgets]);
-    // FIX: The type of `amount` is inferred as `unknown`, so it needs to be cast to a number for the sum operation.
+    // Fix: The type of `amount` is inferred as `unknown`, so it needs to be cast to a number for the sum operation.
     const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum, amount) => sum + Number(amount), 0), [monthlyExpenses]);
 
     return (
