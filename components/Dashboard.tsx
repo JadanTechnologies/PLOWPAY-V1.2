@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { useAppContext } from '../hooks/useAppContext';
@@ -8,6 +6,7 @@ import { Sale } from '../types';
 import { useCurrency } from '../hooks/useCurrency';
 import { useTranslation } from '../hooks/useTranslation';
 import AIInsights from './AIInsights';
+import GoogleMap from './GoogleMap';
 
 const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
     <div className={`animate-pulse bg-slate-200 dark:bg-slate-700 rounded ${className}`} />
@@ -168,6 +167,21 @@ const Dashboard: React.FC = () => {
             </BarChart>
           </ResponsiveContainer>
         </div>
+      </div>
+
+      <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">
+          <h3 className="mb-4 text-lg font-semibold text-slate-900 dark:text-white">Staff Live Location</h3>
+          <div className="h-[400px] bg-slate-900 rounded-md overflow-hidden">
+               {typeof window.L === 'undefined' ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                      <Icon name="x-mark" className="w-12 h-12 text-red-500 mb-2" />
+                      <h4 className="font-bold text-white">Map Failed to Load</h4>
+                      <p className="text-slate-400 text-sm">Please check your internet connection.</p>
+                  </div>
+              ) : (
+                  <GoogleMap users={staff} branches={branches} />
+              )}
+          </div>
       </div>
 
       <div className="p-4 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700">

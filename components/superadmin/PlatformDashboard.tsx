@@ -1,5 +1,3 @@
-
-
 import React, { useMemo, useState } from 'react';
 import {
     ResponsiveContainer,
@@ -17,6 +15,7 @@ import {
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from '../icons/index.tsx';
 import { useCurrency } from '../../hooks/useCurrency';
+import GoogleMap from '../GoogleMap';
 
 const MetricCard: React.FC<{ title: string; value: string; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-700">
@@ -31,7 +30,7 @@ const MetricCard: React.FC<{ title: string; value: string; iconName: string; ico
 );
 
 const PlatformDashboard: React.FC = () => {
-    const { tenants, subscriptionPlans, processExpiredTrials, sendExpiryReminders } = useAppContext();
+    const { tenants, subscriptionPlans, processExpiredTrials, sendExpiryReminders, staff } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [trialJobStatus, setTrialJobStatus] = useState('');
     const [reminderJobStatus, setReminderJobStatus] = useState('');
@@ -176,6 +175,21 @@ const PlatformDashboard: React.FC = () => {
                             <Legend />
                         </PieChart>
                     </ResponsiveContainer>
+                </div>
+            </div>
+
+            <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
+                <h3 className="mb-4 text-lg font-semibold text-white">Live User Activity Map</h3>
+                <div className="h-[400px] bg-slate-900 rounded-md overflow-hidden">
+                     {typeof window.L === 'undefined' ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                            <Icon name="x-mark" className="w-12 h-12 text-red-500 mb-2" />
+                            <h4 className="font-bold text-white">Map Failed to Load</h4>
+                            <p className="text-slate-400 text-sm">Please check your internet connection.</p>
+                        </div>
+                    ) : (
+                        <GoogleMap users={[...tenants, ...staff]} />
+                    )}
                 </div>
             </div>
 

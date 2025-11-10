@@ -28,8 +28,8 @@ const staffRoles: StaffRole[] = [
 ]
 
 const staff: Staff[] = [
-  { id: 'staff-1', name: 'Jane Doe', email: 'jane@example.com', username: 'jane', roleId: 'role-admin', branchId: 'branch-1' },
-  { id: 'staff-2', name: 'John Smith', email: 'john@example.com', username: 'john', roleId: 'role-cashier', branchId: 'branch-1' },
+  { id: 'staff-1', name: 'Jane Doe', email: 'jane@example.com', username: 'jane', roleId: 'role-admin', branchId: 'branch-1', lastKnownLocation: { lat: 37.78, lng: -122.41, timestamp: new Date() } },
+  { id: 'staff-2', name: 'John Smith', email: 'john@example.com', username: 'john', roleId: 'role-cashier', branchId: 'branch-1', lastKnownLocation: { lat: 37.77, lng: -122.43, timestamp: new Date() } },
 ];
 
 const categories: Category[] = [
@@ -103,7 +103,8 @@ const tenant1: Tenant = {
     isVerified: true,
     billingCycle: 'monthly',
     automations: { generateEODReport: true, sendLowStockAlerts: false, sendCreditLimitAlerts: false },
-    logisticsConfig: { activeTrackerProviderId: 'teltonika' }
+    logisticsConfig: { activeTrackerProviderId: 'teltonika' },
+    lastKnownLocation: { lat: 37.7749, lng: -122.4194, timestamp: new Date() }
 };
 
 const tenants: Tenant[] = [ tenant1 ];
@@ -701,6 +702,39 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         logAction('CREDIT_PAYMENT_RECORDED', `Recorded payment of ${formatCurrency(amount)} for customer ${customerId}`);
     }, [logAction, formatCurrency]);
 
+    const updateUserLocation = useCallback(() => {
+        if (!navigator.geolocation) {
+            console.log("Geolocation is not supported by this browser.");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition((position) => {
+            const { latitude, longitude } = position.coords;
+            const location = { lat: latitude, lng: longitude, timestamp: new Date() };
+
+            if (profile?.is_super_admin && currentAdminUser) {
+                // Super admins location is not tracked on the map for others to see.
+                return;
+            } else if (profile?.tenant_id) {
+                if (impersonatedUser) { // If admin is impersonating, don't update location
+                    return;
+                }
+                
+                // Is it a tenant admin or a staff member?
+                const isTenantAdmin = currentTenant && !currentStaffUser;
+                const isStaff = currentTenant && currentStaffUser;
+
+                if (isTenantAdmin) {
+                     setTenantsState(prev => prev.map(t => t.id === currentTenant.id ? { ...t, lastKnownLocation: location } : t));
+                } else if (isStaff) {
+                     setStaffState(prev => prev.map(s => s.id === currentStaffUser.id ? { ...s, lastKnownLocation: location } : s));
+                }
+            }
+        }, () => {
+            console.log("Unable to retrieve your location.");
+        });
+    }, [profile, currentTenant, currentStaffUser, currentAdminUser, impersonatedUser]);
+
     // Most functions are defined via useCallback to maintain reference equality
     const memoizedSetters = {
         // ... other setters
@@ -1021,6 +1055,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         deleteTenantSmsTemplate,
         sendBulkMessage,
         sendBulkMessageToTenants,
+        updateUserLocation,
     };
     
     // Non-memoized setters

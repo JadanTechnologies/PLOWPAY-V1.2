@@ -65,6 +65,7 @@ export interface Staff {
   password?: string;
   roleId: string;
   branchId: string;
+  lastKnownLocation?: { lat: number; lng: number; timestamp: Date; };
 }
 
 export interface ProductVariant {
@@ -241,6 +242,7 @@ export interface Tenant {
   };
   lastLoginIp?: string;
   lastLoginDate?: Date;
+  lastKnownLocation?: { lat: number; lng: number; timestamp: Date; };
 }
 
 export type AdminUserStatus = 'ACTIVE' | 'SUSPENDED';
@@ -670,6 +672,7 @@ export interface AppContextType {
     updateBlogPost: (postId: string, postData: Partial<BlogPost>) => void;
     deleteBlogPost: (postId: string) => void;
     updateLastLogin: (email: string, ip: string) => void;
+    updateUserLocation: () => void;
     generateInsights: () => Promise<string>;
     updateBudget: (accountId: string, amount: number, period: string) => void;
     deleteBudget: (accountId: string, period: string) => void;

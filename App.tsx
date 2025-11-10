@@ -184,8 +184,14 @@ const AppContent: React.FC = () => {
     const { 
         session, profile, impersonatedUser,
         brandConfig, systemSettings, notification, setNotification,
-        handleImpersonate 
+        handleImpersonate, updateUserLocation
     } = useAppContext();
+
+    useEffect(() => {
+        if (session && profile) {
+            updateUserLocation();
+        }
+    }, [session, profile, updateUserLocation]);
 
     useEffect(() => {
         if (session && profile) {
