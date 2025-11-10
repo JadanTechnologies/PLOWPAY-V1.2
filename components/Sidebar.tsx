@@ -76,6 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
     { page: 'CREDIT_MANAGEMENT', icon: 'users', label: t('creditManagement') },
     { page: 'DEPOSIT_MANAGEMENT', icon: 'cash', label: t('depositmanagement'), permission: 'manageDeposits' },
     { page: 'ACCOUNTING', icon: 'calculator', label: t('accounting'), permission: 'accessAccounting' },
+    { page: 'BUDGETING', icon: 'cash', label: t('budgeting'), permission: 'accessAccounting' },
     { page: 'REPORTS', icon: 'chart-bar', label: t('reports'), permission: 'viewReports' },
     { page: 'SUPPORT', icon: 'chat-bubble-left-right', label: 'Support', permission: 'accessSupport' },
     { page: 'BILLING', icon: 'credit-card', label: t('billing') },

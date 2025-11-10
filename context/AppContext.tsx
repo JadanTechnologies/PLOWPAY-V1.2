@@ -10,7 +10,8 @@ import {
     AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost, 
     LocalSession, Profile, allPermissions, IpGeolocationProvider, MapProvider, AISettings, SupabaseSettings,
     // FIX: Import ProductVariant to resolve multiple 'Cannot find name' errors.
-    ProductVariant
+    ProductVariant,
+    Budget
 } from '../types';
 
 // Initial Data
@@ -263,6 +264,10 @@ const supportTickets: SupportTicket[] = [
     { id: 'ticket-1', tenantId: 'tenant-123', subject: 'Problem with printer', department: 'Technical', priority: 'High', status: 'Open', createdAt: new Date(), updatedAt: new Date(), messages: [{id: 'msg-1', sender: 'TENANT', message: 'My receipt printer is not working.', timestamp: new Date()}] }
 ];
 
+const budgets: Budget[] = [
+    { id: 'budget-1', accountId: 'acct-cogs', amount: 10000, period: new Date().toISOString().slice(0, 7) }
+];
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -305,6 +310,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [depositsState, setDepositsState] = useState<Deposit[]>(deposits);
     const [supportTicketsState, setSupportTicketsState] = useState<SupportTicket[]>(supportTickets);
     const [inAppNotifications, setInAppNotifications] = useState<InAppNotification[]>([]);
+    const [budgetsState, setBudgetsState] = useState<Budget[]>(budgets);
 
     const [currentStaffUser, setCurrentStaffUser] = useState<Staff | null>(staff[0] || null);
     const [searchTerm, setSearchTerm] = useState('');
@@ -564,6 +570,32 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     
     // FIX: Moved updateShipmentStatus before memoizedSetters to make it available in other memoized functions.
     const updateShipmentStatus = useCallback((shipmentId: string, status: Shipment['status']) => setShipmentsState(prev => prev.map(s => s.id === shipmentId ? { ...s, status } : s)), []);
+
+    const updateBudget = useCallback((accountId: string, amount: number, period: string) => {
+        setBudgetsState(prev => {
+            const existingBudgetIndex = prev.findIndex(b => b.accountId === accountId && b.period === period);
+            if (existingBudgetIndex > -1) {
+                const newBudgets = [...prev];
+                newBudgets[existingBudgetIndex] = { ...newBudgets[existingBudgetIndex], amount };
+                return newBudgets;
+            } else {
+                const newBudget: Budget = { id: `budget-${Date.now()}`, accountId, amount, period };
+                return [...prev, newBudget];
+            }
+        });
+        setNotification({ type: 'success', message: 'Budget saved successfully!' });
+    }, [setNotification]);
+
+    const deleteBudget = useCallback((accountId: string, period: string) => {
+        setBudgetsState(prev => {
+            const initialLength = prev.length;
+            const newBudgets = prev.filter(b => !(b.accountId === accountId && b.period === period));
+            if (newBudgets.length < initialLength) {
+                setNotification({ type: 'success', message: 'Budget removed successfully!' });
+            }
+            return newBudgets;
+        });
+    }, [setNotification]);
 
     // Most functions are defined via useCallback to maintain reference equality
     const memoizedSetters = {
@@ -998,6 +1030,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         smsTemplates: smsTemplatesState, auditLogs: auditLogsState, deposits: depositsState, supportTickets: supportTicketsState,
         blogPosts: blogPostsState,
         inAppNotifications,
+        budgets: budgetsState,
         currentTenant, currentAdminUser, impersonatedUser,
         notification, setNotification, logAction,
         searchTerm, setSearchTerm, theme, setTheme,
@@ -1007,6 +1040,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         session, profile, isLoading, handleImpersonate, stopImpersonating, login, logout,
         allTenantPermissions, allPermissions, currentStaffUser, setCurrentStaffUser,
         activateSubscription,
+        updateBudget, deleteBudget,
         // FIX: Add missing properties to the context value to match AppContextType.
         updateTenant,
         updateCurrentTenantSettings,

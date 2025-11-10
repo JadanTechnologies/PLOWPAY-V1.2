@@ -486,6 +486,13 @@ export interface BlogPost {
     featuredImage?: string;
 }
 
+export interface Budget {
+  id: string;
+  accountId: string;
+  amount: number;
+  period: string; // Format: "YYYY-MM"
+}
+
 export interface NotificationType {
     message: string;
     type: 'success' | 'error' | 'info';
@@ -538,6 +545,7 @@ export interface AppContextType {
     supportTickets: SupportTicket[];
     blogPosts: BlogPost[];
     inAppNotifications: InAppNotification[];
+    budgets: Budget[];
 
     currentTenant: Tenant | null;
     currentAdminUser: AdminUser | null;
@@ -649,4 +657,6 @@ export interface AppContextType {
     deleteBlogPost: (postId: string) => void;
     updateLastLogin: (email: string, ip: string) => void;
     generateInsights: () => Promise<string>;
+    updateBudget: (accountId: string, amount: number, period: string) => void;
+    deleteBudget: (accountId: string, period: string) => void;
 }

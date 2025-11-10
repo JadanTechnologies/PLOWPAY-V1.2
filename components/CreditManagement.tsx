@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
-import { Customer, Sale } from '../../types';
+import { useAppContext } from '../hooks/useAppContext';
+import { Customer, Sale } from '../types';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../../hooks/useCurrency';
+import { useCurrency } from '../hooks/useCurrency';
 import ConfirmationModal from './ConfirmationModal';
 
 const CustomerCreditDetailModal: React.FC<{ customer: Customer; onClose: () => void; }> = ({ customer, onClose }) => {

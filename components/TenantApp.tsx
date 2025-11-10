@@ -23,6 +23,7 @@ import DepositManagement from './DepositManagement';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons';
 import TenantSupport from './tenant/Support';
+import Budgeting from './Budgeting';
 
 
 const TenantApp: React.FC = () => {
@@ -81,6 +82,8 @@ const TenantApp: React.FC = () => {
         return <LogisticsManagement />;
       case 'ACCOUNTING':
         return <Accounting />;
+      case 'BUDGETING':
+        return <Budgeting />;
       case 'REPORTS':
         return <Reports />;
       case 'SETTINGS':
