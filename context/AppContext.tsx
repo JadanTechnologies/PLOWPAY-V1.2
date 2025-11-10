@@ -11,6 +11,7 @@ import {
     LocalSession, Profile, allPermissions, IpGeolocationProvider, MapProvider, AISettings, SupabaseSettings,
     ProductVariant,
     Budget,
+    CreditPayment,
     StockLogAction
 } from '../types';
 
@@ -68,7 +69,7 @@ const sales: Sale[] = [
   { id: 'sale-2', date: new Date(new Date().setDate(new Date().getDate() - 2)), items: [
       { productId: 'prod-2', variantId: 'var-2a', name: 'Milk', variantName: '1 Gallon', quantity: 2, sellingPrice: 4, costPrice: 2.5 }
   ], total: 8, branchId: 'branch-2', customerId: 'cust-walkin', payments: [{ method: 'Cash', amount: 10 }], change: 2, staffId: 'staff-2', status: 'PAID', amountDue: 0 },
-  { id: 'sale-3', date: new Date(new Date().setDate(new Date().getDate() - 3)), items: [
+  { id: 'sale-3', date: new Date(new Date().setDate(new Date().getDate() - 35)), items: [
       { productId: 'prod-3', variantId: 'var-3a', name: 'T-Shirt', variantName: 'Medium', quantity: 5, sellingPrice: 25, costPrice: 10 }
   ], total: 125, branchId: 'branch-1', customerId: 'cust-1', payments: [], change: 0, staffId: 'staff-1', status: 'UNPAID', amountDue: 125 },
 ];
@@ -101,7 +102,7 @@ const tenant1: Tenant = {
     timezone: 'Africa/Lagos',
     isVerified: true,
     billingCycle: 'monthly',
-    automations: { generateEODReport: true, sendLowStockAlerts: false },
+    automations: { generateEODReport: true, sendLowStockAlerts: false, sendCreditLimitAlerts: false },
     logisticsConfig: { activeTrackerProviderId: 'teltonika' }
 };
 
@@ -263,6 +264,10 @@ const deposits: Deposit[] = [
     { id: 'dep-1', customerId: 'cust-2', amount: 500, date: new Date(new Date().setDate(new Date().getDate() - 3)), staffId: 'staff-1', branchId: 'branch-1', status: 'ACTIVE' },
 ];
 
+const initialCreditPayments: CreditPayment[] = [
+    { id: 'cp-1', customerId: 'cust-1', amount: 100, date: new Date(new Date().setDate(new Date().getDate() - 10)), recordedByStaffId: 'staff-1' }
+];
+
 const supportTickets: SupportTicket[] = [
     { id: 'ticket-1', tenantId: 'tenant-123', subject: 'Problem with printer', department: 'Technical', priority: 'High', status: 'Open', createdAt: new Date(), updatedAt: new Date(), messages: [{id: 'msg-1', sender: 'TENANT', message: 'My receipt printer is not working.', timestamp: new Date()}] }
 ];
@@ -311,6 +316,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [smsTemplatesState, setSmsTemplatesState] = useState<SmsTemplate[]>(smsTemplates);
     const [auditLogsState, setAuditLogsState] = useState<AuditLog[]>(auditLogs);
     const [depositsState, setDepositsState] = useState<Deposit[]>(deposits);
+    const [creditPaymentsState, setCreditPaymentsState] = useState<CreditPayment[]>(initialCreditPayments);
     const [supportTicketsState, setSupportTicketsState] = useState<SupportTicket[]>(supportTickets);
     const [inAppNotifications, setInAppNotifications] = useState<InAppNotification[]>([]);
     const [budgetsState, setBudgetsState] = useState<Budget[]>(budgets);
@@ -673,6 +679,19 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         return { success: true, message: `${messageType} sent to ${customerIds.length} customers successfully.` };
     }, [logAction]);
 
+    const recordCreditPayment = useCallback((customerId: string, amount: number, staffId: string) => {
+        setCustomersState(prev => prev.map(c => c.id === customerId ? { ...c, creditBalance: Math.max(0, c.creditBalance - amount) } : c));
+        const newPayment: CreditPayment = {
+            id: `cp-${Date.now()}`,
+            customerId,
+            amount,
+            date: new Date(),
+            recordedByStaffId: staffId,
+        };
+        setCreditPaymentsState(prev => [newPayment, ...prev]);
+        logAction('CREDIT_PAYMENT_RECORDED', `Recorded payment of ${formatCurrency(amount)} for customer ${customerId}`);
+    }, [logAction, formatCurrency]);
+
     // Most functions are defined via useCallback to maintain reference equality
     const memoizedSetters = {
         // ... other setters
@@ -843,9 +862,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }, []),
         addCustomer: useCallback((customerData: Omit<Customer, 'id' | 'creditBalance'>) => setCustomersState(prev => [...prev, { ...customerData, id: `cust-${Date.now()}`, creditBalance: 0 }]), []),
         deleteCustomer: useCallback((customerId: string) => setCustomersState(prev => prev.filter(c => c.id !== customerId)), []),
-        recordCreditPayment: useCallback((customerId: string, amount: number) => {
-            setCustomersState(prev => prev.map(c => c.id === customerId ? { ...c, creditBalance: Math.max(0, c.creditBalance - amount) } : c));
-        }, []),
+        recordCreditPayment,
         addDeposit: useCallback(async (depositData: Omit<Deposit, 'id' | 'date' | 'status'>): Promise<{success: boolean, message: string}> => {
             const newDeposit: Deposit = { ...depositData, id: `dep-${Date.now()}`, date: new Date(), status: 'ACTIVE' };
             setDepositsState(prev => [newDeposit, ...prev]);
@@ -1072,7 +1089,9 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         purchaseOrders: purchaseOrdersState, accounts: accountsState, journalEntries: journalEntriesState,
         announcements: announcementsState, customers: customersState, consignments: consignmentsState,
         categories: categoriesState, paymentTransactions: paymentTransactionsState, emailTemplates: emailTemplatesState,
-        smsTemplates: smsTemplatesState, auditLogs: auditLogsState, deposits: depositsState, supportTickets: supportTicketsState,
+        smsTemplates: smsTemplatesState, auditLogs: auditLogsState, deposits: depositsState,
+        creditPayments: creditPaymentsState,
+        supportTickets: supportTicketsState,
         blogPosts: blogPostsState,
         inAppNotifications,
         budgets: budgetsState,

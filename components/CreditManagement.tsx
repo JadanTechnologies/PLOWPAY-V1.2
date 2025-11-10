@@ -1,12 +1,12 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
-import { Customer, Sale } from '../types';
+import { useAppContext } from '../../hooks/useAppContext';
+import { Customer, Sale } from '../../types';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../hooks/useCurrency';
+import { useCurrency } from '../../hooks/useCurrency';
 import ConfirmationModal from './ConfirmationModal';
 
 const CustomerCreditDetailModal: React.FC<{ customer: Customer; onClose: () => void; }> = ({ customer, onClose }) => {
-    const { sales, recordCreditPayment, setNotification } = useAppContext();
+    const { sales, recordCreditPayment, setNotification, currentStaffUser } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [paymentAmount, setPaymentAmount] = useState('');
 
@@ -18,7 +18,8 @@ const CustomerCreditDetailModal: React.FC<{ customer: Customer; onClose: () => v
         if (paymentAmount) {
             const amount = parseFloat(paymentAmount);
             if (amount > 0 && amount <= customer.creditBalance) {
-                recordCreditPayment(customer.id, amount);
+                // FIX: Added missing staffId argument to recordCreditPayment call.
+                recordCreditPayment(customer.id, amount, currentStaffUser?.id || 'staff-unknown');
                 setNotification({ type: 'success', message: `Payment of ${formatCurrency(amount)} recorded for ${customer.name}.` });
                 onClose();
             } else {

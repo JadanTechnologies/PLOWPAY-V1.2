@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../hooks/useCurrency';
+import { useCurrency } from '../../hooks/useCurrency';
 
 const ProgressBar: React.FC<{ value: number; max: number }> = ({ value, max }) => {
     const percentage = max > 0 ? Math.min((value / max) * 100, 100) : 0;
@@ -81,10 +81,10 @@ const Budgeting: React.FC = () => {
         });
     };
     
-    // FIX: Removed unnecessary Number() conversion as 'amount' is already a number. This resolves the TypeScript error.
-    const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + amount, 0), [localBudgets]);
-    // FIX: Removed unnecessary Number() conversion as 'amount' is already a number. This resolves the TypeScript error.
-    const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum, amount) => sum + amount, 0), [monthlyExpenses]);
+    // FIX: Explicitly cast `amount` to a number as Object.values may not be strongly typed.
+    const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + Number(amount), 0), [localBudgets]);
+    // FIX: Explicitly cast `amount` to a number as Object.values may not be strongly typed.
+    const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum, amount) => sum + Number(amount), 0), [monthlyExpenses]);
 
     return (
         <div className="space-y-6">

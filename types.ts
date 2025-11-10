@@ -209,6 +209,7 @@ export type TenantStatus = 'ACTIVE' | 'SUSPENDED' | 'TRIAL' | 'UNVERIFIED';
 export interface TenantAutomations {
   generateEODReport: boolean;
   sendLowStockAlerts: boolean;
+  sendCreditLimitAlerts: boolean;
 }
 
 export interface Tenant {
@@ -466,6 +467,14 @@ export interface Deposit {
     appliedSaleId?: string;
 }
 
+export interface CreditPayment {
+  id: string;
+  customerId: string;
+  amount: number;
+  date: Date;
+  recordedByStaffId: string;
+}
+
 export interface TicketMessage { id: string; sender: 'TENANT' | 'ADMIN'; message: string; timestamp: Date; }
 export interface SupportTicket {
     id: string;
@@ -546,6 +555,7 @@ export interface AppContextType {
     smsTemplates: SmsTemplate[];
     auditLogs: AuditLog[];
     deposits: Deposit[];
+    creditPayments: CreditPayment[];
     supportTickets: SupportTicket[];
     blogPosts: BlogPost[];
     inAppNotifications: InAppNotification[];
@@ -637,7 +647,7 @@ export interface AppContextType {
     markAnnouncementAsRead: (announcementId: string, userId: string) => void;
     addCustomer: (customerData: Omit<Customer, 'id' | 'creditBalance'>) => void;
     deleteCustomer: (customerId: string) => void;
-    recordCreditPayment: (customerId: string, amount: number) => void;
+    recordCreditPayment: (customerId: string, amount: number, staffId: string) => void;
     addDeposit: (depositData: Omit<Deposit, 'id' | 'date' | 'status'>) => Promise<{ success: boolean; message: string }>;
     updateDeposit: (depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes' | 'appliedSaleId'>>) => void;
     addConsignment: (consignmentData: Omit<Consignment, 'id' | 'status'>) => void;

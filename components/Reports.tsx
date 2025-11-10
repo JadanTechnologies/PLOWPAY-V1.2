@@ -3,7 +3,7 @@ import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import { Sale, Customer, PurchaseOrder, Consignment, Supplier, Product, Staff } from '../types';
-import { useCurrency } from '../hooks/useCurrency';
+import { useCurrency } from '../../hooks/useCurrency';
 
 const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
     <div className={`animate-pulse bg-slate-700 rounded ${className}`} />
@@ -473,10 +473,10 @@ const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurren
 };
 
 const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
-    // FIX: Removed unnecessary Number() conversion as creditBalance is already a number. This resolves the TypeScript error.
-    const creditCustomers = useMemo(() => customers.filter(c => c.creditBalance > 0), [customers]);
-    // FIX: Removed unnecessary Number() conversion as creditBalance is already a number. This resolves the TypeScript error.
-    const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + c.creditBalance, 0), [creditCustomers]);
+    // FIX: Explicitly cast creditBalance to a number to resolve TypeScript type inference issue.
+    const creditCustomers = useMemo(() => customers.filter(c => Number(c.creditBalance) > 0), [customers]);
+    // FIX: Explicitly cast creditBalance to a number to resolve TypeScript type inference issue.
+    const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + Number(c.creditBalance), 0), [creditCustomers]);
 
     return (
         <table className="w-full text-left">

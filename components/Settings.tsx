@@ -597,10 +597,10 @@ const Roles: React.FC = () => {
 
 const Automations: React.FC = () => {
     const { currentTenant, updateTenantAutomations } = useAppContext();
-    const [automations, setAutomations] = useState<TenantAutomations>(currentTenant?.automations || { generateEODReport: false, sendLowStockAlerts: false });
+    const [automations, setAutomations] = useState<TenantAutomations>(currentTenant?.automations || { generateEODReport: false, sendLowStockAlerts: false, sendCreditLimitAlerts: false });
 
     useEffect(() => {
-        setAutomations(currentTenant?.automations || { generateEODReport: false, sendLowStockAlerts: false });
+        setAutomations(currentTenant?.automations || { generateEODReport: false, sendLowStockAlerts: false, sendCreditLimitAlerts: false });
     }, [currentTenant?.automations]);
 
     const handleToggle = (key: keyof TenantAutomations) => {
@@ -625,6 +625,13 @@ const Automations: React.FC = () => {
                         <p className="text-sm text-slate-400">Receive an in-app notification when an item's stock reaches its reorder point.</p>
                     </div>
                     <Toggle enabled={automations.sendLowStockAlerts} onChange={() => handleToggle('sendLowStockAlerts')} />
+                </div>
+                 <div className="flex items-center justify-between p-4 bg-slate-700/50 rounded-lg">
+                    <div>
+                        <h4 className="font-semibold text-white">Credit Limit Alerts</h4>
+                        <p className="text-sm text-slate-400">Receive an in-app notification when a customer approaches or exceeds their credit limit.</p>
+                    </div>
+                    <Toggle enabled={automations.sendCreditLimitAlerts} onChange={() => handleToggle('sendCreditLimitAlerts')} />
                 </div>
             </div>
         </SettingCard>
