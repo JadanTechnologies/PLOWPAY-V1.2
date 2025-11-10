@@ -4,7 +4,7 @@ import Icon from './icons/index.tsx';
 import { Staff as StaffType, StaffRole, TenantPermission, TenantAutomations, Branch } from '../types';
 import { allCurrencies, allLanguages, allTimezones } from '../utils/data';
 import ConfirmationModal from './ConfirmationModal';
-import GoogleMap from './GoogleMap';
+import MapComponent from './GoogleMap';
 
 
 type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations' | 'security';
@@ -252,7 +252,7 @@ const LocationEditModal: React.FC<{ branch: Branch; onClose: () => void; onSave:
                 </div>
                 <div className="flex-grow bg-slate-900">
                      {typeof window.L === 'undefined' ? <p className="p-4 text-center text-red-400">Map could not be loaded.</p> : (
-                        <GoogleMap 
+                        <MapComponent 
                             onClick={(latlng) => setSelectedLocation(latlng)}
                             editableBranch={{
                                 branch: { ...branch, location: selectedLocation },
@@ -324,7 +324,7 @@ const Branches: React.FC = () => {
                             <p className="text-slate-400 text-sm">Please check your internet connection.</p>
                         </div>
                     ) : (
-                        <GoogleMap branches={branches} />
+                        <MapComponent branches={branches} />
                     )}
                 </div>
             </div>

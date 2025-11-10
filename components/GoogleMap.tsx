@@ -16,7 +16,7 @@ interface MapProps {
     editableBranch?: { branch: Branch; onPositionChange: (latlng: { lat: number, lng: number }) => void; };
 }
 
-const GoogleMap: React.FC<MapProps> = ({ trucks = [], shipments = [], branches = [], users = [], onClick, editableBranch }) => {
+const MapComponent: React.FC<MapProps> = ({ trucks = [], shipments = [], branches = [], users = [], onClick, editableBranch }) => {
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstance = useRef<any>(null);
     const markersRef = useRef<Map<string, any>>(new Map());
@@ -211,4 +211,4 @@ const GoogleMap: React.FC<MapProps> = ({ trucks = [], shipments = [], branches =
     return <div ref={mapRef} style={{ width: '100%', height: '100%' }} />;
 };
 
-export default GoogleMap;
+export default MapComponent;

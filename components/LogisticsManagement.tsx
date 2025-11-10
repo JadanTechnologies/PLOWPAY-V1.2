@@ -1,8 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
+import { useAppContext } from '../../hooks/useAppContext';
 import { Truck, Shipment, TrackerProvider, Customer } from '../types';
 import Icon from './icons/index.tsx';
-import GoogleMap from './GoogleMap.tsx';
+import MapComponent from './GoogleMap.tsx';
 import ConfirmationModal from './ConfirmationModal';
 
 type ModalState = 'NONE' | 'TRUCK' | 'SHIPMENT' | 'SELL_SHIPMENT';
@@ -353,7 +353,7 @@ const LogisticsManagement: React.FC = () => {
                                 </p>
                             </div>
                         ) : (
-                            <GoogleMap trucks={trucks} shipments={shipments} branches={branches} />
+                            <MapComponent trucks={trucks} shipments={shipments} branches={branches} />
                         )}
                     </div>
                 </div>

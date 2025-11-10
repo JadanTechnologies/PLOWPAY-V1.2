@@ -15,7 +15,7 @@ import {
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from '../icons/index.tsx';
 import { useCurrency } from '../../hooks/useCurrency';
-import GoogleMap from '../GoogleMap';
+import MapComponent from '../GoogleMap';
 
 const MetricCard: React.FC<{ title: string; value: string; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-700">
@@ -188,7 +188,7 @@ const PlatformDashboard: React.FC = () => {
                             <p className="text-slate-400 text-sm">Please check your internet connection.</p>
                         </div>
                     ) : (
-                        <GoogleMap users={[...tenants, ...staff]} />
+                        <MapComponent users={[...tenants, ...staff]} />
                     )}
                 </div>
             </div>

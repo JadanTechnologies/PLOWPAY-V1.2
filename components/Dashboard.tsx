@@ -6,7 +6,7 @@ import { Sale } from '../types';
 import { useCurrency } from '../hooks/useCurrency';
 import { useTranslation } from '../hooks/useTranslation';
 import AIInsights from './AIInsights';
-import GoogleMap from './GoogleMap';
+import MapComponent from './GoogleMap';
 
 const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
     <div className={`animate-pulse bg-slate-200 dark:bg-slate-700 rounded ${className}`} />
@@ -179,7 +179,7 @@ const Dashboard: React.FC = () => {
                       <p className="text-slate-400 text-sm">Please check your internet connection.</p>
                   </div>
               ) : (
-                  <GoogleMap users={staff} branches={branches} />
+                  <MapComponent users={staff} branches={branches} />
               )}
           </div>
       </div>

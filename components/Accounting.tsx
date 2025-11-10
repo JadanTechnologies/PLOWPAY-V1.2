@@ -1,8 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
+import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { Account, JournalEntry } from '../types';
-import { useCurrency } from '../hooks/useCurrency';
+import { useCurrency } from '../../hooks/useCurrency';
 
 type AccountingTab = 'dashboard' | 'journal' | 'accounts' | 'reports';
 
@@ -27,7 +27,7 @@ const Accounting: React.FC = () => {
     const [isAccountModalOpen, setAccountModalOpen] = useState(false);
     const [isJournalModalOpen, setJournalModalOpen] = useState(false);
 
-    const [accountForm, setAccountForm] = useState({ name: '', type: 'ASSET' as Account['type'] });
+    const [accountForm, setAccountForm] = useState({ name: '', type: 'EXPENSE' as Account['type'] });
     const [journalForm, setJournalForm] = useState({ description: '', transactions: [{ accountId: '', amount: 0 }, { accountId: '', amount: 0 }] });
 
     const financials = useMemo(() => {
@@ -44,7 +44,7 @@ const Accounting: React.FC = () => {
         if(accountForm.name) {
             addAccount(accountForm);
             setAccountModalOpen(false);
-            setAccountForm({ name: '', type: 'ASSET' });
+            setAccountForm({ name: '', type: 'EXPENSE' });
         }
     };
     
@@ -190,13 +190,25 @@ const Accounting: React.FC = () => {
             {/* Modals */}
             {isAccountModalOpen && (
                  <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-                    <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md">
+                    <div className="bg-slate-800 rounded-lg p-6 w-full max-w-md border border-slate-700">
                         <h3 className="text-xl font-bold mb-4">Add New Account</h3>
                         <div className="space-y-4">
-                            <div><label className="text-sm">Account Name</label><input type="text" onChange={e => setAccountForm({...accountForm, name: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1"/></div>
-                            <div><label className="text-sm">Account Type</label><select onChange={e => setAccountForm({...accountForm, type: e.target.value as Account['type']})} className="w-full bg-slate-700 p-2 rounded-md mt-1"><option>ASSET</option><option>LIABILITY</option><option>EQUITY</option><option>REVENUE</option><option>EXPENSE</option></select></div>
+                            <div>
+                                <label className="text-sm font-medium text-slate-400">Account Name</label>
+                                <input type="text" onChange={e => setAccountForm({...accountForm, name: e.target.value})} className="w-full bg-slate-700 p-2 rounded-md mt-1"/>
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium text-slate-400">Account Type</label>
+                                <select value={accountForm.type} onChange={e => setAccountForm({...accountForm, type: e.target.value as Account['type']})} className="w-full bg-slate-700 p-2 rounded-md mt-1">
+                                    <option value="EXPENSE">Expense</option>
+                                    <option value="ASSET">Asset</option>
+                                    <option value="LIABILITY">Liability</option>
+                                    <option value="EQUITY">Equity</option>
+                                    <option value="REVENUE">Revenue</option>
+                                </select>
+                            </div>
                         </div>
-                        <div className="flex justify-end gap-3 mt-6"><button onClick={() => setAccountModalOpen(false)} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500">Cancel</button><button onClick={handleAddAccount} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500">Save</button></div>
+                        <div className="flex justify-end gap-3 mt-6"><button onClick={() => setAccountModalOpen(false)} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500 font-semibold">Cancel</button><button onClick={handleAddAccount} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500 font-semibold">Save</button></div>
                     </div>
                 </div>
             )}
@@ -209,13 +221,13 @@ const Accounting: React.FC = () => {
                            {journalForm.transactions.map((tx, index) => (
                                <div key={index} className="flex gap-4 items-end">
                                    <div className="flex-1"><label className="text-sm">Account</label><select value={tx.accountId} onChange={e => handleJournalTransactionChange(index, 'accountId', e.target.value)} className="w-full bg-slate-700 p-2 rounded-md mt-1"><option value="">Select Account</option>{accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}</select></div>
-                                   <div><label className="text-sm">Debit</label><input type="number" onChange={e => handleJournalTransactionChange(index, 'amount', e.target.value)} value={tx.amount > 0 ? tx.amount : ''} className="w-full bg-slate-700 p-2 rounded-md mt-1"/></div>
-                                   <div><label className="text-sm">Credit</label><input type="number" onChange={e => handleJournalTransactionChange(index, 'amount', `-${e.target.value}`)} value={tx.amount < 0 ? -tx.amount : ''} className="w-full bg-slate-700 p-2 rounded-md mt-1"/></div>
+                                   <div><label className="text-sm">Debit</label><input type="number" onChange={e => handleJournalTransactionChange(index, 'amount', e.target.value)} disabled={tx.amount < 0} value={tx.amount > 0 ? tx.amount : ''} className="w-full bg-slate-700 p-2 rounded-md mt-1"/></div>
+                                   <div><label className="text-sm">Credit</label><input type="number" onChange={e => handleJournalTransactionChange(index, 'amount', `-${e.target.value}`)} disabled={tx.amount > 0} value={tx.amount < 0 ? -tx.amount : ''} className="w-full bg-slate-700 p-2 rounded-md mt-1"/></div>
                                </div>
                            ))}
-                           <button onClick={addJournalTransactionRow} className="text-cyan-400 text-sm font-semibold">+ Add line</button>
+                           <button onClick={addJournalTransactionRow} className="text-cyan-400 text-sm font-semibold">+ Add Line</button>
                         </div>
-                        <div className="flex justify-end gap-3 mt-6"><button onClick={() => setJournalModalOpen(false)} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500">Cancel</button><button onClick={handleAddJournalEntry} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500">Save Entry</button></div>
+                        <div className="flex justify-end gap-3 mt-6"><button onClick={() => setJournalModalOpen(false)} className="px-4 py-2 rounded-md bg-slate-600 hover:bg-slate-500 font-semibold">Cancel</button><button onClick={handleAddJournalEntry} className="px-4 py-2 rounded-md bg-cyan-600 hover:bg-cyan-500 font-semibold">Save Entry</button></div>
                     </div>
                 </div>
             )}
