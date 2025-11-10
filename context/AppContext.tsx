@@ -246,10 +246,12 @@ const paymentTransactions: PaymentTransaction[] = [
 const emailTemplates: EmailTemplate[] = [
     { id: 'tmpl-welcome', name: 'Welcome Email', subject: 'Welcome to FlowPay!', body: 'Hello {{tenantName}}, welcome aboard!' },
     { id: 'tmpl-expiry', name: 'Trial Expiry Reminder', subject: 'Your trial is ending soon', body: 'Hi {{tenantName}}, your trial for the {{planName}} plan is ending soon.' },
+    { id: 'tmpl-tenant-promo', tenantId: 'tenant-123', name: 'Summer Sale Promo', subject: '☀️ Summer Sale is Here!', body: 'Hi {{customerName}},\n\nGet ready for our summer sale! Enjoy up to 50% off on selected items.\n\nThanks,\n{{businessName}}' },
 ];
 
 const smsTemplates: SmsTemplate[] = [
-    { id: 'tmpl-sms-receipt', name: 'Sale Receipt SMS', body: 'Thank you for your purchase of {{amount}} at {{businessName}}!' }
+    { id: 'tmpl-sms-receipt', name: 'Sale Receipt SMS', body: 'Thank you for your purchase of {{amount}} at {{businessName}}!' },
+    { id: 'tmpl-tenant-sms-alert', tenantId: 'tenant-123', name: 'New Stock Alert', body: 'Hi {{customerName}}, new stock just arrived at {{businessName}}. Come check it out!' }
 ];
 
 const auditLogs: AuditLog[] = [
@@ -634,6 +636,43 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         });
     }, [setNotification]);
 
+    const addTenantEmailTemplate = useCallback((templateData: Omit<EmailTemplate, 'id' | 'tenantId'>) => {
+        if (!currentTenant) return;
+        const newTemplate: EmailTemplate = { ...templateData, id: `tmpl-email-${Date.now()}`, tenantId: currentTenant.id };
+        setEmailTemplatesState(prev => [...prev, newTemplate]);
+    }, [currentTenant]);
+
+    const updateTenantEmailTemplate = useCallback((templateId: string, updates: Partial<Omit<EmailTemplate, 'id' | 'tenantId'>>) => {
+        setEmailTemplatesState(prev => prev.map(t => (t.id === templateId && t.tenantId === currentTenant?.id) ? { ...t, ...updates } : t));
+    }, [currentTenant]);
+
+    const deleteTenantEmailTemplate = useCallback((templateId: string) => {
+        setEmailTemplatesState(prev => prev.filter(t => !(t.id === templateId && t.tenantId === currentTenant?.id)));
+    }, [currentTenant]);
+
+    const addTenantSmsTemplate = useCallback((templateData: Omit<SmsTemplate, 'id' | 'tenantId'>) => {
+        if (!currentTenant) return;
+        const newTemplate: SmsTemplate = { ...templateData, id: `tmpl-sms-${Date.now()}`, tenantId: currentTenant.id };
+        setSmsTemplatesState(prev => [...prev, newTemplate]);
+    }, [currentTenant]);
+
+    const updateTenantSmsTemplate = useCallback((templateId: string, updates: Partial<Omit<SmsTemplate, 'id' | 'tenantId'>>) => {
+        setSmsTemplatesState(prev => prev.map(t => (t.id === templateId && t.tenantId === currentTenant?.id) ? { ...t, ...updates } : t));
+    }, [currentTenant]);
+
+    const deleteTenantSmsTemplate = useCallback((templateId: string) => {
+        setSmsTemplatesState(prev => prev.filter(t => !(t.id === templateId && t.tenantId === currentTenant?.id)));
+    }, [currentTenant]);
+
+    const sendBulkMessage = useCallback(async (type: 'email' | 'sms', customerIds: string[], message: string, subject?: string): Promise<{ success: boolean; message: string }> => {
+        // This is a simulation.
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const messageType = type === 'email' ? 'Email' : 'SMS';
+        const logDetails = `${messageType} sent to ${customerIds.length} customers. Subject: ${subject || 'N/A'}`;
+        logAction(`SENT_BULK_${type.toUpperCase()}`, logDetails);
+        return { success: true, message: `${messageType} sent to ${customerIds.length} customers successfully.` };
+    }, [logAction]);
+
     // Most functions are defined via useCallback to maintain reference equality
     const memoizedSetters = {
         // ... other setters
@@ -948,6 +987,13 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             - Investigate the sales dip. Was it a weekend? A holiday?
             - Offer a loyalty discount to 'Alice Johnson' to encourage repeat business.`;
         }, []),
+        addTenantEmailTemplate,
+        updateTenantEmailTemplate,
+        deleteTenantEmailTemplate,
+        addTenantSmsTemplate,
+        updateTenantSmsTemplate,
+        deleteTenantSmsTemplate,
+        sendBulkMessage,
     };
     
     // Non-memoized setters

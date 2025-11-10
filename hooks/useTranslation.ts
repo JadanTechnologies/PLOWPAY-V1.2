@@ -26,6 +26,7 @@ const translations: Record<string, Record<string, string>> = {
     auditLogs: 'Audit Logs',
     depositmanagement: 'Deposit Management',
     budgeting: 'Budgeting',
+    communications: 'Communications',
   },
   es: {
     dashboard: 'Tablero',
@@ -50,6 +51,7 @@ const translations: Record<string, Record<string, string>> = {
     auditLogs: 'Registros de Auditoría',
     depositmanagement: 'Gestión de Depósitos',
     budgeting: 'Presupuesto',
+    communications: 'Comunicaciones',
   },
   fr: {
     dashboard: 'Tableau de Bord',
@@ -74,6 +76,7 @@ const translations: Record<string, Record<string, string>> = {
     auditLogs: 'Journaux d\'audit',
     depositmanagement: 'Gestion des Dépôts',
     budgeting: 'Budgétisation',
+    communications: 'Communications',
   },
   de: {
     dashboard: 'Dashboard',
@@ -97,6 +100,7 @@ const translations: Record<string, Record<string, string>> = {
     profile: 'Profil',
     auditLogs: 'Audit-Protokolle',
     depositmanagement: 'Einlagenverwaltung',
+    communications: 'Kommunikation',
   },
   it: {
     dashboard: 'Cruscotto',
@@ -120,6 +124,7 @@ const translations: Record<string, Record<string, string>> = {
     profile: 'Profilo',
     auditLogs: 'Log di Audit',
     depositmanagement: 'Gestione Depositi',
+    communications: 'Comunicazioni',
   },
   pt: {
     dashboard: 'Painel',
@@ -143,6 +148,7 @@ const translations: Record<string, Record<string, string>> = {
     profile: 'Perfil',
     auditLogs: 'Logs de Auditoria',
     depositmanagement: 'Gerenciamento de Depósitos',
+    communications: 'Comunicações',
   },
   ru: {
     dashboard: 'Панель управления',
@@ -166,6 +172,7 @@ const translations: Record<string, Record<string, string>> = {
     profile: 'Профиль',
     auditLogs: 'Журналы аудита',
     depositmanagement: 'Управление депозитами',
+    communications: 'Коммуникации',
   },
   zh: {
     dashboard: '仪表板',
@@ -189,6 +196,7 @@ const translations: Record<string, Record<string, string>> = {
     profile: '个人资料',
     auditLogs: '审计日志',
     depositmanagement: '存款管理',
+    communications: '通讯',
   },
   ja: {
     dashboard: 'ダッシュボード',
@@ -212,6 +220,7 @@ const translations: Record<string, Record<string, string>> = {
     profile: 'プロフィール',
     auditLogs: '監査ログ',
     depositmanagement: '預金管理',
+    communications: 'コミュニケーション',
   },
   ko: {
     dashboard: '대시보드',
@@ -235,6 +244,7 @@ const translations: Record<string, Record<string, string>> = {
     profile: '프로필',
     auditLogs: '감사 로그',
     depositmanagement: '예금 관리',
+    communications: '커뮤니케이션',
   },
   ar: {
     dashboard: 'لوحة القيادة',
@@ -258,6 +268,7 @@ const translations: Record<string, Record<string, string>> = {
     profile: 'الملف الشخصي',
     auditLogs: 'سجلات المراجعة',
     depositmanagement: 'إدارة الودائع',
+    communications: 'مجال الاتصالات',
   },
   hi: {
     dashboard: 'डैशबोर्ड',
@@ -281,6 +292,7 @@ const translations: Record<string, Record<string, string>> = {
     profile: 'प्रोफ़ाइल',
     auditLogs: 'ऑडिट लॉग',
     depositmanagement: 'जमा प्रबंधन',
+    communications: 'संचार',
   }
 };
 

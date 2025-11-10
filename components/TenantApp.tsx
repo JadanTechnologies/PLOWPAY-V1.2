@@ -24,6 +24,8 @@ import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons';
 import TenantSupport from './tenant/Support';
 import Budgeting from './Budgeting';
+import TemplateManagement from './tenant/TemplateManagement';
+import Communications from './tenant/Communications';
 
 
 const TenantApp: React.FC = () => {
@@ -104,6 +106,10 @@ const TenantApp: React.FC = () => {
         return <TenantAuditLogs />;
       case 'SUPPORT':
         return <TenantSupport />;
+      case 'TEMPLATES':
+        return <TemplateManagement />;
+      case 'COMMUNICATIONS':
+        return <Communications />;
       default:
         return <Dashboard />;
     }

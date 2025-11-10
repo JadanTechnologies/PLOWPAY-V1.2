@@ -473,8 +473,10 @@ const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurren
 };
 
 const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
-    const creditCustomers = useMemo(() => customers.filter(c => Number(c.creditBalance) > 0), [customers]);
-    const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + Number(c.creditBalance), 0), [creditCustomers]);
+    // FIX: Removed unnecessary Number() conversion as creditBalance is already a number. This resolves the TypeScript error.
+    const creditCustomers = useMemo(() => customers.filter(c => c.creditBalance > 0), [customers]);
+    // FIX: Removed unnecessary Number() conversion as creditBalance is already a number. This resolves the TypeScript error.
+    const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + c.creditBalance, 0), [creditCustomers]);
 
     return (
         <table className="w-full text-left">

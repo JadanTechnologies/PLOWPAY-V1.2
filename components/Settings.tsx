@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
@@ -10,6 +9,7 @@ import GoogleMap from './GoogleMap';
 
 type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations' | 'security';
 
+// FIX: Added missing permission labels for 'manageTemplates' and 'sendCommunications' to satisfy the Record<TenantPermission, string> type.
 const permissionLabels: Record<TenantPermission, string> = {
     accessPOS: 'Access Point of Sale',
     manageInventory: 'Manage Inventory',
@@ -24,12 +24,15 @@ const permissionLabels: Record<TenantPermission, string> = {
     manageDeposits: 'Manage Deposits',
     accessReturns: 'Process Returns',
     accessSupport: 'Access Support',
+    manageTemplates: 'Manage Templates',
+    sendCommunications: 'Send Communications',
 };
 
+// FIX: Added missing permissions to the 'Administration' group so they appear in the UI.
 const permissionGroups: Record<string, TenantPermission[]> = {
     'Sales & Operations': ['accessPOS', 'managePurchases', 'makeDeposits', 'accessReturns'],
     'Inventory & Logistics': ['manageInventory', 'manageLogistics'],
-    'Administration': ['viewReports', 'manageStaff', 'accessSettings', 'accessAccounting', 'viewAuditLogs', 'manageDeposits', 'accessSupport'],
+    'Administration': ['viewReports', 'manageStaff', 'accessSettings', 'accessAccounting', 'viewAuditLogs', 'manageDeposits', 'accessSupport', 'manageTemplates', 'sendCommunications'],
 };
 
 const CollapsiblePermissionSection: React.FC<{

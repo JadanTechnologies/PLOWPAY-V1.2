@@ -34,7 +34,9 @@ export type TenantPermission =
  | 'makeDeposits'
  | 'manageDeposits'
  | 'accessReturns'
- | 'accessSupport';
+ | 'accessSupport'
+ | 'manageTemplates'
+ | 'sendCommunications';
 
 export const allTenantPermissions: TenantPermission[] = [
     'accessPOS',
@@ -50,6 +52,8 @@ export const allTenantPermissions: TenantPermission[] = [
     'manageDeposits',
     'accessReturns',
     'accessSupport',
+    'manageTemplates',
+    'sendCommunications',
 ];
 
 
@@ -436,8 +440,8 @@ export interface PaymentTransaction {
     proofOfPaymentUrl?: string;
 }
 
-export interface EmailTemplate { id: string; name: string; subject: string; body: string; }
-export interface SmsTemplate { id: string; name: string; body: string; }
+export interface EmailTemplate { id: string; name: string; subject: string; body: string; tenantId?: string; }
+export interface SmsTemplate { id: string; name: string; body: string; tenantId?: string; }
 export interface InAppNotification { id: string; userId: string; message: string; read: boolean; createdAt: Date; }
 export interface AuditLog {
     id: string;
@@ -659,4 +663,11 @@ export interface AppContextType {
     generateInsights: () => Promise<string>;
     updateBudget: (accountId: string, amount: number, period: string) => void;
     deleteBudget: (accountId: string, period: string) => void;
+    addTenantEmailTemplate: (templateData: Omit<EmailTemplate, 'id' | 'tenantId'>) => void;
+    updateTenantEmailTemplate: (templateId: string, updates: Partial<Omit<EmailTemplate, 'id' | 'tenantId'>>) => void;
+    deleteTenantEmailTemplate: (templateId: string) => void;
+    addTenantSmsTemplate: (templateData: Omit<SmsTemplate, 'id' | 'tenantId'>) => void;
+    updateTenantSmsTemplate: (templateId: string, updates: Partial<Omit<SmsTemplate, 'id' | 'tenantId'>>) => void;
+    deleteTenantSmsTemplate: (templateId: string) => void;
+    sendBulkMessage: (type: 'email' | 'sms', customerIds: string[], message: string, subject?: string) => Promise<{ success: boolean; message: string }>;
 }

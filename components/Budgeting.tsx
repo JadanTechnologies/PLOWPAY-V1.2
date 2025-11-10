@@ -81,8 +81,10 @@ const Budgeting: React.FC = () => {
         });
     };
     
-    const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + Number(amount), 0), [localBudgets]);
-    const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum, amount) => sum + Number(amount), 0), [monthlyExpenses]);
+    // FIX: Removed unnecessary Number() conversion as 'amount' is already a number. This resolves the TypeScript error.
+    const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + amount, 0), [localBudgets]);
+    // FIX: Removed unnecessary Number() conversion as 'amount' is already a number. This resolves the TypeScript error.
+    const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum, amount) => sum + amount, 0), [monthlyExpenses]);
 
     return (
         <div className="space-y-6">
