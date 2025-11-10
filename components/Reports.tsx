@@ -1,10 +1,8 @@
-
-
 import React, { useMemo, useState } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { Sale, Customer, PurchaseOrder, Consignment, Supplier } from '../types';
+import { Sale, Customer, PurchaseOrder, Consignment, Supplier, Product, Staff } from '../types';
 import { useCurrency } from '../hooks/useCurrency';
 
 const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
@@ -58,7 +56,7 @@ const ReportsSkeleton = () => (
     </div>
 );
 
-type ReportTab = 'profit_loss' | 'sales' | 'credit' | 'purchases' | 'consignment' | 'deposit_sales';
+type ReportTab = 'profit_loss' | 'sales' | 'credit' | 'purchases' | 'consignment' | 'deposit_sales' | 'inventory_valuation' | 'sales_by_staff' | 'customer_credit';
 
 const MetricCard: React.FC<{ title: string; value: string | number; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-slate-800 rounded-lg shadow-md flex items-center">
@@ -374,6 +372,136 @@ const ConsignmentReport: React.FC<{ data: any[], formatCurrency: (val: number) =
     </div>
 );
 
+const InventoryValuationReport: React.FC<{ products: Product[], branches: Map<string, string>, branchFilter: string, formatCurrency: (val: number) => string }> = ({ products, branches, branchFilter, formatCurrency }) => {
+    const { valuationData, totalValue } = useMemo(() => {
+        const data: any[] = [];
+        let totalVal = 0;
+        products.forEach(product => {
+            product.variants.forEach(variant => {
+                Object.entries(variant.stockByBranch).forEach(([branchId, quantity]) => {
+                    if ((branchFilter === 'ALL' || branchId === branchFilter) && quantity > 0) {
+                        const value = quantity * variant.costPrice;
+                        data.push({
+                            productName: product.name,
+                            variantName: variant.name,
+                            branchName: branches.get(branchId) || 'N/A',
+                            quantity,
+                            costPrice: variant.costPrice,
+                            totalValue: value
+                        });
+                        totalVal += value;
+                    }
+                });
+            });
+        });
+        return { valuationData: data, totalValue: totalVal };
+    }, [products, branches, branchFilter]);
+
+    return (
+        <div className="overflow-x-auto max-h-[600px]">
+            <table className="w-full text-left text-sm">
+                <thead className="border-b border-slate-700 sticky top-0 bg-slate-800">
+                    <tr>
+                        <th className="p-2">Product</th><th className="p-2">Branch</th><th className="p-2 text-right">Quantity</th>
+                        <th className="p-2 text-right">Cost Price</th><th className="p-2 text-right">Total Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {valuationData.map((item, index) => (
+                        <tr key={index} className="border-b border-slate-700 hover:bg-slate-700/50">
+                            <td className="p-2">{item.productName} ({item.variantName})</td>
+                            <td className="p-2">{item.branchName}</td>
+                            <td className="p-2 text-right font-bold">{item.quantity}</td>
+                            <td className="p-2 text-right font-mono">{formatCurrency(item.costPrice)}</td>
+                            <td className="p-2 text-right font-mono">{formatCurrency(item.totalValue)}</td>
+                        </tr>
+                    ))}
+                </tbody>
+                <tfoot className="sticky bottom-0 bg-slate-800 font-bold border-t-2 border-slate-600">
+                    <tr>
+                        <td colSpan={4} className="p-2 text-right">Grand Total Inventory Value</td>
+                        <td className="p-2 text-right font-mono text-cyan-400">{formatCurrency(totalValue)}</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    );
+};
+
+const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurrency: (val: number) => string }> = ({ sales, staff, formatCurrency }) => {
+    const salesByStaffData = useMemo(() => {
+        const staffSales = new Map<string, { staffName: string; saleCount: number; totalSales: number }>();
+        sales.forEach(sale => {
+            const staffMember = staff.find(s => s.id === sale.staffId);
+            const staffName = staffMember?.name || 'Unknown Staff';
+            const current = staffSales.get(sale.staffId) || { staffName, saleCount: 0, totalSales: 0 };
+            current.saleCount += 1;
+            current.totalSales += sale.total;
+            staffSales.set(sale.staffId, current);
+        });
+        return Array.from(staffSales.values()).sort((a, b) => b.totalSales - a.totalSales);
+    }, [sales, staff]);
+
+    const totals = useMemo(() => ({
+        saleCount: salesByStaffData.reduce((sum, s) => sum + s.saleCount, 0),
+        totalSales: salesByStaffData.reduce((sum, s) => sum + s.totalSales, 0),
+    }), [salesByStaffData]);
+
+    return (
+        <table className="w-full text-left">
+            <thead className="border-b border-slate-700">
+                <tr><th className="p-3">Staff Member</th><th className="p-3 text-right">Number of Sales</th><th className="p-3 text-right">Total Sales Value</th></tr>
+            </thead>
+            <tbody>
+                {salesByStaffData.map((data, index) => (
+                    <tr key={index} className="border-b border-slate-700 hover:bg-slate-700/50">
+                        <td className="p-3 font-medium">{data.staffName}</td>
+                        <td className="p-3 text-right font-bold">{data.saleCount}</td>
+                        <td className="p-3 text-right font-mono">{formatCurrency(data.totalSales)}</td>
+                    </tr>
+                ))}
+            </tbody>
+            <tfoot className="font-bold border-t-2 border-slate-600">
+                <tr>
+                    <td className="p-3 text-right">Total</td>
+                    <td className="p-3 text-right">{totals.saleCount}</td>
+                    <td className="p-3 text-right font-mono">{formatCurrency(totals.totalSales)}</td>
+                </tr>
+            </tfoot>
+        </table>
+    );
+};
+
+const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
+    // Fix: Cast creditBalance to Number to prevent type errors if it's inferred as unknown.
+    const creditCustomers = useMemo(() => customers.filter(c => Number(c.creditBalance) > 0), [customers]);
+    // Fix: Cast creditBalance to Number to ensure correct arithmetic operation.
+    const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + Number(c.creditBalance), 0), [creditCustomers]);
+
+    return (
+        <table className="w-full text-left">
+            <thead className="border-b border-slate-700">
+                <tr><th className="p-3">Customer Name</th><th className="p-3">Phone</th><th className="p-3 text-right">Credit Balance</th></tr>
+            </thead>
+            <tbody>
+                {creditCustomers.map(customer => (
+                    <tr key={customer.id} className="border-b border-slate-700 hover:bg-slate-700/50">
+                        <td className="p-3 font-medium">{customer.name}</td>
+                        <td className="p-3 text-slate-400">{customer.phone || 'N/A'}</td>
+                        <td className="p-3 text-right font-mono text-red-400">{formatCurrency(customer.creditBalance)}</td>
+                    </tr>
+                ))}
+            </tbody>
+            <tfoot className="font-bold border-t-2 border-slate-600">
+                <tr>
+                    <td colSpan={2} className="p-3 text-right">Total Outstanding Credit</td>
+                    <td className="p-3 text-right font-mono text-red-400">{formatCurrency(totalCredit)}</td>
+                </tr>
+            </tfoot>
+        </table>
+    );
+};
+
 
 const Reports: React.FC = () => {
   const { sales, products, branches, staff, categories, customers, purchaseOrders, consignments, suppliers, brandConfig, isLoading } = useAppContext();
@@ -495,7 +623,18 @@ const Reports: React.FC = () => {
 
   const handlePrint = () => window.print();
 
-  const reportTitles: Record<ReportTab, string> = { sales: 'Detailed Sales Report', credit: 'Credit Sales Report', purchases: 'Purchase Order Report', consignment: 'Consignment Report', profit_loss: 'Profit & Loss Summary', deposit_sales: 'Deposit Sales Report' };
+  const reportTitles: Record<ReportTab, string> = { 
+    sales: 'Detailed Sales Report', 
+    credit: 'Credit Sales Report', 
+    purchases: 'Purchase Order Report', 
+    consignment: 'Consignment Report', 
+    profit_loss: 'Profit & Loss Summary', 
+    deposit_sales: 'Deposit Sales Report',
+    inventory_valuation: 'Inventory Valuation Report',
+    sales_by_staff: 'Sales by Staff Report',
+    customer_credit: 'Customer Credit Report',
+};
+
   const dateFilters = ['Today', 'This Week', 'This Month', 'Last Month', 'This Year'];
   const TabButton: React.FC<{tab: ReportTab, label: string}> = ({ tab, label }) => (<button onClick={() => setActiveReport(tab)} className={`px-4 py-2 font-medium text-sm rounded-md ${activeReport === tab ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>{label}</button>);
 
@@ -545,7 +684,15 @@ const Reports: React.FC = () => {
             </div>
             <div className="p-6 bg-slate-800 rounded-lg shadow-md">
                 <div className="flex flex-wrap gap-2 border-b border-slate-700 mb-6 pb-2 no-print">
-                    <TabButton tab="profit_loss" label="Profit & Loss" /><TabButton tab="sales" label="Detailed Sales" /><TabButton tab="credit" label="Credit Sales" /><TabButton tab="deposit_sales" label="Deposit Sales" /><TabButton tab="purchases" label="Purchase Orders" /><TabButton tab="consignment" label="Consignment" />
+                    <TabButton tab="profit_loss" label="Profit & Loss" />
+                    <TabButton tab="sales" label="Detailed Sales" />
+                    <TabButton tab="sales_by_staff" label="Sales by Staff" />
+                    <TabButton tab="inventory_valuation" label="Inventory Valuation" />
+                    <TabButton tab="customer_credit" label="Customer Credit" />
+                    <TabButton tab="credit" label="Credit Sales" />
+                    <TabButton tab="deposit_sales" label="Deposit Sales" />
+                    <TabButton tab="purchases" label="Purchase Orders" />
+                    <TabButton tab="consignment" label="Consignment" />
                 </div>
                 {activeReport === 'profit_loss' && <ProfitLossSummary data={grandTotals} formatCurrency={formatCurrency} />}
                 {activeReport === 'sales' && <DetailedSalesReport data={detailedReportData} totals={grandTotals} formatCurrency={formatCurrency} />}
@@ -553,6 +700,9 @@ const Reports: React.FC = () => {
                 {activeReport === 'deposit_sales' && <DepositSalesReport data={depositSalesData} formatCurrency={formatCurrency} />}
                 {activeReport === 'purchases' && <PurchaseOrdersReport data={purchaseData} suppliers={supplierMap} branches={branchMap} formatCurrency={formatCurrency} />}
                 {activeReport === 'consignment' && <ConsignmentReport data={consignmentReportData} formatCurrency={formatCurrency} />}
+                {activeReport === 'inventory_valuation' && <InventoryValuationReport products={products} branches={branchMap} branchFilter={branchFilter} formatCurrency={formatCurrency} />}
+                {activeReport === 'sales_by_staff' && <SalesByStaffReport sales={filteredSales} staff={staff} formatCurrency={formatCurrency} />}
+                {activeReport === 'customer_credit' && <CustomerCreditReport customers={customers} formatCurrency={formatCurrency} />}
             </div>
         </div>
     </div>
