@@ -43,7 +43,7 @@ const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void 
 
 const Settings: React.FC = () => {
     type SettingsTab = 'branding' | 'content' | 'faqs' | 'localization' | 'providers' | 'ai_settings' | 'landing' | 'featured_update' | 'supabase';
-    const [activeTab, setActiveTab] = useState<SettingsTab>('supabase');
+    const [activeTab, setActiveTab] = useState<SettingsTab>('branding');
     const { brandConfig, pageContent, systemSettings, updateBrandConfig, updatePageContent, updateFaqs, updateSystemSettings, updateLandingPageMetrics, setNotification } = useAppContext();
 
     // State for each settings tab

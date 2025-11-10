@@ -473,9 +473,7 @@ const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurren
 };
 
 const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
-    // Fix: The type of `creditBalance` is inferred as `unknown`, so it needs to be cast to a number for comparison.
     const creditCustomers = useMemo(() => customers.filter(c => Number(c.creditBalance) > 0), [customers]);
-    // Fix: The type of `creditBalance` is inferred as `unknown`, so it needs to be cast to a number for the sum operation.
     const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + Number(c.creditBalance), 0), [creditCustomers]);
 
     return (

@@ -81,9 +81,7 @@ const Budgeting: React.FC = () => {
         });
     };
     
-    // Fix: The type of `amount` is inferred as `unknown`, so it needs to be cast to a number for the sum operation.
     const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + Number(amount), 0), [localBudgets]);
-    // Fix: The type of `amount` is inferred as `unknown`, so it needs to be cast to a number for the sum operation.
     const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum, amount) => sum + Number(amount), 0), [monthlyExpenses]);
 
     return (

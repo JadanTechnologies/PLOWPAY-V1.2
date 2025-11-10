@@ -9,9 +9,9 @@ import {
     InAppNotification, MaintenanceSettings, AccessControlSettings, LandingPageMetrics, 
     AuditLog, NotificationType, Deposit, SupportTicket, TicketMessage, BlogPost, 
     LocalSession, Profile, allPermissions, IpGeolocationProvider, MapProvider, AISettings, SupabaseSettings,
-    // FIX: Import ProductVariant to resolve multiple 'Cannot find name' errors.
     ProductVariant,
-    Budget
+    Budget,
+    StockLogAction
 } from '../types';
 
 // Initial Data
@@ -462,7 +462,6 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setCurrentTenant(null); // Clear tenant context
     };
     
-    // FIX: Moved activateSubscription outside of memoizedSetters to fix ReferenceError.
     const activateSubscription = useCallback((tenantId: string, planId: string, billingCycle: 'monthly' | 'yearly') => {
         setTenantsState(prev => prev.map(t => t.id === tenantId ? { ...t, status: 'ACTIVE', planId, billingCycle, trialEndDate: undefined } : t));
     }, []);
@@ -477,16 +476,54 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }
     };
     
-    // FIX: Moved updateDeposit before addSale to make it available in its scope.
     const updateDeposit = useCallback((depositId: string, updates: Partial<Pick<Deposit, 'status' | 'notes' | 'appliedSaleId'>>) => {
         setDepositsState(prev => prev.map(d => d.id === depositId ? { ...d, ...updates } : d));
     }, []);
 
-    // FIX: Added a local formatCurrency function because useCurrency hook is not available here.
     const formatCurrency = (value: number) => {
         const currencyInfo = systemSettingsState.currencies.find(c => c.code === currentCurrency);
         const symbol = currencyInfo ? currencyInfo.symbol : '$';
         return `${symbol}${value.toFixed(2)}`;
+    };
+    
+    const adjustStock = (productId: string, variantId: string, branchId: string, quantityChange: number, reason: string) => {
+        let productName = '';
+        let variantName = '';
+        let action: StockLogAction = 'ADJUSTMENT';
+
+        if (reason === 'Sale') action = 'SALE';
+        else if (reason === 'Return') action = 'RETURN';
+        else if (reason.startsWith('Received from PO')) action = 'PURCHASE_RECEIVED';
+
+        setProductsState(prev => prev.map(p => {
+            if (p.id === productId) {
+                productName = p.name;
+                return {
+                    ...p,
+                    variants: p.variants.map(v => {
+                        if (v.id === variantId) {
+                            variantName = v.name;
+                            const oldStock = v.stockByBranch[branchId] || 0;
+                            const newStock = oldStock + quantityChange;
+                            return { ...v, stockByBranch: { ...v.stockByBranch, [branchId]: newStock } };
+                        }
+                        return v;
+                    })
+                };
+            }
+            return p;
+        }));
+        
+        const newLog: StockLog = {
+            id: `log-${Date.now()}`,
+            date: new Date(),
+            productId, variantId, productName, variantName,
+            action,
+            quantity: quantityChange,
+            branchId,
+            reason,
+        };
+        setStockLogsState(prev => [newLog, ...prev]);
     };
 
     const addSale = async (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'>): Promise<{success: boolean, message: string, newSale?: Sale}> => {
@@ -543,7 +580,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         
         // Update stock and logs
         newSale.items.forEach(item => {
-            adjustStock(item.productId, item.variantId, newSale.branchId, -item.quantity, 'Sale');
+            adjustStock(item.productId, item.variantId, newSale.branchId, item.quantity, item.quantity < 0 ? 'Return' : 'Sale');
         });
 
         logAction('CREATED_SALE', `Created sale #${newSale.id} for ${formatCurrency(newSale.total)}`, {id: newSale.staffId, name: 'Staff User', type: 'STAFF'});
@@ -569,7 +606,6 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setAdminUsersState(prev => prev.map(u => u.id === userId ? { ...u, ...userData } : u));
     };
     
-    // FIX: Moved updateShipmentStatus before memoizedSetters to make it available in other memoized functions.
     const updateShipmentStatus = useCallback((shipmentId: string, status: Shipment['status']) => setShipmentsState(prev => prev.map(s => s.id === shipmentId ? { ...s, status } : s)), []);
 
     const updateBudget = useCallback((accountId: string, amount: number, period: string) => {
@@ -649,7 +685,6 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             
             const saleTotal = shipment.items.reduce((acc, item) => acc + (item.sellingPrice * item.quantity), 0);
             
-            // FIX: Correctly map shipment items to CartItem, resolving missing 'name' and 'variantName' properties.
             const saleResult = await addSale({
                 items: shipment.items.map(i => {
                     const product = productsState.find(p => p.id === i.productId);
@@ -938,43 +973,6 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         }));
     };
     
-    const adjustStock = (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => {
-        let oldStock = 0;
-        let productName = '';
-        let variantName = '';
-
-        setProductsState(prev => prev.map(p => {
-            if (p.id === productId) {
-                productName = p.name;
-                return {
-                    ...p,
-                    variants: p.variants.map(v => {
-                        if (v.id === variantId) {
-                            variantName = v.name;
-                            oldStock = v.stockByBranch[branchId] || 0;
-                            return { ...v, stockByBranch: { ...v.stockByBranch, [branchId]: newStock } };
-                        }
-                        return v;
-                    })
-                };
-            }
-            return p;
-        }));
-        
-        const quantityChange = newStock - oldStock;
-
-        const newLog: StockLog = {
-            id: `log-${Date.now()}`,
-            date: new Date(),
-            productId, variantId, productName, variantName,
-            action: 'ADJUSTMENT',
-            quantity: quantityChange,
-            branchId,
-            reason,
-        };
-        setStockLogsState(prev => [newLog, ...prev]);
-    };
-    
      const transferStock = (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => {
         let productName = '';
         let variantName = '';
@@ -1042,7 +1040,6 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         allTenantPermissions, allPermissions, currentStaffUser, setCurrentStaffUser,
         activateSubscription,
         updateBudget, deleteBudget,
-        // FIX: Add missing properties to the context value to match AppContextType.
         updateTenant,
         updateCurrentTenantSettings,
         ...memoizedSetters,
