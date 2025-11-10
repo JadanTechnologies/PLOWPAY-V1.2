@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { useCurrency } from '../../hooks/useCurrency';
+import { Account } from '../types';
 
 const ProgressBar: React.FC<{ value: number; max: number }> = ({ value, max }) => {
     const percentage = max > 0 ? Math.min((value / max) * 100, 100) : 0;
@@ -20,12 +21,76 @@ const ProgressBar: React.FC<{ value: number; max: number }> = ({ value, max }) =
     );
 };
 
+const AddBudgetModal: React.FC<{
+    isOpen: boolean;
+    onClose: () => void;
+    onSave: (accountId: string, amount: number) => void;
+    accounts: Account[];
+}> = ({ isOpen, onClose, onSave, accounts }) => {
+    const [accountId, setAccountId] = useState(accounts[0]?.id || '');
+    const [amount, setAmount] = useState('');
+
+    useEffect(() => {
+        if (accounts.length > 0) {
+            setAccountId(accounts[0].id);
+        }
+    }, [accounts]);
+
+    const handleSave = () => {
+        if (accountId && amount && Number(amount) > 0) {
+            onSave(accountId, Number(amount));
+            onClose();
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black/80 z-50 flex justify-center items-center p-4">
+            <div className="bg-slate-800 rounded-lg shadow-xl p-6 w-full max-w-md border border-slate-700">
+                <h3 className="text-xl font-bold mb-4 text-white">Add New Budget Item</h3>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-slate-400">Expense Category</label>
+                        <select
+                            value={accountId}
+                            onChange={e => setAccountId(e.target.value)}
+                            className="w-full mt-1 bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        >
+                            {accounts.length > 0 ? (
+                                accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)
+                            ) : (
+                                <option disabled>No unbudgeted categories</option>
+                            )}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-slate-400">Budget Amount</label>
+                        <input
+                            type="number"
+                            value={amount}
+                            onChange={e => setAmount(e.target.value)}
+                            placeholder="0.00"
+                            className="w-full mt-1 bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                        />
+                    </div>
+                </div>
+                <div className="mt-6 flex justify-end space-x-3">
+                    <button onClick={onClose} className="px-4 py-2 rounded-md bg-slate-600 text-white hover:bg-slate-500 font-semibold">Cancel</button>
+                    <button onClick={handleSave} className="px-4 py-2 rounded-md bg-cyan-600 text-white hover:bg-cyan-500 font-semibold">Save Budget</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const Budgeting: React.FC = () => {
     const { accounts, journalEntries, budgets, updateBudget, deleteBudget } = useAppContext();
     const { formatCurrency } = useCurrency();
     
     const [currentPeriod, setCurrentPeriod] = useState(new Date().toISOString().slice(0, 7)); // "YYYY-MM"
     const [localBudgets, setLocalBudgets] = useState<Record<string, number>>({});
+    const [isAddModalOpen, setAddModalOpen] = useState(false);
 
     const expenseAccounts = useMemo(() => {
         return accounts.filter(acc => acc.type === 'EXPENSE');
@@ -80,6 +145,15 @@ const Budgeting: React.FC = () => {
             }
         });
     };
+
+    const handleAddBudget = (accountId: string, amount: number) => {
+        setLocalBudgets(prev => ({...prev, [accountId]: amount }));
+        updateBudget(accountId, amount, currentPeriod);
+    };
+
+    const unbudgetedAccounts = useMemo(() => {
+        return expenseAccounts.filter(acc => !localBudgets[acc.id] || localBudgets[acc.id] === 0);
+    }, [expenseAccounts, localBudgets]);
     
     // FIX: Explicitly cast `amount` to a number as Object.values may not be strongly typed.
     const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + Number(amount), 0), [localBudgets]);
@@ -94,13 +168,17 @@ const Budgeting: React.FC = () => {
                         <h2 className="text-2xl font-bold text-white">Monthly Budgeting</h2>
                         <p className="text-slate-400 mt-1">Set and track budgets for your expense categories.</p>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                         <input
                             type="month"
                             value={currentPeriod}
                             onChange={(e) => setCurrentPeriod(e.target.value)}
                             className="bg-slate-700 border border-slate-600 rounded-md py-2 px-3 text-white focus:outline-none focus:ring-2 focus:ring-cyan-500"
                         />
+                         <button onClick={() => setAddModalOpen(true)} className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-md flex items-center">
+                            <Icon name="plus" className="w-5 h-5 mr-2" />
+                            Add Budget
+                        </button>
                         <button onClick={handleSaveBudgets} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
                             Save All Budgets
                         </button>
@@ -172,6 +250,12 @@ const Budgeting: React.FC = () => {
                     )}
                 </div>
             </div>
+             <AddBudgetModal 
+                isOpen={isAddModalOpen} 
+                onClose={() => setAddModalOpen(false)} 
+                onSave={handleAddBudget} 
+                accounts={unbudgetedAccounts} 
+            />
         </div>
     );
 };

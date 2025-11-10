@@ -678,6 +678,15 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         logAction(`SENT_BULK_${type.toUpperCase()}`, logDetails);
         return { success: true, message: `${messageType} sent to ${customerIds.length} customers successfully.` };
     }, [logAction]);
+    
+    const sendBulkMessageToTenants = useCallback(async (type: 'email' | 'sms', tenantIds: string[], message: string, subject?: string): Promise<{ success: boolean; message: string }> => {
+        // This is a simulation for super admin.
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        const messageType = type === 'email' ? 'Email' : 'SMS';
+        const logDetails = `Sent bulk ${messageType} to ${tenantIds.length} tenants. Subject: ${subject || 'N/A'}`;
+        logAction(`SENT_BULK_${type.toUpperCase()}_TO_TENANTS`, logDetails);
+        return { success: true, message: `${messageType} sent to ${tenantIds.length} tenants successfully.` };
+    }, [logAction]);
 
     const recordCreditPayment = useCallback((customerId: string, amount: number, staffId: string) => {
         setCustomersState(prev => prev.map(c => c.id === customerId ? { ...c, creditBalance: Math.max(0, c.creditBalance - amount) } : c));
@@ -1011,6 +1020,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateTenantSmsTemplate,
         deleteTenantSmsTemplate,
         sendBulkMessage,
+        sendBulkMessageToTenants,
     };
     
     // Non-memoized setters

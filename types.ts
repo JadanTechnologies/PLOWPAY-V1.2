@@ -680,4 +680,5 @@ export interface AppContextType {
     updateTenantSmsTemplate: (templateId: string, updates: Partial<Omit<SmsTemplate, 'id' | 'tenantId'>>) => void;
     deleteTenantSmsTemplate: (templateId: string) => void;
     sendBulkMessage: (type: 'email' | 'sms', customerIds: string[], message: string, subject?: string) => Promise<{ success: boolean; message: string }>;
+    sendBulkMessageToTenants: (type: 'email' | 'sms', tenantIds: string[], message: string, subject?: string) => Promise<{ success: boolean; message: string }>;
 }

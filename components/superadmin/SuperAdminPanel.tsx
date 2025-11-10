@@ -22,6 +22,7 @@ import SuperAdminProfile from './Profile';
 import SuperAdminAuditLogs from './AuditLogs';
 import SupportManagement from './SupportManagement';
 import BlogManagement from './BlogManagement';
+import Communications from './Communications';
 import { allTimezones } from '../../utils/data';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
@@ -601,6 +602,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onImpersonate }) => {
     AUDIT_LOGS: 'Audit Logs',
     SUPPORT_TICKETS: 'Support Tickets',
     BLOG_MANAGEMENT: 'Blog Management',
+    COMMUNICATIONS: 'Communications',
   };
 
   const renderPage = () => {
@@ -616,6 +618,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onImpersonate }) => {
       case 'TEMPLATE_MANAGEMENT': return hasPermission('manageNotificationSettings') && <TemplateManagement />;
       case 'SETTINGS': return hasPermission('manageSystemSettings') && <Settings />;
       case 'ANNOUNCEMENTS': return hasPermission('manageAnnouncements') && <Announcements />;
+      case 'COMMUNICATIONS': return hasPermission('manageNotificationSettings') && <Communications />;
       case 'MAINTENANCE': return hasPermission('manageSystemSettings') && <Maintenance />;
       case 'ACCESS_MANAGEMENT': return hasPermission('manageSystemSettings') && <AccessManagement />;
       case 'PROFILE': return <SuperAdminProfile />;
