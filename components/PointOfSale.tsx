@@ -192,9 +192,6 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
     const cashier = staff.find(s => s.id === sale.staffId);
     const customer = customers.find(c => c.id === sale.customerId);
     const isRefund = sale.total < 0;
-    const totalPaid = sale.payments.reduce((sum, p) => sum + p.amount, 0);
-    const paymentMethods = sale.payments.map(p => p.method).join(', ');
-
 
     const handlePrint = () => {
         window.print();
@@ -210,21 +207,21 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
                 </div>
                 
                 <div id="invoice-content" className="p-3 overflow-y-auto">
-                    <div className="text-center mb-6">
-                         <Icon name="shopping-cart" className="w-10 h-10 text-slate-800 dark:text-slate-300 mx-auto" />
-                        <h2 className="text-xl font-bold mt-2">{isRefund ? 'Refund Receipt' : 'Invoice'}</h2>
+                    <div className="receipt-header text-center mb-6">
+                         <Icon name="shopping-cart" className="brand-logo w-10 h-10 text-slate-800 dark:text-slate-300 mx-auto" />
+                        <h2 className="text-xl font-bold mt-2">{brandConfig.name}</h2>
                         <p className="text-sm text-slate-600 dark:text-slate-400">123 Market St, San Francisco, CA</p>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">{isRefund ? 'Refund Receipt' : 'Sales Receipt'}</p>
                     </div>
 
-                    <div className="flex justify-between text-xs mb-4 text-slate-700 dark:text-slate-300">
+                    <div className="receipt-details flex justify-between text-xs mb-4 text-slate-700 dark:text-slate-300">
                         <div>
                             <p><strong>{isRefund ? 'Return' : 'Sale'} ID:</strong> {sale.id}</p>
                             <p><strong>Date:</strong> {sale.date.toLocaleString()}</p>
-                             <p><strong>Cashier:</strong> {cashier?.name || 'N/A'}</p>
                         </div>
                         <div className="text-right">
-                             <p><strong>Customer:</strong></p>
-                             <p>{customer?.name || 'N/A'}</p>
+                             <p><strong>Cashier:</strong> {cashier?.name || 'N/A'}</p>
+                             <p><strong>Customer:</strong> {customer?.name || 'N/A'}</p>
                         </div>
                     </div>
 
@@ -247,14 +244,14 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
                         </tbody>
                     </table>
 
-                    <div className="space-y-1 text-sm mb-4">
+                    <div className="totals-section space-y-1 text-sm mb-4">
                         <div className="flex justify-between"><span className="text-slate-600 dark:text-slate-400">Subtotal:</span><span>{formatCurrency(subtotal)}</span></div>
                         <div className="flex justify-between"><span className="text-slate-600 dark:text-slate-400">Tax:</span><span>{formatCurrency(tax)}</span></div>
                          {sale.discount && sale.discount > 0 && <div className="flex justify-between"><span className="text-slate-600 dark:text-slate-400">Discount:</span><span className="text-red-500 dark:text-red-400">-{formatCurrency(sale.discount)}</span></div>}
                         <div className="flex justify-between font-bold text-base border-t border-dashed border-slate-300 dark:border-slate-600 pt-2 mt-2"><span>Total:</span><span>{formatCurrency(sale.total)}</span></div>
                     </div>
                     
-                    <div className="space-y-1 text-sm">
+                    <div className="payment-details space-y-1 text-sm">
                          {sale.payments.map((p, i) => (
                             <div key={i} className="flex justify-between">
                                 <span className="text-slate-600 dark:text-slate-400">{isRefund ? 'Refunded via' : 'Paid'} ({p.method}):</span>
@@ -264,7 +261,7 @@ const InvoiceModal: React.FC<{ sale: Sale; onClose: () => void; }> = ({ sale, on
                          {sale.change > 0 && <div className="flex justify-between"><span className="text-slate-600 dark:text-slate-400">Change:</span><span>{formatCurrency(sale.change)}</span></div>}
                     </div>
 
-                    <p className="text-center text-xs mt-6 text-slate-500 dark:text-slate-400">Thank you for your business!</p>
+                    <p className="footer-message text-center text-xs mt-6 text-slate-500 dark:text-slate-400">Thank you for your business!</p>
                 </div>
                 <div className="no-print mt-auto p-4 bg-slate-100 dark:bg-slate-900/50 rounded-b-lg flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700">
                     <button onClick={onClose} className="px-4 py-2 rounded-md bg-slate-200 dark:bg-slate-600 text-slate-800 dark:text-white hover:bg-slate-300 dark:hover:bg-slate-500 font-semibold">Close</button>

@@ -78,11 +78,12 @@
         /* Reset main content area for printing */
         body > #root > div > div > main {
           padding: 0 !important;
+          margin: 0 !important;
           overflow: visible !important;
         }
 
         /* Make the printable modal wrapper take up the whole screen */
-        #invoice-modal-container {
+        #invoice-modal-container, #report-printable-area {
           position: static !important;
           display: block !important;
           background: none !important;
@@ -93,31 +94,31 @@
           overflow: visible !important;
         }
 
-        /* The printable area should be a block element */
-        #invoice-modal, #report-printable-area {
-          visibility: visible;
-          display: block !important;
-          position: static !important;
-          width: 100% !important;
-          height: auto !important;
-          overflow: visible !important;
-          background: white !important;
-          color: black !important;
-          padding: 0 !important;
-          margin: 0 !important;
-          border: none !important;
-          box-shadow: none !important;
+        /* Generic printable area styles */
+        #report-printable-area {
+            visibility: visible;
+            display: block !important;
+            position: static !important;
+            width: 100% !important;
+            height: auto !important;
+            overflow: visible !important;
+            background: white !important;
+            color: black !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
         }
-        
+
         /* Ensure all children within printable areas are visible and styled for print */
-        #invoice-content *, #report-printable-area * {
+        #report-printable-area * {
             visibility: visible !important;
             color: black !important;
             background: transparent !important;
             box-shadow: none !important;
             text-shadow: none !important;
         }
-
+        
         /* Specific styles for report printing */
         #report-printable-area table {
             width: 100%;
@@ -140,6 +141,99 @@
             margin-bottom: 1.5rem;
             border-bottom: 2px solid #333;
             padding-bottom: 1rem;
+        }
+
+        /* Thermal Receipt Styles for Invoice */
+        #invoice-modal {
+            visibility: visible;
+            display: block !important;
+            position: static !important;
+            width: 80mm !important;
+            height: auto !important;
+            overflow: visible !important;
+            background: white !important;
+            color: black !important;
+            padding: 5mm !important;
+            margin: 0 !important;
+            border: none !important;
+            box-shadow: none !important;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 10pt;
+            line-height: 1.4;
+        }
+        #invoice-content * {
+            visibility: visible !important;
+            color: black !important;
+            background: transparent !important;
+            box-shadow: none !important;
+            text-shadow: none !important;
+        }
+        #invoice-content .receipt-header {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        #invoice-content .receipt-header svg {
+            display: none;
+        }
+        #invoice-content .receipt-header h2 {
+            font-size: 14pt;
+            font-weight: bold;
+            margin: 0;
+            padding: 0;
+        }
+        #invoice-content .receipt-header p {
+            font-size: 9pt;
+            margin: 2px 0;
+        }
+        #invoice-content .receipt-details,
+        #invoice-content .totals-section {
+            border-top: 1px dashed black;
+            padding-top: 5px;
+            margin-top: 5px;
+        }
+        #invoice-content .receipt-details {
+            font-size: 8pt;
+            margin-bottom: 10px;
+        }
+        #invoice-content table {
+            width: 100%;
+        }
+        #invoice-content table thead {
+            border-top: 1px dashed black;
+            border-bottom: 1px dashed black;
+        }
+        #invoice-content table th {
+            text-align: left;
+            padding: 5px 0;
+            font-size: 9pt;
+        }
+        #invoice-content table td {
+            padding: 2px 0;
+            font-size: 9pt;
+            vertical-align: top;
+        }
+        #invoice-content table td > div {
+            line-height: 1.2;
+        }
+        #invoice-content table .text-xs {
+            font-size: 8pt;
+            color: #333 !important;
+        }
+        #invoice-content .totals-section div,
+        #invoice-content .payment-details div {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9pt;
+        }
+        #invoice-content .totals-section .font-bold,
+        #invoice-content .payment-details .font-bold {
+            font-weight: bold;
+            font-size: 10pt;
+        }
+        #invoice-content .footer-message {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 8pt;
         }
       }
     </style>

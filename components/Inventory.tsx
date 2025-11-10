@@ -78,7 +78,9 @@ const Inventory: React.FC = () => {
         if (selectedProduct && selectedVariant && newStockValue !== '' && adjustmentBranchId) {
             const newStock = parseInt(newStockValue, 10);
             if (!isNaN(newStock) && newStock >= 0) {
-                adjustStock(selectedProduct.id, selectedVariant.id, adjustmentBranchId, newStock, adjustmentReason);
+                const oldStock = selectedVariant.stockByBranch[adjustmentBranchId] || 0;
+                const quantityChange = newStock - oldStock;
+                adjustStock(selectedProduct.id, selectedVariant.id, adjustmentBranchId, quantityChange, adjustmentReason);
                 closeAdjustModal();
             } else {
                 alert("Please enter a valid, non-negative number for the stock.");

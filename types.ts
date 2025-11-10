@@ -556,7 +556,7 @@ export interface AppContextType {
     
     getMetric: (metric: 'totalRevenue' | 'salesVolume' | 'newCustomers' | 'activeBranches') => number;
     addSale: (saleData: Omit<Sale, 'id' | 'date' | 'status' | 'amountDue'>) => Promise<{ success: boolean; message: string; newSale?: Sale }>;
-    adjustStock: (productId: string, variantId: string, branchId: string, newStock: number, reason: string) => void;
+    adjustStock: (productId: string, variantId: string, branchId: string, quantityChange: number, reason: string) => void;
     transferStock: (productId: string, variantId: string, fromBranchId: string, toBranchId: string, quantity: number) => void;
     addProduct: (productData: Omit<Product, 'id' | 'isFavorite' | 'variants'> & { variants: Omit<ProductVariant, 'id'>[] }) => void;
     updateProductVariant: (productId: string, variantId: string, variantData: Partial<Omit<ProductVariant, 'id' | 'stockByBranch'>>) => void;
