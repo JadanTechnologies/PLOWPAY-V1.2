@@ -110,106 +110,104 @@ const MapComponent: React.FC<MapProps> = ({ trucks = [], shipments = [], branche
             }
         });
         
-        // Editable branch marker
-        if (editableBranch) {
-            const branch = editableBranch.branch;
-            const position: [number, number] = [branch.location.lat, branch.location.lng];
-            const markerId = `branch-${branch.id}`;
-             if(branch.location.lat !== 0 || branch.location.lng !== 0) {
-                bounds.extend(position);
-             }
-
-            const icon = L.divIcon({ html: branchIconSvg, className: '', iconSize: [32, 32], iconAnchor: [16, 32] });
-            const existingMarker = currentMarkers.get(markerId);
-
-            if (existingMarker) {
-                existingMarker.setLatLng(position);
-            } else {
-                const newMarker = L.marker(position, { icon, draggable: true }).addTo(map);
-                newMarker.on('dragend', function(event: any){
-                    var marker = event.target;
-                    var newPosition = marker.getLatLng();
-                    editableBranch.onPositionChange(newPosition);
-                });
-                currentMarkers.set(markerId, newMarker);
-            }
-        }
-        
-        // User markers
+        // User markers (tenants and staff)
         users.forEach(user => {
             if (!user.lastKnownLocation) return;
-            
             const position: [number, number] = [user.lastKnownLocation.lat, user.lastKnownLocation.lng];
             const isTenant = 'planId' in user;
             const markerId = `${isTenant ? 'tenant' : 'staff'}-${user.id}`;
             bounds.extend(position);
             const existingMarker = currentMarkers.get(markerId);
-
-            const iconColor = isTenant ? '#a855f7' : '#ec4899'; // Purple for Tenant, Pink for Staff
-            const icon = L.divIcon({
-                html: userIconSvg.replace('{COLOR}', iconColor),
-                className: '',
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
             
-            const lastUpdated = new Date(user.lastKnownLocation.timestamp).toLocaleString();
-            // FIX: Use `ownerName` for Tenant and `name` for Staff, as `name` does not exist on the Tenant type.
-            const tooltipContent = `<b>${isTenant ? user.ownerName : user.name}</b> (${isTenant ? 'Admin' : 'Staff'})<br>Last seen: ${lastUpdated}`;
+            const iconColor = isTenant ? '#a78bfa' : '#60a5fa'; // purple for tenant, blue for staff
+            const icon = L.divIcon({ 
+                html: userIconSvg.replace('{COLOR}', iconColor), 
+                className: '', 
+                iconSize: [32, 32], 
+                iconAnchor: [16, 32] 
+            });
 
-            if (existingMarker) {
-                existingMarker.setLatLng(position).setIcon(icon).setTooltipContent(tooltipContent);
+            if(existingMarker) {
+                existingMarker.setLatLng(position);
             } else {
+                const name = isTenant ? (user as Tenant).businessName : (user as Staff).name;
                 const newMarker = L.marker(position, { icon }).addTo(map);
-                newMarker.bindTooltip(tooltipContent);
+                newMarker.bindTooltip(`<b>${name}</b><br>${isTenant ? 'Tenant' : 'Staff'}`);
                 currentMarkers.set(markerId, newMarker);
             }
         });
 
 
-        if (bounds.isValid()) {
-            map.fitBounds(bounds, { padding: [50, 50] });
+        // Editable branch marker
+        if (editableBranch) {
+            const { branch, onPositionChange } = editableBranch;
+            const position: [number, number] = [branch.location.lat, branch.location.lng];
+            const markerId = `branch-${branch.id}`;
+            bounds.extend(position);
+            const existingMarker = currentMarkers.get(markerId);
+            const icon = L.divIcon({ html: branchIconSvg, className: 'blinking-marker', iconSize: [32, 32], iconAnchor: [16, 32] });
+
+            if (existingMarker) {
+                existingMarker.setLatLng(position);
+            } else {
+                const newMarker = L.marker(position, { icon, draggable: true }).addTo(map);
+                newMarker.on('dragend', function (event: any) {
+                    onPositionChange(event.target.getLatLng());
+                });
+                newMarker.bindTooltip(`<b>${branch.name}</b><br>Drag to set location`);
+                currentMarkers.set(markerId, newMarker);
+            }
         }
-    }, [trucks, branches, shipments, editableBranch, users]);
-
-    // Polylines...
-     useEffect(() => {
-        const map = mapInstance.current;
-        if (!map) return;
-
+        
+        // Shipment polylines
         const currentPolylines = polylinesRef.current;
-        const inTransitShipmentIds = new Set(shipments.filter(s => s.status === 'IN_TRANSIT').map(s => s.id));
+        const allShipmentIds = new Set(shipments.map(s => `shipment-${s.id}`));
 
-        currentPolylines.forEach((line, shipmentId) => {
-            if (!inTransitShipmentIds.has(shipmentId)) {
+        // Remove old polylines
+        currentPolylines.forEach((line, id) => {
+            if (!allShipmentIds.has(id)) {
                 map.removeLayer(line);
-                currentPolylines.delete(shipmentId);
+                currentPolylines.delete(id);
             }
         });
 
         shipments.forEach(shipment => {
-            if (shipment.status === 'IN_TRANSIT') {
-                const truck = trucks.find(t => t.id === shipment.truckId);
-                const branch = branches.find(b => b.id === shipment.destination);
-                if (truck && branch?.location && (branch.location.lat !== 0 || branch.location.lng !== 0)) {
-                    const path = [ [truck.currentLocation.lat, truck.currentLocation.lng], [branch.location.lat, branch.location.lng] ];
-                    
-                    const existingPolyline = currentPolylines.get(shipment.id);
+            if (shipment.status !== 'IN_TRANSIT') return;
 
-                    if (existingPolyline) {
-                        existingPolyline.setLatLngs(path);
-                    } else {
-                        const newPolyline = L.polyline(path, { color: '#06b6d4', weight: 2, dashArray: '5, 5' }).addTo(map);
-                        currentPolylines.set(shipment.id, newPolyline);
-                    }
+            const truck = trucks.find(t => t.id === shipment.truckId);
+            const destinationBranch = branches.find(b => b.id === shipment.destination);
+            
+            if (truck && destinationBranch) {
+                const start: [number, number] = [truck.currentLocation.lat, truck.currentLocation.lng];
+                const end: [number, number] = [destinationBranch.location.lat, destinationBranch.location.lng];
+                
+                const lineId = `shipment-${shipment.id}`;
+                const existingLine = currentPolylines.get(lineId);
+
+                if (existingLine) {
+                    existingLine.setLatLngs([start, end]);
+                } else {
+                    const polyline = L.polyline([start, end], {
+                        color: '#6366f1',
+                        weight: 2,
+                        opacity: 0.7,
+                        dashArray: '5, 5'
+                    }).addTo(map);
+                    polyline.bindTooltip(`Shipment: ${shipment.shipmentCode}`);
+                    currentPolylines.set(lineId, polyline);
                 }
             }
         });
 
-    }, [shipments, trucks, branches]);
 
+        // Fit bounds if there are items to show
+        if (bounds.isValid() && !editableBranch) { // Don't auto-zoom when editing a branch location
+             map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }, [trucks, branches, users, shipments, editableBranch]);
 
-    return <div ref={mapRef} style={{ width: '100%', height: '100%' }} />;
+    // FIX: A React functional component must return a renderable element. This div serves as the map container.
+    return <div ref={mapRef} className="w-full h-full" />;
 };
 
 export default MapComponent;

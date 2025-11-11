@@ -6,7 +6,7 @@ import { Sale } from '../types';
 import { useCurrency } from '../hooks/useCurrency';
 import { useTranslation } from '../hooks/useTranslation';
 import AIInsights from './AIInsights';
-import MapComponent from './GoogleMap';
+import MapComponent from './MapComponent';
 
 const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
     <div className={`animate-pulse bg-slate-200 dark:bg-slate-700 rounded ${className}`} />

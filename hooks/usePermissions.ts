@@ -1,4 +1,3 @@
-
 import { useAppContext } from './useAppContext';
 import { Permission } from '../types';
 

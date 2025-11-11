@@ -15,7 +15,7 @@ import {
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from '../icons/index.tsx';
 import { useCurrency } from '../../hooks/useCurrency';
-import MapComponent from '../GoogleMap';
+import MapComponent from '../MapComponent';
 import { TenantStatus } from '../../types';
 
 const MetricCard: React.FC<{ title: string; value: string; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
