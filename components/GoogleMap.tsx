@@ -154,7 +154,8 @@ const MapComponent: React.FC<MapProps> = ({ trucks = [], shipments = [], branche
             });
             
             const lastUpdated = new Date(user.lastKnownLocation.timestamp).toLocaleString();
-            const tooltipContent = `<b>${user.name}</b> (${isTenant ? 'Admin' : 'Staff'})<br>Last seen: ${lastUpdated}`;
+            // FIX: Use `ownerName` for Tenant and `name` for Staff, as `name` does not exist on the Tenant type.
+            const tooltipContent = `<b>${isTenant ? user.ownerName : user.name}</b> (${isTenant ? 'Admin' : 'Staff'})<br>Last seen: ${lastUpdated}`;
 
             if (existingMarker) {
                 existingMarker.setLatLng(position).setIcon(icon).setTooltipContent(tooltipContent);

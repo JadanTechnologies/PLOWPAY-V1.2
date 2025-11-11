@@ -16,6 +16,7 @@ import { useAppContext } from '../../hooks/useAppContext';
 import Icon from '../icons/index.tsx';
 import { useCurrency } from '../../hooks/useCurrency';
 import MapComponent from '../GoogleMap';
+import { TenantStatus } from '../../types';
 
 const MetricCard: React.FC<{ title: string; value: string; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-700">
@@ -29,11 +30,31 @@ const MetricCard: React.FC<{ title: string; value: string; iconName: string; ico
   </div>
 );
 
+const FilterButton: React.FC<{
+    label: string;
+    filter: TenantStatus | 'ALL';
+    activeFilter: TenantStatus | 'ALL';
+    onClick: (filter: TenantStatus | 'ALL') => void;
+}> = ({ label, filter, activeFilter, onClick }) => (
+    <button
+        onClick={() => onClick(filter)}
+        className={`px-3 py-1 text-xs font-semibold rounded-full transition-colors ${
+            activeFilter === filter
+                ? 'bg-cyan-600 text-white shadow-md'
+                : 'bg-slate-700 hover:bg-slate-600 text-slate-300'
+        }`}
+    >
+        {label}
+    </button>
+);
+
+
 const PlatformDashboard: React.FC = () => {
     const { tenants, subscriptionPlans, processExpiredTrials, sendExpiryReminders, staff } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [trialJobStatus, setTrialJobStatus] = useState('');
     const [reminderJobStatus, setReminderJobStatus] = useState('');
+    const [statusFilter, setStatusFilter] = useState<TenantStatus | 'ALL'>('ALL');
 
 
     const platformMetrics = useMemo(() => {
@@ -120,8 +141,16 @@ const PlatformDashboard: React.FC = () => {
             setReminderJobStatus(`Job completed. ${sent} reminders sent. Last run: ${new Date().toLocaleTimeString()}`);
         }, 1000);
     };
+    
+    const filteredTenants = useMemo(() => {
+        if (statusFilter === 'ALL') {
+            return tenants;
+        }
+        return tenants.filter(tenant => tenant.status === statusFilter);
+    }, [tenants, statusFilter]);
 
     const COLORS = ['#14b8a6', '#06b6d4', '#f59e0b', '#ef4444'];
+    const filterOptions: (TenantStatus | 'ALL')[] = ['ALL', 'ACTIVE', 'TRIAL', 'SUSPENDED'];
 
     return (
         <div className="space-y-6">
@@ -179,7 +208,19 @@ const PlatformDashboard: React.FC = () => {
             </div>
 
             <div className="bg-slate-800 rounded-lg shadow-lg p-6 border border-slate-700">
-                <h3 className="mb-4 text-lg font-semibold text-white">Live User Activity Map</h3>
+                <h3 className="text-lg font-semibold text-white">Live User Activity Map</h3>
+                 <div className="flex flex-wrap items-center gap-2 my-4">
+                    <span className="text-sm font-semibold text-slate-400">Filter Tenants:</span>
+                    {filterOptions.map(filter => (
+                        <FilterButton
+                            key={filter}
+                            label={filter}
+                            filter={filter}
+                            activeFilter={statusFilter}
+                            onClick={setStatusFilter}
+                        />
+                    ))}
+                </div>
                 <div className="h-[400px] bg-slate-900 rounded-md overflow-hidden">
                      {typeof window.L === 'undefined' ? (
                         <div className="flex flex-col items-center justify-center h-full text-center p-4">
@@ -188,7 +229,7 @@ const PlatformDashboard: React.FC = () => {
                             <p className="text-slate-400 text-sm">Please check your internet connection.</p>
                         </div>
                     ) : (
-                        <MapComponent users={[...tenants, ...staff]} />
+                        <MapComponent users={[...filteredTenants, ...staff]} />
                     )}
                 </div>
             </div>
