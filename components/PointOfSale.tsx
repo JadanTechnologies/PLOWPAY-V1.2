@@ -560,7 +560,11 @@ const PointOfSale: React.FC = () => {
             const availableStock = (variant.stockByBranch[currentBranchId] || 0) + (variant.consignmentStockByBranch?.[currentBranchId] || 0);
             const currentCartQty = existingItem ? existingItem.quantity : 0;
             if (currentCartQty + 1 > availableStock) {
-                setSaleStatus({ message: `Cannot add more ${product.name} (${variant.name}). Only ${availableStock} in stock.`, type: 'error' });
+                if (availableStock <= 0) {
+                    setSaleStatus({ message: `${product.name} (${variant.name}) is out of stock.`, type: 'error' });
+                } else {
+                    setSaleStatus({ message: `Cannot add more ${product.name} (${variant.name}). Only ${availableStock} in stock.`, type: 'error' });
+                }
                 return prevCart;
             }
         }
