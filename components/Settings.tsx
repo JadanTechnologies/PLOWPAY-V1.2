@@ -4,7 +4,7 @@ import Icon from './icons/index.tsx';
 import { Staff as StaffType, StaffRole, TenantPermission, TenantAutomations, Branch } from '../types';
 import { allCurrencies, allLanguages, allTimezones } from '../utils/data';
 import ConfirmationModal from './ConfirmationModal';
-import MapComponent from './MapComponent';
+import MapComponent from './GoogleMap';
 
 
 type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations' | 'security';

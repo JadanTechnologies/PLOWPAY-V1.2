@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Truck, Shipment, TrackerProvider, Customer } from '../types';
 import Icon from './icons/index.tsx';
-import MapComponent from './MapComponent';
+import MapComponent from './GoogleMap';
 import ConfirmationModal from './ConfirmationModal';
 
 type ModalState = 'NONE' | 'TRUCK' | 'SHIPMENT' | 'SELL_SHIPMENT';
