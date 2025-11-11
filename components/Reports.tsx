@@ -504,7 +504,7 @@ const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (v
 
 
 const Reports: React.FC = () => {
-  const { sales, products, branches, staff, categories, customers, purchaseOrders, consignments, suppliers, brandConfig, isLoading } = useAppContext();
+  const { sales, products, branches, staff, categories, customers, purchaseOrders, consignments, suppliers, brandConfig, isLoading, setNotification } = useAppContext();
   const { formatCurrency } = useCurrency();
   
   const [dateRange, setDateRange] = useState(() => {
@@ -623,6 +623,59 @@ const Reports: React.FC = () => {
 
   const handlePrint = () => window.print();
 
+  const handleExportCSV = () => {
+    if (detailedReportData.length === 0) {
+        setNotification({ type: 'info', message: 'No data to export for the current filters.' });
+        return;
+    }
+
+    const headers = [
+        "S/N", "Branch", "Customer", "Item", "Qty Sold", "Cost Price", "Total Cost",
+        "Sell Price", "Total Sell", "Discount", "Net Price", "Profit", "Attendant", "Date & Time"
+    ];
+
+    const escapeCsvCell = (cell: any): string => {
+        const str = String(cell == null ? '' : cell);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+    };
+
+    const csvRows = [headers.join(',')];
+
+    detailedReportData.forEach((row, index) => {
+        const values = [
+            index + 1,
+            row.branchName,
+            row.customerName,
+            row.itemName,
+            row.quantitySold,
+            row.costPrice.toFixed(2),
+            row.totalCostPrice.toFixed(2),
+            row.sellingPrice.toFixed(2),
+            row.totalSellingPrice.toFixed(2),
+            row.discount.toFixed(2),
+            row.balanceAfterDiscount.toFixed(2),
+            row.profit.toFixed(2),
+            row.attendant,
+            row.dateTime
+        ].map(escapeCsvCell);
+        csvRows.push(values.join(','));
+    });
+
+    const csvString = csvRows.join('\n');
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `detailed_sales_report_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const reportTitles: Record<ReportTab, string> = { 
     sales: 'Detailed Sales Report', 
     credit: 'Credit Sales Report', 
@@ -673,7 +726,16 @@ const Reports: React.FC = () => {
                             </select>
                         </div>
                     </div>
-                    <button onClick={handlePrint} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center"><Icon name="printer" className="w-5 h-5 mr-2"/>Print Report</button>
+                    <div className="flex items-center gap-2">
+                        {activeReport === 'sales' && (
+                            <button onClick={handleExportCSV} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
+                                <Icon name="clipboard-document-list" className="w-5 h-5 mr-2"/>Export CSV
+                            </button>
+                        )}
+                        <button onClick={handlePrint} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
+                            <Icon name="printer" className="w-5 h-5 mr-2"/>Print Report
+                        </button>
+                    </div>
                 </div>
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 no-print">
