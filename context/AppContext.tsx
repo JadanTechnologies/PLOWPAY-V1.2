@@ -186,7 +186,7 @@ const initialSystemSettings: SystemSettings = {
     ],
     activeIpGeolocationProviderId: 'ipinfo',
     aiSettings: { provider: 'gemini', gemini: { apiKey: '' }, openai: { apiKey: '' } },
-    supabaseSettings: { projectUrl: 'https://your-project-url.supabase.co', anonKey: 'your-anon-key' },
+    supabaseSettings: { projectUrl: 'https://dpaxdweqfuurbvsncrgk.supabase.co', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRwYXhkd2VxZnV1cmJ2c25jcmdrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI2NDMwMjMsImV4cCI6MjA3ODIxOTAyM30.KFBAS0GFuvRwFsHtH1BJXQWOVlctQGmBEBNwp8TiVIQ' },
 };
 
 const trucks: Truck[] = [
