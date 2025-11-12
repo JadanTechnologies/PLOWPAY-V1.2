@@ -69,7 +69,7 @@ const Login: React.FC<LoginProps> = ({ onNavigate }) => {
                 autoComplete="username"
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-3 border border-slate-600 bg-slate-700 text-slate-200 placeholder-slate-400 rounded-t-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500 focus:z-10 sm:text-sm"
-                placeholder="Username (e.g. super, tenant)"
+                placeholder="Username (e.g. super, tenant, john)"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
               />

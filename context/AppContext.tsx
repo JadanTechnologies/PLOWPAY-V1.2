@@ -28,8 +28,8 @@ const staffRoles: StaffRole[] = [
 ]
 
 const staff: Staff[] = [
-  { id: 'staff-1', name: 'Jane Doe', email: 'jane@example.com', username: 'jane', roleId: 'role-admin', branchId: 'branch-1', lastKnownLocation: { lat: 37.78, lng: -122.41, timestamp: new Date() } },
-  { id: 'staff-2', name: 'John Smith', email: 'john@example.com', username: 'john', roleId: 'role-cashier', branchId: 'branch-1', lastKnownLocation: { lat: 37.77, lng: -122.43, timestamp: new Date() } },
+  { id: 'staff-1', name: 'Jane Doe', email: 'jane@example.com', username: 'jane', password: '12345', roleId: 'role-admin', branchId: 'branch-1', lastKnownLocation: { lat: 37.78, lng: -122.41, timestamp: new Date() } },
+  { id: 'staff-2', name: 'John Smith', email: 'john@example.com', username: 'john', password: '12345', roleId: 'role-cashier', branchId: 'branch-1', lastKnownLocation: { lat: 37.77, lng: -122.43, timestamp: new Date() } },
 ];
 
 const categories: Category[] = [
@@ -322,7 +322,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     const [inAppNotifications, setInAppNotifications] = useState<InAppNotification[]>([]);
     const [budgetsState, setBudgetsState] = useState<Budget[]>(budgets);
 
-    const [currentStaffUser, setCurrentStaffUser] = useState<Staff | null>(staff[0] || null);
+    const [currentStaffUser, setCurrentStaffUser] = useState<Staff | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [theme, setTheme] = useState<'light' | 'dark'>('dark');
     
@@ -405,7 +405,9 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
                 setCurrentTenant(null); // Super admin is not a tenant
             } else if (parsed.profile.tenant_id) {
                 const tenant = tenantsState.find(t => t.id === parsed.profile.tenant_id);
+                const staff = staffState.find(s => s.id === parsed.user.id);
                 setCurrentTenant(tenant || null);
+                setCurrentStaffUser(staff || null);
                 setCurrentAdminUser(null);
             }
         }
@@ -416,6 +418,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         // This is a mock login function for demo purposes.
         const superAdmin = adminUsersState.find(u => u.username === username);
         const tenantUser = tenantsState.find(t => t.username === username);
+        const staffUser = staffState.find(s => s.username === username);
 
         if (password !== '12345') {
             return { success: false, message: 'Invalid username or password.' };
@@ -429,6 +432,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             profileData = { id: superAdmin.id, is_super_admin: true, tenant_id: null };
             setCurrentAdminUser(superAdmin);
             setCurrentTenant(null);
+            setCurrentStaffUser(null);
         } else if (tenantUser) {
             if (!tenantUser.isVerified) {
                 return { success: false, message: 'Account not verified. Please check your email.' };
@@ -436,6 +440,17 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             user = { id: tenantUser.id, email: tenantUser.email };
             profileData = { id: tenantUser.id, is_super_admin: false, tenant_id: tenantUser.id };
             setCurrentTenant(tenantUser);
+            setCurrentAdminUser(null);
+            setCurrentStaffUser(null);
+        } else if (staffUser) {
+            // For this demo, all staff belong to the first tenant.
+            const tenant = tenantsState[0];
+            if (!tenant) return { success: false, message: 'No tenant configured for staff login.' };
+
+            user = { id: staffUser.id, email: staffUser.email };
+            profileData = { id: staffUser.id, is_super_admin: false, tenant_id: tenant.id };
+            setCurrentTenant(tenant);
+            setCurrentStaffUser(staffUser);
             setCurrentAdminUser(null);
         } else {
              return { success: false, message: 'Invalid username or password.' };
@@ -459,6 +474,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         setCurrentAdminUser(null);
         setCurrentTenant(null);
         setImpersonatedUser(null);
+        setCurrentStaffUser(null);
     };
 
     const handleImpersonate = (tenant: Tenant) => {

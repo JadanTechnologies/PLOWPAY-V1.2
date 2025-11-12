@@ -603,6 +603,8 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onImpersonate }) => {
     SUPPORT_TICKETS: 'Support Tickets',
     BLOG_MANAGEMENT: 'Blog Management',
     COMMUNICATIONS: 'Communications',
+    // FIX: Added missing 'FLEET_OVERVIEW' property to satisfy the 'Record<SuperAdminPage, string>' type.
+    FLEET_OVERVIEW: 'Fleet Overview',
   };
 
   const renderPage = () => {
