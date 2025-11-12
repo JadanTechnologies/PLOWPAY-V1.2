@@ -36,7 +36,8 @@ export type TenantPermission =
  | 'accessReturns'
  | 'accessSupport'
  | 'manageTemplates'
- | 'sendCommunications';
+ | 'sendCommunications'
+ | 'manageBilling';
 
 export const allTenantPermissions: TenantPermission[] = [
     'accessPOS',
@@ -54,6 +55,7 @@ export const allTenantPermissions: TenantPermission[] = [
     'accessSupport',
     'manageTemplates',
     'sendCommunications',
+    'manageBilling',
 ];
 
 

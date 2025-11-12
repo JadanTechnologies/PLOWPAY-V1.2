@@ -9,7 +9,7 @@ import MapComponent from './GoogleMap';
 
 type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations' | 'security';
 
-// FIX: Added missing permission labels for 'manageTemplates' and 'sendCommunications' to satisfy the Record<TenantPermission, string> type.
+// FIX: Added missing permission label for 'manageBilling' to satisfy the Record<TenantPermission, string> type.
 const permissionLabels: Record<TenantPermission, string> = {
     accessPOS: 'Access Point of Sale',
     manageInventory: 'Manage Inventory',
@@ -26,13 +26,14 @@ const permissionLabels: Record<TenantPermission, string> = {
     accessSupport: 'Access Support',
     manageTemplates: 'Manage Templates',
     sendCommunications: 'Send Communications',
+    manageBilling: 'Manage Billing',
 };
 
-// FIX: Added missing permissions to the 'Administration' group so they appear in the UI.
+// FIX: Added 'manageBilling' permission to the 'Administration' group so it appears in the UI.
 const permissionGroups: Record<string, TenantPermission[]> = {
     'Sales & Operations': ['accessPOS', 'managePurchases', 'makeDeposits', 'accessReturns'],
     'Inventory & Logistics': ['manageInventory', 'manageLogistics'],
-    'Administration': ['viewReports', 'manageStaff', 'accessSettings', 'accessAccounting', 'viewAuditLogs', 'manageDeposits', 'accessSupport', 'manageTemplates', 'sendCommunications'],
+    'Administration': ['viewReports', 'manageStaff', 'accessSettings', 'accessAccounting', 'viewAuditLogs', 'manageDeposits', 'accessSupport', 'manageTemplates', 'sendCommunications', 'manageBilling'],
 };
 
 const CollapsiblePermissionSection: React.FC<{

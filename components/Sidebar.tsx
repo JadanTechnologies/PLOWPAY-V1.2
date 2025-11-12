@@ -58,28 +58,30 @@ const NavItem: React.FC<{
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOpen }) => {
   const { t } = useTranslation();
-  const { currentStaffUser, staffRoles } = useAppContext();
+  const { currentStaffUser, staffRoles, allTenantPermissions } = useAppContext();
 
   const userPermissions = useMemo(() => {
-    if (!currentStaffUser) return new Set<TenantPermission>();
+    if (!currentStaffUser) { // It's the tenant admin
+      return new Set(allTenantPermissions);
+    }
     const role = staffRoles.find(r => r.id === currentStaffUser.roleId);
     return new Set(role?.permissions || []);
-  }, [currentStaffUser, staffRoles]);
+  }, [currentStaffUser, staffRoles, allTenantPermissions]);
   
   const navItemConfig: { page: Page; icon: string; label: string; permission?: TenantPermission }[] = [
-    { page: 'DASHBOARD', icon: 'layout-grid', label: t('dashboard') },
+    { page: 'DASHBOARD', icon: 'layout-grid', label: t('dashboard'), permission: 'viewReports' },
     { page: 'POS', icon: 'pos', label: t('pos'), permission: 'accessPOS' },
     { page: 'INVENTORY', icon: 'inventory', label: t('inventory'), permission: 'manageInventory' },
     { page: 'PURCHASES', icon: 'clipboard-document-list', label: t('purchases'), permission: 'managePurchases' },
-    { page: 'CONSIGNMENT', icon: 'briefcase', label: t('consignment') },
+    { page: 'CONSIGNMENT', icon: 'briefcase', label: t('consignment'), permission: 'manageInventory' },
     { page: 'LOGISTICS', icon: 'truck', label: t('logistics'), permission: 'manageLogistics' },
-    { page: 'CREDIT_MANAGEMENT', icon: 'users', label: t('creditManagement') },
+    { page: 'CREDIT_MANAGEMENT', icon: 'users', label: t('creditManagement'), permission: 'accessAccounting' },
     { page: 'DEPOSIT_MANAGEMENT', icon: 'cash', label: t('depositmanagement'), permission: 'manageDeposits' },
     { page: 'ACCOUNTING', icon: 'calculator', label: t('accounting'), permission: 'accessAccounting' },
     { page: 'BUDGETING', icon: 'cash', label: t('budgeting'), permission: 'accessAccounting' },
     { page: 'REPORTS', icon: 'chart-bar', label: t('reports'), permission: 'viewReports' },
     { page: 'SUPPORT', icon: 'chat-bubble-left-right', label: 'Support', permission: 'accessSupport' },
-    { page: 'BILLING', icon: 'credit-card', label: t('billing') },
+    { page: 'BILLING', icon: 'credit-card', label: t('billing'), permission: 'manageBilling' },
   ];
   
   // FIX: Added explicit type annotation to ensure permission property is typed as TenantPermission.
