@@ -758,13 +758,13 @@ const Reports: React.FC = () => {
                 </div>
                 {activeReport === 'profit_loss' && <ProfitLossSummary data={grandTotals} formatCurrency={formatCurrency} />}
                 {activeReport === 'sales' && <DetailedSalesReport data={detailedReportData} totals={grandTotals} formatCurrency={formatCurrency} />}
+                {activeReport === 'sales_by_staff' && <SalesByStaffReport sales={filteredSales} staff={staff} formatCurrency={formatCurrency} />}
+                {activeReport === 'inventory_valuation' && <InventoryValuationReport products={products} branches={branchMap} branchFilter={branchFilter} formatCurrency={formatCurrency} />}
+                {activeReport === 'customer_credit' && <CustomerCreditReport customers={customers} formatCurrency={formatCurrency} />}
                 {activeReport === 'credit' && <CreditSalesReport data={creditSalesData} formatCurrency={formatCurrency} />}
                 {activeReport === 'deposit_sales' && <DepositSalesReport data={depositSalesData} formatCurrency={formatCurrency} />}
                 {activeReport === 'purchases' && <PurchaseOrdersReport data={purchaseData} suppliers={supplierMap} branches={branchMap} formatCurrency={formatCurrency} />}
                 {activeReport === 'consignment' && <ConsignmentReport data={consignmentReportData} formatCurrency={formatCurrency} />}
-                {activeReport === 'inventory_valuation' && <InventoryValuationReport products={products} branches={branchMap} branchFilter={branchFilter} formatCurrency={formatCurrency} />}
-                {activeReport === 'sales_by_staff' && <SalesByStaffReport sales={filteredSales} staff={staff} formatCurrency={formatCurrency} />}
-                {activeReport === 'customer_credit' && <CustomerCreditReport customers={customers} formatCurrency={formatCurrency} />}
             </div>
         </div>
     </div>

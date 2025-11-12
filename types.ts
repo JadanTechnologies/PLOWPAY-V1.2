@@ -592,7 +592,11 @@ export interface AppContextType {
     deleteAdminRole: (roleId: string) => void;
     
     session: LocalSession | null;
+    // FIX: Add setSession to AppContextType to allow updating session state.
+    setSession: React.Dispatch<React.SetStateAction<LocalSession | null>>;
     profile: Profile | null;
+    // FIX: Add setProfile to AppContextType to allow updating profile state.
+    setProfile: React.Dispatch<React.SetStateAction<Profile | null>>;
     isLoading: boolean;
     handleImpersonate: (tenant: Tenant) => void;
     stopImpersonating: () => void;

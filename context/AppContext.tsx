@@ -1162,7 +1162,7 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         currentLanguage, setCurrentLanguage, currentCurrency, setCurrentCurrency,
         getMetric, addSale, adjustStock, transferStock, addProduct, updateProductVariant,
         addAdminUser, updateAdminUser, updateAdminRole, addAdminRole, deleteAdminRole,
-        session, profile, isLoading, handleImpersonate, stopImpersonating, login, logout,
+        session, setSession, profile, setProfile, isLoading, handleImpersonate, stopImpersonating, login, logout,
         allTenantPermissions, allPermissions, currentStaffUser, setCurrentStaffUser,
         activateSubscription,
         updateBudget, deleteBudget,
