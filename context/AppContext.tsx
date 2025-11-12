@@ -1,3 +1,5 @@
+
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { 
     AppContextType, Product, Sale, Branch, StockLog, Tenant, SubscriptionPlan, 
@@ -853,16 +855,22 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updatePurchaseOrderStatus: useCallback((poId: string, status: PurchaseOrder['status']) => {
             setPurchaseOrdersState(prev => prev.map(po => {
                 if (po.id === poId) {
-                    if (status === 'RECEIVED') {
+                    // Only process receiving stock if the status is changing TO 'RECEIVED'
+                    if (status === 'RECEIVED' && po.status !== 'RECEIVED') {
                         po.items.forEach(item => {
-                             adjustStock(products.find(p => p.variants.some(v => v.id === item.variantId))!.id, item.variantId, po.destinationBranchId, item.quantity, `Received from PO ${po.poNumber}`);
+                             // FIX: Use `productsState` which is the current state, not the initial `products` constant.
+                             const product = productsState.find(p => p.variants.some(v => v.id === item.variantId));
+                             if(product) {
+                                // `adjustStock` is not memoized, but it will be the latest version from this render's closure.
+                                adjustStock(product.id, item.variantId, po.destinationBranchId, item.quantity, `Received from PO ${po.poNumber}`);
+                             }
                         });
                     }
                     return { ...po, status };
                 }
                 return po;
             }));
-        }, [products]),
+        }, [productsState]), // FIX: Dependency updated to `productsState`.
         addStaffRole: useCallback((roleData: Omit<StaffRole, 'id'>) => setStaffRolesState(prev => [...prev, { ...roleData, id: `role-${Date.now()}` }]), []),
         updateStaffRole: useCallback((roleId: string, permissions: TenantPermission[]) => setStaffRolesState(prev => prev.map(r => r.id === roleId ? { ...r, permissions } : r)), []),
         deleteStaffRole: useCallback((roleId: string) => setStaffRolesState(prev => prev.filter(r => r.id !== roleId)), []),

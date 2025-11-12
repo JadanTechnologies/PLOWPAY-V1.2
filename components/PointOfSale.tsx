@@ -7,6 +7,7 @@ import Calculator from './Calculator';
 import { useCurrency } from '../hooks/useCurrency';
 import ConfirmationModal from './ConfirmationModal';
 import InvoiceModal from './InvoiceModal';
+import { useTenantPermissions } from '../hooks/useTenantPermissions';
 
 const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, variant: ProductVariant) => void }> = ({ product, onAddToCart }) => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
@@ -376,8 +377,9 @@ const CustomerSearchModal: React.FC<{
 
 
 const PointOfSale: React.FC = () => {
-  const { products, searchTerm, addSale, branches, categories, addDeposit, customers, deposits, currentStaffUser, staffRoles } = useAppContext();
+  const { products, searchTerm, addSale, branches, categories, addDeposit, customers, deposits, currentStaffUser } = useAppContext();
   const { formatCurrency } = useCurrency();
+  const { hasTenantPermission } = useTenantPermissions();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState('All');
   const [showFavorites, setShowFavorites] = useState(false);
@@ -387,12 +389,7 @@ const PointOfSale: React.FC = () => {
   const [isClearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [deletingHeldOrderId, setDeletingHeldOrderId] = useState<number | null>(null);
 
-  const userPermissions = useMemo(() => {
-    if (!currentStaffUser) return new Set<TenantPermission>();
-    const role = staffRoles.find(r => r.id === currentStaffUser.roleId);
-    return new Set(role?.permissions || []);
-  }, [currentStaffUser, staffRoles]);
-  const canProcessReturns = userPermissions.has('accessReturns');
+  const canProcessReturns = hasTenantPermission('accessReturns');
 
 
   const defaultCustomer = { id: 'cust-walkin', name: 'Walk-in Customer', phone: '' };

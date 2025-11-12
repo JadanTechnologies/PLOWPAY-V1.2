@@ -77,137 +77,108 @@ const MapComponent: React.FC<MapProps> = ({ trucks = [], shipments = [], branche
                 html: truckIconSvg.replace('{COLOR}', iconColor),
                 className: '',
                 iconSize: [32, 32],
-                iconAnchor: [16, 16]
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
             });
+            
+            const popupContent = `<b>Truck:</b> ${truck.licensePlate}<br><b>Driver:</b> ${truck.driverName}<br><b>Status:</b> ${truck.status}<br><b>Load:</b> ${(truck.currentLoad / 1000).toFixed(1)}t / ${(truck.maxLoad / 1000).toFixed(1)}t`;
 
             if (existingMarker) {
-                existingMarker.setLatLng(position).setIcon(icon);
+                existingMarker.setLatLng(position).setPopupContent(popupContent);
             } else {
-                const newMarker = L.marker(position, { icon }).addTo(map);
-                newMarker.bindTooltip(`<b>${truck.licensePlate}</b><br>Driver: ${truck.driverName}<br>Status: ${truck.status}`);
+                const newMarker = L.marker(position, { icon }).bindPopup(popupContent).addTo(map);
                 currentMarkers.set(markerId, newMarker);
             }
         });
 
         // Branch markers
         branches.forEach(branch => {
-            if (editableBranch && branch.id === editableBranch.branch.id) return; // Skip if it's the editable one
-            if (branch.location.lat === 0 && branch.location.lng === 0) return;
-            
+            if(branch.location.lat === 0 && branch.location.lng === 0) return; // Don't show un-placed branches
+
             const position: [number, number] = [branch.location.lat, branch.location.lng];
             const markerId = `branch-${branch.id}`;
             bounds.extend(position);
             const existingMarker = currentMarkers.get(markerId);
-            
-            const icon = L.divIcon({ html: branchIconSvg, className: '', iconSize: [32, 32], iconAnchor: [16, 32] });
-            
+
+             const icon = L.divIcon({
+                html: branchIconSvg,
+                className: '',
+                iconSize: [32, 32],
+                iconAnchor: [16, 32],
+                popupAnchor: [0, -32]
+            });
+            const popupContent = `<b>Branch:</b> ${branch.name}`;
+
             if (existingMarker) {
-                existingMarker.setLatLng(position);
+                existingMarker.setLatLng(position).setPopupContent(popupContent);
             } else {
-                const newMarker = L.marker(position, { icon }).addTo(map);
-                newMarker.bindTooltip(`<b>${branch.name}</b>`);
+                const newMarker = L.marker(position, { icon }).bindPopup(popupContent).addTo(map);
                 currentMarkers.set(markerId, newMarker);
             }
         });
-        
-        // User markers (tenants and staff)
+
+        // User markers (Tenant owners and Staff)
         users.forEach(user => {
-            if (!user.lastKnownLocation) return;
+            if (!user.lastKnownLocation || (user.lastKnownLocation.lat === 0 && user.lastKnownLocation.lng === 0)) return;
+
             const position: [number, number] = [user.lastKnownLocation.lat, user.lastKnownLocation.lng];
-            const isTenant = 'planId' in user;
+            const isTenant = 'businessName' in user;
             const markerId = `${isTenant ? 'tenant' : 'staff'}-${user.id}`;
             bounds.extend(position);
             const existingMarker = currentMarkers.get(markerId);
-            
-            const iconColor = isTenant ? '#a78bfa' : '#60a5fa'; // purple for tenant, blue for staff
-            const icon = L.divIcon({ 
-                html: userIconSvg.replace('{COLOR}', iconColor), 
-                className: '', 
-                iconSize: [32, 32], 
-                iconAnchor: [16, 32] 
+
+            const iconColor = isTenant ? '#a78bfa' : '#f472b6'; // Purple for tenants, Pink for staff
+            const icon = L.divIcon({
+                html: userIconSvg.replace('{COLOR}', iconColor),
+                className: 'user-marker',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12],
+                popupAnchor: [0, -12]
             });
-
-            if(existingMarker) {
-                existingMarker.setLatLng(position);
-            } else {
-                const name = isTenant ? (user as Tenant).businessName : (user as Staff).name;
-                const newMarker = L.marker(position, { icon }).addTo(map);
-                newMarker.bindTooltip(`<b>${name}</b><br>${isTenant ? 'Tenant' : 'Staff'}`);
-                currentMarkers.set(markerId, newMarker);
-            }
-        });
-
-
-        // Editable branch marker
-        if (editableBranch) {
-            const { branch, onPositionChange } = editableBranch;
-            const position: [number, number] = [branch.location.lat, branch.location.lng];
-            const markerId = `branch-${branch.id}`;
-            bounds.extend(position);
-            const existingMarker = currentMarkers.get(markerId);
-            const icon = L.divIcon({ html: branchIconSvg, className: 'blinking-marker', iconSize: [32, 32], iconAnchor: [16, 32] });
+            const popupContent = `<b>${isTenant ? 'Tenant' : 'Staff'}:</b> ${user.name}<br><b>Last Seen:</b> ${user.lastKnownLocation.timestamp.toLocaleString()}`;
 
             if (existingMarker) {
-                existingMarker.setLatLng(position);
+                existingMarker.setLatLng(position).setPopupContent(popupContent);
             } else {
-                const newMarker = L.marker(position, { icon, draggable: true }).addTo(map);
-                newMarker.on('dragend', function (event: any) {
-                    onPositionChange(event.target.getLatLng());
-                });
-                newMarker.bindTooltip(`<b>${branch.name}</b><br>Drag to set location`);
+                const newMarker = L.marker(position, { icon }).bindPopup(popupContent).addTo(map);
                 currentMarkers.set(markerId, newMarker);
             }
-        }
+        });
         
-        // Shipment polylines
-        const currentPolylines = polylinesRef.current;
-        const allShipmentIds = new Set(shipments.map(s => `shipment-${s.id}`));
-
-        // Remove old polylines
-        currentPolylines.forEach((line, id) => {
-            if (!allShipmentIds.has(id)) {
-                map.removeLayer(line);
-                currentPolylines.delete(id);
-            }
-        });
-
-        shipments.forEach(shipment => {
-            if (shipment.status !== 'IN_TRANSIT') return;
-
-            const truck = trucks.find(t => t.id === shipment.truckId);
-            const destinationBranch = branches.find(b => b.id === shipment.destination);
+        // Editable branch marker
+        if (editableBranch) {
+             const position: [number, number] = [editableBranch.branch.location.lat, editableBranch.branch.location.lng];
+            const markerId = `branch-${editableBranch.branch.id}`;
+            bounds.extend(position);
             
-            if (truck && destinationBranch) {
-                const start: [number, number] = [truck.currentLocation.lat, truck.currentLocation.lng];
-                const end: [number, number] = [destinationBranch.location.lat, destinationBranch.location.lng];
-                
-                const lineId = `shipment-${shipment.id}`;
-                const existingLine = currentPolylines.get(lineId);
-
-                if (existingLine) {
-                    existingLine.setLatLngs([start, end]);
-                } else {
-                    const polyline = L.polyline([start, end], {
-                        color: '#6366f1',
-                        weight: 2,
-                        opacity: 0.7,
-                        dashArray: '5, 5'
-                    }).addTo(map);
-                    polyline.bindTooltip(`Shipment: ${shipment.shipmentCode}`);
-                    currentPolylines.set(lineId, polyline);
-                }
+            const icon = L.divIcon({
+                html: branchIconSvg,
+                className: '',
+                iconSize: [40, 40],
+                iconAnchor: [20, 40],
+                popupAnchor: [0, -40]
+            });
+            
+            let marker = currentMarkers.get(markerId);
+            if (!marker) {
+                marker = L.marker(position, { icon, draggable: true }).addTo(map);
+                marker.on('dragend', (event: any) => {
+                    editableBranch.onPositionChange(event.target.getLatLng());
+                });
+                currentMarkers.set(markerId, marker);
             }
-        });
-
-
-        // Fit bounds if there are items to show
-        if (bounds.isValid() && !editableBranch) { // Don't auto-zoom when editing a branch location
-             map.fitBounds(bounds, { padding: [50, 50] });
+            marker.setLatLng(position);
         }
-    }, [trucks, branches, users, shipments, editableBranch]);
 
-    // FIX: A React functional component must return a renderable element. This div serves as the map container.
+        // Fit map to bounds if there are items to show
+        if (bounds.isValid()) {
+            map.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }, [trucks, branches, users, editableBranch]);
+
+    // FIX: A React component must return a ReactNode. This div is used by Leaflet to render the map.
     return <div ref={mapRef} className="w-full h-full" />;
 };
 
+// FIX: Add default export to be consumable by other components.
 export default MapComponent;

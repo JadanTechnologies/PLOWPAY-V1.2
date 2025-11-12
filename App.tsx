@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppContextProvider } from './context/AppContext';
 import TenantApp from './components/TenantApp';
@@ -180,8 +182,7 @@ const App: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-    // FIX: Destructure setSession and setProfile from useAppContext to correctly manage authentication state.
-    const { session, profile, impersonatedUser, notification, setNotification, systemSettings, setSession, setProfile } = useAppContext();
+    const { session, profile, impersonatedUser, notification, setNotification, systemSettings, setSession, setProfile, handleImpersonate } = useAppContext();
     const [view, setView] = useState<View>('landing');
     const [viewData, setViewData] = useState<any>(null);
 
@@ -242,12 +243,6 @@ const AppContent: React.FC = () => {
     if (isAccessDenied) {
         return <AccessDeniedPage />;
     }
-
-    const handleImpersonate = (tenant: Tenant) => {
-      // In App.tsx, this function should just call the context function.
-      // The context itself will handle the state logic.
-      // This is passed down to SuperAdminPanel.
-    };
     
     let content;
 

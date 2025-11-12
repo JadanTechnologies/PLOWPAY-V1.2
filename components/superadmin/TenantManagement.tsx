@@ -1,3 +1,5 @@
+
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Tenant, TenantStatus } from '../../types';
@@ -115,8 +117,8 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
             if (!formState.password || formState.password.trim() === '') {
                 delete (updateData as any).password;
             }
-             if (logoPreview && logoPreview !== selectedTenant.companyLogoUrl) {
-                updateData.companyLogoUrl = logoPreview;
+             if (logoPreview !== selectedTenant.companyLogoUrl) {
+                updateData.companyLogoUrl = logoPreview || '';
             }
             updateTenant(selectedTenant.id, updateData);
             setNotification({ type: 'success', message: 'Tenant updated successfully.' });
@@ -311,10 +313,17 @@ const TenantManagement: React.FC<TenantManagementProps> = ({ onImpersonate }) =>
                                                 <Icon name="briefcase" className="w-8 h-8 text-slate-500" />
                                             </div>
                                         )}
-                                        <label htmlFor="logo-upload" className="cursor-pointer bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-md text-sm">
-                                            <span>{logoFile || logoPreview ? 'Change Logo' : 'Upload Logo'}</span>
-                                            <input id="logo-upload" name="logo" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} required={modal === 'ADD_TENANT'}/>
-                                        </label>
+                                        <div className="space-y-2">
+                                            <label htmlFor="logo-upload" className="cursor-pointer bg-slate-600 hover:bg-slate-500 text-white font-semibold py-2 px-4 rounded-md text-sm inline-block">
+                                                <span>{logoFile || logoPreview ? 'Change Logo' : 'Upload Logo'}</span>
+                                                <input id="logo-upload" name="logo" type="file" className="sr-only" accept="image/*" onChange={handleFileChange} required={modal === 'ADD_TENANT' && !logoPreview}/>
+                                            </label>
+                                            {logoPreview && (
+                                                <button type="button" onClick={() => { setLogoPreview(null); setLogoFile(null); }} className="text-xs text-rose-400 hover:text-rose-300 font-semibold">
+                                                    Remove Logo
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

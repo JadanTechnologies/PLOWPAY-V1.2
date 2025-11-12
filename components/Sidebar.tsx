@@ -1,9 +1,10 @@
-import React, { useMemo } from 'react';
+
+import React from 'react';
 import { Page } from '../App';
 import Icon from './icons/index.tsx';
 import { useTranslation } from '../hooks/useTranslation';
-import { useAppContext } from '../hooks/useAppContext';
 import { TenantPermission } from '../types';
+import { useTenantPermissions } from '../hooks/useTenantPermissions';
 
 interface SidebarProps {
   currentPage: Page;
@@ -56,16 +57,8 @@ const NavItem: React.FC<{
 
 const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOpen }) => {
   const { t } = useTranslation();
-  const { currentStaffUser, staffRoles, allTenantPermissions } = useAppContext();
+  const { hasTenantPermission } = useTenantPermissions();
 
-  const userPermissions = useMemo(() => {
-    if (!currentStaffUser) { // It's the tenant admin
-      return new Set(allTenantPermissions);
-    }
-    const role = staffRoles.find(r => r.id === currentStaffUser.roleId);
-    return new Set(role?.permissions || []);
-  }, [currentStaffUser, staffRoles, allTenantPermissions]);
-  
   const navItemConfig: { page: Page; icon: string; label: string; permission?: TenantPermission }[] = [
     { page: 'DASHBOARD', icon: 'layout-grid', label: t('dashboard'), permission: 'viewReports' },
     { page: 'POS', icon: 'pos', label: t('pos'), permission: 'accessPOS' },
@@ -84,7 +77,6 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
     { page: 'BILLING', icon: 'credit-card', label: t('billing'), permission: 'manageBilling' },
   ];
   
-  // FIX: Added explicit type annotation to ensure permission property is typed as TenantPermission.
   const bottomNavItems: { page: Page; icon: string; label: string; permission?: TenantPermission }[] = [
       { page: 'COMMUNICATIONS', icon: 'chat-bubble-left-right', label: t('communications'), permission: 'sendCommunications' },
       { page: 'TEMPLATES', icon: 'clipboard-document-list', label: t('templates'), permission: 'manageTemplates' },
@@ -93,8 +85,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
       { page: 'SETTINGS', icon: 'settings', label: t('settings'), permission: 'accessSettings' },
   ]
 
-  const visibleNavItems = navItemConfig.filter(item => !item.permission || userPermissions.has(item.permission));
-  const visibleBottomNavItems = bottomNavItems.filter(item => !item.permission || userPermissions.has(item.permission));
+  const visibleNavItems = navItemConfig.filter(item => !item.permission || hasTenantPermission(item.permission));
+  const visibleBottomNavItems = bottomNavItems.filter(item => !item.permission || hasTenantPermission(item.permission));
 
   return (
     <aside
