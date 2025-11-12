@@ -1,14 +1,19 @@
-
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Tenant } from '../../types';
 import { countries, states, phoneCodes } from '../../utils/data';
 
 const TenantProfile: React.FC = () => {
-    const { currentTenant, updateTenantProfile } = useAppContext();
+    const { currentTenant, updateTenantProfile, currentStaffUser, staffRoles } = useAppContext();
     const [formState, setFormState] = useState<Partial<Tenant>>({});
     const [availableStates, setAvailableStates] = useState<{code: string, name: string}[]>([]);
+
+    const isCashier = useMemo(() => {
+        if (!currentStaffUser) return false;
+        const role = staffRoles.find(r => r.id === currentStaffUser.roleId);
+        return role?.name === 'Cashier';
+    }, [currentStaffUser, staffRoles]);
+
 
     useEffect(() => {
         if (currentTenant) {
@@ -40,6 +45,9 @@ const TenantProfile: React.FC = () => {
 
     if (!currentTenant) return <div>Loading profile...</div>;
 
+    const disabledInputClass = "w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md disabled:bg-slate-700/50 disabled:cursor-not-allowed";
+    const disabledSelectClass = "bg-slate-700 border border-slate-600 rounded-l-md p-2 text-white disabled:bg-slate-700/50 disabled:cursor-not-allowed";
+
     return (
         <form onSubmit={handleSubmit} className="space-y-8 max-w-4xl mx-auto">
             <div className="p-6 bg-slate-800 rounded-lg shadow-md">
@@ -53,31 +61,31 @@ const TenantProfile: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-slate-400">Business Name</label>
-                        <input type="text" name="businessName" value={formState.businessName || ''} onChange={handleChange} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
+                        <input type="text" name="businessName" value={formState.businessName || ''} onChange={handleChange} disabled={isCashier} className={disabledInputClass} />
                     </div>
                      <div>
                         <label className="block text-sm font-medium text-slate-400">Company Phone</label>
                         <div className="flex mt-1">
-                            <select name="phoneCountryCode" value={formState.phoneCountryCode || ''} onChange={handleChange} className="bg-slate-700 border border-slate-600 rounded-l-md p-2 text-white">
+                            <select name="phoneCountryCode" value={formState.phoneCountryCode || ''} onChange={handleChange} disabled={isCashier} className={disabledSelectClass}>
                                 {phoneCodes.map(c => <option key={c.code} value={c.code}>{c.name} ({c.code})</option>)}
                             </select>
-                            <input type="tel" name="companyPhone" value={formState.companyPhone || ''} onChange={handleChange} className="w-full py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-r-md"/>
+                            <input type="tel" name="companyPhone" value={formState.companyPhone || ''} onChange={handleChange} disabled={isCashier} className="w-full py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-r-md disabled:bg-slate-700/50 disabled:cursor-not-allowed"/>
                         </div>
                     </div>
                     <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-slate-400">Company Address</label>
-                        <input type="text" name="companyAddress" value={formState.companyAddress || ''} onChange={handleChange} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
+                        <input type="text" name="companyAddress" value={formState.companyAddress || ''} onChange={handleChange} disabled={isCashier} className={disabledInputClass}/>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-slate-400">Country</label>
-                        <select name="country" value={formState.country || ''} onChange={handleChange} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md">
+                        <select name="country" value={formState.country || ''} onChange={handleChange} disabled={isCashier} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md disabled:bg-slate-700/50 disabled:cursor-not-allowed">
                             <option value="">Select a country</option>
                             {countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
                         </select>
                     </div>
                      <div>
                         <label className="block text-sm font-medium text-slate-400">State / Province</label>
-                        <select name="state" value={formState.state || ''} onChange={handleChange} disabled={!availableStates.length} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md disabled:bg-slate-700/50">
+                        <select name="state" value={formState.state || ''} onChange={handleChange} disabled={!availableStates.length || isCashier} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md disabled:bg-slate-700/50 disabled:cursor-not-allowed">
                              <option value="">Select a state</option>
                             {availableStates.map(s => <option key={s.code} value={s.code}>{s.name}</option>)}
                         </select>
@@ -91,7 +99,7 @@ const TenantProfile: React.FC = () => {
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-sm font-medium text-slate-400">Full Name</label>
-                        <input type="text" name="ownerName" value={formState.ownerName || ''} onChange={handleChange} className="w-full mt-1 py-2 px-3 text-white bg-slate-700 border border-slate-600 rounded-md"/>
+                        <input type="text" name="ownerName" value={formState.ownerName || ''} onChange={handleChange} disabled={isCashier} className={disabledInputClass}/>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-slate-400">Email Address</label>
@@ -101,11 +109,13 @@ const TenantProfile: React.FC = () => {
                 </div>
             </div>
 
-            <div className="text-right">
-                <button type="submit" className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-6 rounded-md">
-                    Save Changes
-                </button>
-            </div>
+            {!isCashier && (
+                <div className="text-right">
+                    <button type="submit" className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-6 rounded-md">
+                        Save Changes
+                    </button>
+                </div>
+            )}
         </form>
     );
 };
