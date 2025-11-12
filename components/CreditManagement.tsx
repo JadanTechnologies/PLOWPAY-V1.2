@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import { Customer, Sale } from '../../types';
@@ -28,7 +29,6 @@ const CustomerCreditDetailModal: React.FC<{ customer: Customer; onClose: () => v
         if (paymentAmount) {
             const amount = parseFloat(paymentAmount);
             if (amount > 0 && amount <= customer.creditBalance) {
-                // FIX: Added missing staffId argument to recordCreditPayment call.
                 recordCreditPayment(customer.id, amount, currentStaffUser?.id || 'staff-unknown');
                 setNotification({ type: 'success', message: `Payment of ${formatCurrency(amount)} recorded for ${customer.name}.` });
                 onClose();

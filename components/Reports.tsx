@@ -1,8 +1,9 @@
-import React, { useMemo, useState } from 'react';
+
+import React, { useMemo, useState, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { Sale, Customer, PurchaseOrder, Consignment, Supplier, Product, Staff } from '../types';
+import { Sale, Customer, PurchaseOrder, Consignment, Supplier, Product, Staff } from '../../types';
 import { useCurrency } from '../../hooks/useCurrency';
 
 const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
@@ -99,17 +100,19 @@ const ProfitLossSummary: React.FC<{ data: any, formatCurrency: (val: number) => 
     </div>
 );
 
-const DetailedSalesReport: React.FC<{ data: any[], totals: any, formatCurrency: (val: number) => string }> = ({ data, totals, formatCurrency }) => (
+const DetailedSalesReport: React.FC<{ data: any[], totals: any, formatCurrency: (val: number) => string, isCashier: boolean }> = ({ data, totals, formatCurrency, isCashier }) => (
     <div className="overflow-x-auto max-h-[600px]">
         <table className="w-full text-left text-xs whitespace-nowrap">
             <thead className="border-b border-slate-700 sticky top-0 bg-slate-800">
                 <tr>
                     <th className="p-2">S/N</th><th className="p-2">Branch</th><th className="p-2">Customer</th><th className="p-2">Item</th>
                     <th className="p-2 text-right">Qty Sold</th>
-                    <th className="p-2 text-right">Cost Price</th><th className="p-2 text-right">Total Cost</th>
+                    {!isCashier && <th className="p-2 text-right">Cost Price</th>}
+                    {!isCashier && <th className="p-2 text-right">Total Cost</th>}
                     <th className="p-2 text-right">Sell Price</th><th className="p-2 text-right">Total Sell</th>
                     <th className="p-2 text-right">Discount</th><th className="p-2 text-right">Net Price</th>
-                    <th className="p-2 text-right">Profit</th><th className="p-2">Attendant</th><th className="p-2">Date & Time</th>
+                    {!isCashier && <th className="p-2 text-right">Profit</th>}
+                    <th className="p-2">Attendant</th><th className="p-2">Date & Time</th>
                 </tr>
             </thead>
             <tbody>
@@ -117,21 +120,25 @@ const DetailedSalesReport: React.FC<{ data: any[], totals: any, formatCurrency: 
                     <tr key={row.id} className="border-b border-slate-700 hover:bg-slate-700/50">
                         <td className="p-2">{index + 1}</td><td className="p-2">{row.branchName}</td><td className="p-2">{row.customerName}</td><td className="p-2">{row.itemName}</td>
                         <td className="p-2 text-right font-bold">{row.quantitySold}</td>
-                        <td className="p-2 text-right font-mono">{formatCurrency(row.costPrice)}</td><td className="p-2 text-right font-mono">{formatCurrency(row.totalCostPrice)}</td>
+                        {!isCashier && <td className="p-2 text-right font-mono">{formatCurrency(row.costPrice)}</td>}
+                        {!isCashier && <td className="p-2 text-right font-mono">{formatCurrency(row.totalCostPrice)}</td>}
                         <td className="p-2 text-right font-mono">{formatCurrency(row.sellingPrice)}</td><td className="p-2 text-right font-mono">{formatCurrency(row.totalSellingPrice)}</td>
                         <td className="p-2 text-right font-mono text-red-400">{formatCurrency(row.discount)}</td><td className="p-2 text-right font-mono">{formatCurrency(row.balanceAfterDiscount)}</td>
-                        <td className="p-2 text-right font-mono font-bold text-green-400">{formatCurrency(row.profit)}</td><td className="p-2">{row.attendant}</td><td className="p-2">{row.dateTime}</td>
+                        {!isCashier && <td className="p-2 text-right font-mono font-bold text-green-400">{formatCurrency(row.profit)}</td>}
+                        <td className="p-2">{row.attendant}</td><td className="p-2">{row.dateTime}</td>
                     </tr>
                 ))}
             </tbody>
             <tfoot className="sticky bottom-0 bg-slate-800 font-bold border-t-2 border-slate-600">
                 <tr>
                     <td colSpan={4} className="p-2 text-right">Grand Total</td>
-                    <td className="p-2 text-right">{totals.quantitySold}</td><td></td>
-                    <td className="p-2 text-right font-mono">{formatCurrency(totals.totalCostPrice)}</td><td></td>
+                    <td className="p-2 text-right">{totals.quantitySold}</td>
+                    {!isCashier && <td></td>}
+                    {!isCashier && <td className="p-2 text-right font-mono">{formatCurrency(totals.totalCostPrice)}</td>}
+                    <td></td>
                     <td className="p-2 text-right font-mono">{formatCurrency(totals.totalSellingPrice)}</td>
                     <td className="p-2 text-right font-mono text-red-400">{formatCurrency(totals.discount)}</td><td></td>
-                    <td className="p-2 text-right font-mono text-green-400">{formatCurrency(totals.profit)}</td>
+                    {!isCashier && <td className="p-2 text-right font-mono text-green-400">{formatCurrency(totals.profit)}</td>}
                     <td colSpan={2}></td>
                 </tr>
             </tfoot>
@@ -473,9 +480,7 @@ const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurren
 };
 
 const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
-    // FIX: Explicitly cast creditBalance to a number to resolve TypeScript type inference issue.
     const creditCustomers = useMemo(() => customers.filter(c => Number(c.creditBalance) > 0), [customers]);
-    // FIX: Explicitly cast creditBalance to a number to resolve TypeScript type inference issue.
     const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + Number(c.creditBalance), 0), [creditCustomers]);
 
     return (
@@ -504,7 +509,7 @@ const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (v
 
 
 const Reports: React.FC = () => {
-  const { sales, products, branches, staff, categories, customers, purchaseOrders, consignments, suppliers, brandConfig, isLoading, setNotification } = useAppContext();
+  const { sales, products, branches, staff, customers, purchaseOrders, consignments, suppliers, brandConfig, isLoading, setNotification, currentStaffUser, staffRoles } = useAppContext();
   const { formatCurrency } = useCurrency();
   
   const [dateRange, setDateRange] = useState(() => {
@@ -514,8 +519,25 @@ const Reports: React.FC = () => {
     return { start, end };
   });
   const [activeFilter, setActiveFilter] = useState('Last Month');
-  const [activeReport, setActiveReport] = useState<ReportTab>('profit_loss');
-  const [branchFilter, setBranchFilter] = useState('ALL');
+  const [activeReport, setActiveReport] = useState<ReportTab>('sales');
+  
+  const isCashier = useMemo(() => {
+      if (!currentStaffUser) return false;
+      const role = staffRoles.find(r => r.id === currentStaffUser.roleId);
+      return role?.name === 'Cashier';
+  }, [currentStaffUser, staffRoles]);
+
+  const [branchFilter, setBranchFilter] = useState(isCashier ? currentStaffUser?.branchId || 'ALL' : 'ALL');
+  
+  // Reset active report if it's not allowed for cashier
+  useEffect(() => {
+      if (isCashier) {
+          setActiveReport('sales');
+      } else {
+          setActiveReport('profit_loss');
+      }
+  }, [isCashier]);
+
 
   if (isLoading) {
     return <ReportsSkeleton />;
@@ -542,9 +564,15 @@ const Reports: React.FC = () => {
     const endOfDay = new Date(dateRange.end);
     endOfDay.setHours(23,59,59,999);
     const inDateRange = saleDate >= startOfDay && saleDate <= endOfDay;
-    const inBranch = branchFilter === 'ALL' || sale.branchId === branchFilter;
+    
+    // Cashier sees only their branch, Admin can filter
+    const cashierBranchId = currentStaffUser?.branchId;
+    const inBranch = isCashier
+        ? sale.branchId === cashierBranchId
+        : (branchFilter === 'ALL' || sale.branchId === branchFilter);
+    
     return inDateRange && inBranch;
-  }), [sales, dateRange, branchFilter]);
+  }), [sales, dateRange, branchFilter, isCashier, currentStaffUser]);
 
   const salesMetrics = useMemo(() => {
     const totalRevenue = filteredSales.reduce((acc, sale) => acc + sale.total, 0);
@@ -629,10 +657,11 @@ const Reports: React.FC = () => {
         return;
     }
 
-    const headers = [
-        "S/N", "Branch", "Customer", "Item", "Qty Sold", "Cost Price", "Total Cost",
-        "Sell Price", "Total Sell", "Discount", "Net Price", "Profit", "Attendant", "Date & Time"
-    ];
+    const headers = [ "S/N", "Branch", "Customer", "Item", "Qty Sold", "Sell Price", "Total Sell", "Discount", "Net Price", "Attendant", "Date & Time" ];
+    if (!isCashier) {
+        headers.splice(5, 0, "Cost Price", "Total Cost");
+        headers.splice(10, 0, "Profit");
+    }
 
     const escapeCsvCell = (cell: any): string => {
         const str = String(cell == null ? '' : cell);
@@ -646,22 +675,20 @@ const Reports: React.FC = () => {
 
     detailedReportData.forEach((row, index) => {
         const values = [
-            index + 1,
-            row.branchName,
-            row.customerName,
-            row.itemName,
-            row.quantitySold,
-            row.costPrice.toFixed(2),
-            row.totalCostPrice.toFixed(2),
-            row.sellingPrice.toFixed(2),
-            row.totalSellingPrice.toFixed(2),
-            row.discount.toFixed(2),
-            row.balanceAfterDiscount.toFixed(2),
-            row.profit.toFixed(2),
-            row.attendant,
-            row.dateTime
-        ].map(escapeCsvCell);
-        csvRows.push(values.join(','));
+            index + 1, row.branchName, row.customerName, row.itemName, row.quantitySold,
+        ];
+        if (!isCashier) {
+            values.push(row.costPrice.toFixed(2) as any, row.totalCostPrice.toFixed(2) as any);
+        }
+        values.push(
+            row.sellingPrice.toFixed(2) as any, row.totalSellingPrice.toFixed(2) as any, row.discount.toFixed(2) as any, row.balanceAfterDiscount.toFixed(2) as any
+        );
+        if (!isCashier) {
+            values.push(row.profit.toFixed(2) as any);
+        }
+        values.push(row.attendant as any, row.dateTime as any);
+        
+        csvRows.push(values.map(escapeCsvCell).join(','));
     });
 
     const csvString = csvRows.join('\n');
@@ -677,19 +704,18 @@ const Reports: React.FC = () => {
   };
 
   const reportTitles: Record<ReportTab, string> = { 
-    sales: 'Detailed Sales Report', 
-    credit: 'Credit Sales Report', 
-    purchases: 'Purchase Order Report', 
-    consignment: 'Consignment Report', 
-    profit_loss: 'Profit & Loss Summary', 
-    deposit_sales: 'Deposit Sales Report',
-    inventory_valuation: 'Inventory Valuation Report',
-    sales_by_staff: 'Sales by Staff Report',
-    customer_credit: 'Customer Credit Report',
+    sales: 'Detailed Sales Report', credit: 'Credit Sales Report', purchases: 'Purchase Order Report', consignment: 'Consignment Report', profit_loss: 'Profit & Loss Summary', deposit_sales: 'Deposit Sales Report', inventory_valuation: 'Inventory Valuation Report', sales_by_staff: 'Sales by Staff Report', customer_credit: 'Customer Credit Report',
 };
 
   const dateFilters = ['Today', 'This Week', 'This Month', 'Last Month', 'This Year'];
   const TabButton: React.FC<{tab: ReportTab, label: string}> = ({ tab, label }) => (<button onClick={() => setActiveReport(tab)} className={`px-4 py-2 font-medium text-sm rounded-md ${activeReport === tab ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>{label}</button>);
+
+  const allowedReportsForCashier: ReportTab[] = ['sales', 'credit', 'deposit_sales'];
+  const allReports: {tab: ReportTab, label: string}[] = [
+    {tab: 'profit_loss', label: 'Profit & Loss'}, {tab: 'sales', label: 'Detailed Sales'}, {tab: 'sales_by_staff', label: 'Sales by Staff'}, {tab: 'inventory_valuation', label: 'Inventory Valuation'}, {tab: 'customer_credit', label: 'Customer Credit'}, {tab: 'credit', label: 'Credit Sales'}, {tab: 'deposit_sales', label: 'Deposit Sales'}, {tab: 'purchases', label: 'Purchase Orders'}, {tab: 'consignment', label: 'Consignment'},
+  ];
+  const visibleReports = isCashier ? allReports.filter(r => allowedReportsForCashier.includes(r.tab)) : allReports;
+
 
   return (
     <div id="report-printable-area">
@@ -717,7 +743,8 @@ const Reports: React.FC = () => {
                                 id="branch-filter"
                                 value={branchFilter}
                                 onChange={e => setBranchFilter(e.target.value)}
-                                className="bg-slate-700 border border-slate-600 rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                disabled={isCashier}
+                                className="bg-slate-700 border border-slate-600 rounded-md py-1 px-2 focus:outline-none focus:ring-2 focus:ring-cyan-500 disabled:bg-slate-700/50"
                             >
                                 <option value="ALL">All Branches</option>
                                 {branches.map(branch => (
@@ -738,33 +765,29 @@ const Reports: React.FC = () => {
                     </div>
                 </div>
             </div>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 no-print">
-                <MetricCard title="Total Revenue" value={formatCurrency(salesMetrics.totalRevenue)} iconName="dashboard" iconBgColor="bg-blue-500" />
-                <MetricCard title="Total Sales" value={salesMetrics.totalSales} iconName="pos" iconBgColor="bg-green-500" />
-                <MetricCard title="Items Sold" value={salesMetrics.totalItemsSold} iconName="inventory" iconBgColor="bg-orange-500" />
-                <MetricCard title="Avg. Sale Value" value={formatCurrency(salesMetrics.averageSaleValue)} iconName="calculator" iconBgColor="bg-purple-500" />
-            </div>
+            {!isCashier && (
+                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 no-print">
+                    <MetricCard title="Total Revenue" value={formatCurrency(salesMetrics.totalRevenue)} iconName="dashboard" iconBgColor="bg-blue-500" />
+                    <MetricCard title="Total Sales" value={salesMetrics.totalSales} iconName="pos" iconBgColor="bg-green-500" />
+                    <MetricCard title="Items Sold" value={salesMetrics.totalItemsSold} iconName="inventory" iconBgColor="bg-orange-500" />
+                    <MetricCard title="Avg. Sale Value" value={formatCurrency(salesMetrics.averageSaleValue)} iconName="calculator" iconBgColor="bg-purple-500" />
+                </div>
+            )}
             <div className="p-6 bg-slate-800 rounded-lg shadow-md">
                 <div className="flex flex-wrap gap-2 border-b border-slate-700 mb-6 pb-2 no-print">
-                    <TabButton tab="profit_loss" label="Profit & Loss" />
-                    <TabButton tab="sales" label="Detailed Sales" />
-                    <TabButton tab="sales_by_staff" label="Sales by Staff" />
-                    <TabButton tab="inventory_valuation" label="Inventory Valuation" />
-                    <TabButton tab="customer_credit" label="Customer Credit" />
-                    <TabButton tab="credit" label="Credit Sales" />
-                    <TabButton tab="deposit_sales" label="Deposit Sales" />
-                    <TabButton tab="purchases" label="Purchase Orders" />
-                    <TabButton tab="consignment" label="Consignment" />
+                    {visibleReports.map(report => (
+                        <TabButton key={report.tab} tab={report.tab} label={report.label} />
+                    ))}
                 </div>
-                {activeReport === 'profit_loss' && <ProfitLossSummary data={grandTotals} formatCurrency={formatCurrency} />}
-                {activeReport === 'sales' && <DetailedSalesReport data={detailedReportData} totals={grandTotals} formatCurrency={formatCurrency} />}
+                {activeReport === 'profit_loss' && !isCashier && <ProfitLossSummary data={grandTotals} formatCurrency={formatCurrency} />}
+                {activeReport === 'sales' && <DetailedSalesReport data={detailedReportData} totals={grandTotals} formatCurrency={formatCurrency} isCashier={isCashier} />}
                 {activeReport === 'sales_by_staff' && <SalesByStaffReport sales={filteredSales} staff={staff} formatCurrency={formatCurrency} />}
-                {activeReport === 'inventory_valuation' && <InventoryValuationReport products={products} branches={branchMap} branchFilter={branchFilter} formatCurrency={formatCurrency} />}
+                {activeReport === 'inventory_valuation' && !isCashier && <InventoryValuationReport products={products} branches={branchMap} branchFilter={branchFilter} formatCurrency={formatCurrency} />}
                 {activeReport === 'customer_credit' && <CustomerCreditReport customers={customers} formatCurrency={formatCurrency} />}
                 {activeReport === 'credit' && <CreditSalesReport data={creditSalesData} formatCurrency={formatCurrency} />}
                 {activeReport === 'deposit_sales' && <DepositSalesReport data={depositSalesData} formatCurrency={formatCurrency} />}
-                {activeReport === 'purchases' && <PurchaseOrdersReport data={purchaseData} suppliers={supplierMap} branches={branchMap} formatCurrency={formatCurrency} />}
-                {activeReport === 'consignment' && <ConsignmentReport data={consignmentReportData} formatCurrency={formatCurrency} />}
+                {activeReport === 'purchases' && !isCashier && <PurchaseOrdersReport data={purchaseData} suppliers={supplierMap} branches={branchMap} formatCurrency={formatCurrency} />}
+                {activeReport === 'consignment' && !isCashier && <ConsignmentReport data={consignmentReportData} formatCurrency={formatCurrency} />}
             </div>
         </div>
     </div>

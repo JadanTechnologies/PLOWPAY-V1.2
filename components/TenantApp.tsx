@@ -26,12 +26,13 @@ import TenantSupport from './tenant/Support';
 import Budgeting from './Budgeting';
 import TemplateManagement from './tenant/TemplateManagement';
 import Communications from './tenant/Communications';
+import CashierDashboard from './cashier/CashierDashboard';
 
 
 const TenantApp: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<Page>('DASHBOARD');
   const [isSidebarOpen, setSidebarOpen] = useState(true);
-  const { currentTenant, currentAdminUser, stopImpersonating, impersonatedUser } = useAppContext();
+  const { currentTenant, currentAdminUser, stopImpersonating, impersonatedUser, currentStaffUser, staffRoles } = useAppContext();
   const [isExpiryBannerVisible, setExpiryBannerVisible] = useState(true);
   
   const isImpersonating = !!impersonatedUser;
@@ -70,10 +71,16 @@ const TenantApp: React.FC = () => {
     return null;
   }, [currentTenant]);
   
+  const isCashier = useMemo(() => {
+      if (!currentStaffUser) return false;
+      const role = staffRoles.find(r => r.id === currentStaffUser.roleId);
+      return role?.name === 'Cashier';
+  }, [currentStaffUser, staffRoles]);
+
   const renderPage = () => {
     switch (currentPage) {
       case 'DASHBOARD':
-        return <Dashboard />;
+        return isCashier ? <CashierDashboard /> : <Dashboard />;
       case 'POS':
         return <PointOfSale />;
       case 'INVENTORY':
@@ -111,7 +118,7 @@ const TenantApp: React.FC = () => {
       case 'COMMUNICATIONS':
         return <Communications />;
       default:
-        return <Dashboard />;
+        return isCashier ? <CashierDashboard /> : <Dashboard />;
     }
   };
 

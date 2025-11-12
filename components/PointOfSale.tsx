@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant, Payment, Sale, Deposit, TenantPermission, Customer } from '../types';
@@ -5,7 +6,7 @@ import Icon from './icons/index.tsx';
 import Calculator from './Calculator';
 import { useCurrency } from '../hooks/useCurrency';
 import ConfirmationModal from './ConfirmationModal';
-import InvoiceModal from './InvoiceModal.tsx';
+import InvoiceModal from './InvoiceModal';
 
 const ProductCard: React.FC<{ product: Product; onAddToCart: (product: Product, variant: ProductVariant) => void }> = ({ product, onAddToCart }) => {
   const [selectedVariant, setSelectedVariant] = useState<ProductVariant>(product.variants[0]);
@@ -188,7 +189,6 @@ const PaymentModal: React.FC<{
 interface HeldOrder {
   id: number;
   cart: CartItem[];
-  // FIX: Added 'id' to the customer object in HeldOrder to match the customer state type.
   customer: { id: string; name: string; phone: string; };
   discount: number;
   heldAt: Date;
@@ -545,8 +545,6 @@ const PointOfSale: React.FC = () => {
       const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesFavorites = !showFavorites || product.isFavorite;
       
-      // If it's a staff user, they can only see products in their branch.
-      // Tenant admin can see all.
       if (currentStaffUser) {
           const isVisibleInBranch = product.variants.some(variant => {
             const stock = (variant.stockByBranch[currentBranchId] || 0) + (variant.consignmentStockByBranch?.[currentBranchId] || 0);
@@ -607,7 +605,6 @@ const PointOfSale: React.FC = () => {
     const orderToRetrieve = heldOrders.find(o => o.id === id);
     if (orderToRetrieve) {
       setCart(orderToRetrieve.cart);
-      // FIX: Ensure customer object matches state type by providing a fallback for optional phone property.
       setCustomer({ ...orderToRetrieve.customer, phone: orderToRetrieve.customer.phone || '' });
       setDiscount(orderToRetrieve.discount);
       if (orderToRetrieve.cart.length > 0 && orderToRetrieve.cart[0].quantity < 0) {
@@ -671,7 +668,6 @@ const PointOfSale: React.FC = () => {
   };
 
   const handleSelectCustomer = (selected: {id: string; name: string, phone?: string}) => {
-    // FIX: Ensure customer object matches state type by providing a fallback for optional phone property.
     setCustomer({ ...selected, phone: selected.phone || '' });
     setIsCustomerSearchOpen(false);
   };
