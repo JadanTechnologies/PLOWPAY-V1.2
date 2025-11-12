@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback, useMemo } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -27,6 +25,8 @@ import Budgeting from './Budgeting';
 import TemplateManagement from './tenant/TemplateManagement';
 import Communications from './tenant/Communications';
 import CashierDashboard from './cashier/CashierDashboard';
+import CashierCredit from './cashier/CashierCredit';
+import CashierDeposits from './cashier/CashierDeposits';
 
 
 const TenantApp: React.FC = () => {
@@ -101,6 +101,10 @@ const TenantApp: React.FC = () => {
         return <CreditManagement />;
       case 'DEPOSIT_MANAGEMENT':
         return <DepositManagement />;
+      case 'CASHIER_CREDIT':
+        return <CashierCredit />;
+      case 'CASHIER_DEPOSITS':
+        return <CashierDeposits />;
       case 'CONSIGNMENT':
         return <ConsignmentManagement />;
       case 'BILLING':

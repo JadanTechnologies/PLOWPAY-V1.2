@@ -9,7 +9,7 @@ import MapComponent from './GoogleMap';
 
 type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations' | 'security';
 
-// FIX: Added missing permission label for 'manageBilling' to satisfy the Record<TenantPermission, string> type.
+// FIX: Added missing permission labels for 'accessCashierCredit' and 'accessCashierDeposits' to satisfy the Record<TenantPermission, string> type.
 const permissionLabels: Record<TenantPermission, string> = {
     accessPOS: 'Access Point of Sale',
     manageInventory: 'Manage Inventory',
@@ -27,11 +27,13 @@ const permissionLabels: Record<TenantPermission, string> = {
     manageTemplates: 'Manage Templates',
     sendCommunications: 'Send Communications',
     manageBilling: 'Manage Billing',
+    accessCashierCredit: 'Access Cashier Credit',
+    accessCashierDeposits: 'Access Cashier Deposits',
 };
 
-// FIX: Added 'manageBilling' permission to the 'Administration' group so it appears in the UI.
+// FIX: Added cashier permissions to the 'Sales & Operations' group so they appear in the UI.
 const permissionGroups: Record<string, TenantPermission[]> = {
-    'Sales & Operations': ['accessPOS', 'managePurchases', 'makeDeposits', 'accessReturns'],
+    'Sales & Operations': ['accessPOS', 'managePurchases', 'makeDeposits', 'accessReturns', 'accessCashierCredit', 'accessCashierDeposits'],
     'Inventory & Logistics': ['manageInventory', 'manageLogistics'],
     'Administration': ['viewReports', 'manageStaff', 'accessSettings', 'accessAccounting', 'viewAuditLogs', 'manageDeposits', 'accessSupport', 'manageTemplates', 'sendCommunications', 'manageBilling'],
 };

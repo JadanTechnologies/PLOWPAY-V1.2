@@ -1,9 +1,8 @@
-
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from '../icons';
 import { useCurrency } from '../../hooks/useCurrency';
-import { Sale, Deposit, Customer } from '../../types';
+import { Sale, Deposit, Customer, ProductVariant, CartItem } from '../../types';
 import DashboardDetailModal from './DashboardDetailModal';
 import InvoiceModal from '../InvoiceModal';
 
@@ -12,11 +11,11 @@ interface MetricCardProps {
     value: string | number;
     iconName: string;
     iconBgColor: string;
-    onClick: () => void;
+    onClick?: () => void;
 }
 
 const MetricCard: React.FC<MetricCardProps> = ({ title, value, iconName, iconBgColor, onClick }) => (
-  <button onClick={onClick} className="p-4 bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-700 w-full text-left hover:bg-slate-700/50 transition-colors">
+  <button onClick={onClick} disabled={!onClick} className="p-4 bg-slate-800 rounded-lg shadow-lg flex items-center border border-slate-700 w-full text-left hover:bg-slate-700/50 transition-colors disabled:hover:bg-slate-800 disabled:cursor-default">
     <div className={`p-3 rounded-full ${iconBgColor} mr-4`}>
       <Icon name={iconName} className="w-6 h-6 text-white" />
     </div>
@@ -27,15 +26,19 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, iconName, iconBgC
   </button>
 );
 
+// Define more specific types for modal data
+type ProductInfo = ProductVariant & { productName: string; stock: number; };
+type SoldItemInfo = CartItem & { saleDate: Date };
+
 const CashierDashboard: React.FC = () => {
     const { sales, deposits, products, customers, currentStaffUser } = useAppContext();
     const { formatCurrency } = useCurrency();
-    const [modalState, setModalState] = useState<{ title: string; data: Sale[] | Deposit[] | Customer[], type: 'sale' | 'deposit' | 'customer' } | null>(null);
+    const [modalState, setModalState] = useState<{ title: string; data: any[], type: 'sale' | 'deposit' | 'customer' | 'product' | 'sold_item' } | null>(null);
     const [reprintSale, setReprintSale] = useState<Sale | null>(null);
 
     const cashierSales = useMemo(() => {
         if (!currentStaffUser) return [];
-        return sales.filter(sale => sale.staffId === currentStaffUser.id);
+        return sales.filter(sale => sale.staffId === currentStaffUser.id).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }, [sales, currentStaffUser]);
 
     const branchDeposits = useMemo(() => {
@@ -48,23 +51,29 @@ const CashierDashboard: React.FC = () => {
         return sales.filter(s => s.branchId === currentStaffUser.branchId && s.amountDue > 0);
     }, [sales, currentStaffUser]);
 
-    const branchProducts = useMemo(() => {
-        if (!currentStaffUser) return { total: 0, remaining: 0 };
+    const { branchProductsData, totalProductsInBranch, remainingStock } = useMemo(() => {
+        if (!currentStaffUser) return { branchProductsData: [], totalProductsInBranch: 0, remainingStock: 0 };
         const branchId = currentStaffUser.branchId;
-        let totalVariants = 0;
-        let remainingStock = 0;
+        const data: ProductInfo[] = [];
+        let remaining = 0;
 
         products.forEach(p => {
             p.variants.forEach(v => {
                 const stockInBranch = (v.stockByBranch[branchId] || 0) + (v.consignmentStockByBranch?.[branchId] || 0);
                 if (stockInBranch > 0) {
-                    totalVariants++;
-                    remainingStock += stockInBranch;
+                    data.push({ ...v, productName: p.name, stock: stockInBranch });
+                    remaining += stockInBranch;
                 }
             });
         });
-        return { total: totalVariants, remaining: remainingStock };
+        return { branchProductsData: data, totalProductsInBranch: data.length, remainingStock: remaining };
     }, [products, currentStaffUser]);
+
+    const soldItemsData = useMemo(() => {
+        return cashierSales.flatMap(s => s.items.map(item => ({ ...item, saleDate: s.date })));
+    }, [cashierSales]);
+
+    const totalSoldCount = useMemo(() => soldItemsData.reduce((sum, item) => sum + item.quantity, 0), [soldItemsData]);
     
     const metrics = useMemo(() => {
         const now = new Date();
@@ -86,14 +95,9 @@ const CashierDashboard: React.FC = () => {
             year: { data: salesThisYear, total: salesThisYear.reduce((sum, s) => sum + s.total, 0) },
             deposits: { data: branchDeposits, total: branchDeposits.reduce((sum, d) => sum + d.amount, 0) },
             credit: { data: branchCreditSales, total: branchCreditSales.reduce((sum, s) => sum + s.amountDue, 0) },
-            products: branchProducts.total,
-            soldProducts: cashierSales.reduce((sum, s) => sum + s.items.reduce((iSum, i) => iSum + i.quantity, 0), 0),
-            remainingProducts: branchProducts.remaining,
             totalCustomers: { data: customers, total: customers.length }
         };
-    }, [cashierSales, branchDeposits, branchCreditSales, branchProducts, customers]);
-
-    const recentSales = useMemo(() => cashierSales.slice(0, 5), [cashierSales]);
+    }, [cashierSales, branchDeposits, branchCreditSales, customers]);
 
     return (
         <div className="space-y-6">
@@ -104,9 +108,9 @@ const CashierDashboard: React.FC = () => {
                 <MetricCard title="This Year's Sales" value={formatCurrency(metrics.year.total)} iconName="calendar" iconBgColor="bg-indigo-500" onClick={() => setModalState({ title: "This Year's Sales", data: metrics.year.data, type: 'sale' })} />
                 <MetricCard title="Total Deposits" value={formatCurrency(metrics.deposits.total)} iconName="cash" iconBgColor="bg-teal-500" onClick={() => setModalState({ title: "Branch Deposits", data: metrics.deposits.data, type: 'deposit' })} />
                 <MetricCard title="Total Credit" value={formatCurrency(metrics.credit.total)} iconName="credit-card" iconBgColor="bg-red-500" onClick={() => setModalState({ title: "Branch Credit Sales", data: metrics.credit.data, type: 'sale' })} />
-                <MetricCard title="Products in Branch" value={metrics.products} iconName="inventory" iconBgColor="bg-purple-500" onClick={() => {}} />
-                <MetricCard title="Products Sold (You)" value={metrics.soldProducts} iconName="pos" iconBgColor="bg-amber-500" onClick={() => {}} />
-                <MetricCard title="Remaining Products" value={metrics.remainingProducts} iconName="inventory" iconBgColor="bg-orange-500" onClick={() => {}} />
+                <MetricCard title="Products in Branch" value={totalProductsInBranch} iconName="inventory" iconBgColor="bg-purple-500" onClick={() => setModalState({ title: 'Products in Branch', data: branchProductsData, type: 'product' })} />
+                <MetricCard title="Products Sold (You)" value={totalSoldCount} iconName="pos" iconBgColor="bg-amber-500" onClick={() => setModalState({ title: 'Products You Sold', data: soldItemsData, type: 'sold_item' })} />
+                <MetricCard title="Remaining Products" value={remainingStock} iconName="inventory" iconBgColor="bg-orange-500" onClick={() => setModalState({ title: 'Remaining Products in Branch', data: branchProductsData, type: 'product' })} />
                 <MetricCard title="Total Customers" value={metrics.totalCustomers.total} iconName="users" iconBgColor="bg-pink-500" onClick={() => setModalState({ title: "All Customers", data: metrics.totalCustomers.data, type: 'customer' })} />
             </div>
 
@@ -124,7 +128,7 @@ const CashierDashboard: React.FC = () => {
                     </tr>
                     </thead>
                     <tbody>
-                    {recentSales.map((sale: Sale) => (
+                    {cashierSales.slice(0, 5).map((sale: Sale) => (
                         <tr key={sale.id} className="border-b border-slate-700 hover:bg-slate-700/50">
                             <td className="p-3 whitespace-nowrap font-mono text-slate-400 text-sm">{sale.id.split('-')[0]}...</td>
                             <td className="p-3 whitespace-nowrap">{customers.find(c => c.id === sale.customerId)?.name || 'N/A'}</td>

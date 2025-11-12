@@ -6,7 +6,8 @@ import Icon from './icons/index.tsx';
 import { useCurrency } from '../../hooks/useCurrency';
 import ConfirmationModal from './ConfirmationModal';
 
-const CustomerCreditDetailModal: React.FC<{ customer: Customer; onClose: () => void; }> = ({ customer, onClose }) => {
+// FIX: Export the CustomerCreditDetailModal component to make it available for use in other files.
+export const CustomerCreditDetailModal: React.FC<{ customer: Customer; onClose: () => void; }> = ({ customer, onClose }) => {
     const { sales, recordCreditPayment, setNotification, currentStaffUser, creditPayments, staff } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [paymentAmount, setPaymentAmount] = useState('');

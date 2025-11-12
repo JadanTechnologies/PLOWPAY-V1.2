@@ -23,7 +23,7 @@ const branches: Branch[] = [
 
 const staffRoles: StaffRole[] = [
     { id: 'role-admin', name: 'Admin', permissions: allTenantPermissions },
-    { id: 'role-cashier', name: 'Cashier', permissions: ['accessPOS', 'makeDeposits', 'manageDeposits', 'viewReports'] },
+    { id: 'role-cashier', name: 'Cashier', permissions: ['accessPOS', 'makeDeposits', 'viewReports', 'accessCashierCredit', 'accessCashierDeposits'] },
     { id: 'role-stock', name: 'Stock Manager', permissions: ['manageInventory', 'managePurchases', 'viewAuditLogs'] },
 ]
 

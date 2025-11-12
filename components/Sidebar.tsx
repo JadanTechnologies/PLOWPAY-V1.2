@@ -1,5 +1,3 @@
-
-
 import React, { useMemo } from 'react';
 import { Page } from '../App';
 import Icon from './icons/index.tsx';
@@ -71,6 +69,8 @@ const Sidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpen, setIsOp
   const navItemConfig: { page: Page; icon: string; label: string; permission?: TenantPermission }[] = [
     { page: 'DASHBOARD', icon: 'layout-grid', label: t('dashboard'), permission: 'viewReports' },
     { page: 'POS', icon: 'pos', label: t('pos'), permission: 'accessPOS' },
+    { page: 'CASHIER_CREDIT', icon: 'credit-card', label: 'Credit Records', permission: 'accessCashierCredit' },
+    { page: 'CASHIER_DEPOSITS', icon: 'cash', label: 'Deposit Records', permission: 'accessCashierDeposits' },
     { page: 'INVENTORY', icon: 'inventory', label: t('inventory'), permission: 'manageInventory' },
     { page: 'PURCHASES', icon: 'clipboard-document-list', label: t('purchases'), permission: 'managePurchases' },
     { page: 'CONSIGNMENT', icon: 'briefcase', label: t('consignment'), permission: 'manageInventory' },
