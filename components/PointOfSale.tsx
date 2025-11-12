@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant, Payment, Sale, Deposit, TenantPermission, Customer } from '../types';
@@ -388,8 +387,10 @@ const PointOfSale: React.FC = () => {
   const [isReturnMode, setIsReturnMode] = useState(false);
   const [isClearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [deletingHeldOrderId, setDeletingHeldOrderId] = useState<number | null>(null);
+  const [isCreditConfirmOpen, setCreditConfirmOpen] = useState(false);
 
   const canProcessReturns = hasTenantPermission('accessReturns');
+  const canMakeCreditSale = hasTenantPermission('makeCreditSales');
 
 
   const defaultCustomer = { id: 'cust-walkin', name: 'Walk-in Customer', phone: '' };
@@ -642,6 +643,29 @@ const PointOfSale: React.FC = () => {
         clearOrder();
     }
   };
+
+  const handleChargeToCredit = async () => {
+    const saleData = {
+        items: cart,
+        total,
+        branchId: currentBranchId,
+        customerId: selectedCustomerId,
+        payments: [], // No payments for a credit sale
+        change: 0,
+        staffId: currentStaffUser?.id || 'staff-unknown',
+        discount,
+    };
+
+    const { success, message, newSale } = await addSale(saleData);
+
+    setSaleStatus({ message, type: success ? 'success' : 'error' });
+
+    if (success && newSale) {
+        setLastCompletedSale(newSale);
+        setInvoiceModalOpen(true); // Show invoice after credit sale
+        clearOrder();
+    }
+};
   
   const handleRecordDeposit = async (amount: number, notes: string) => {
       if (!selectedCustomerId || selectedCustomerId === 'cust-walkin') {
@@ -753,7 +777,7 @@ const PointOfSale: React.FC = () => {
                      <div className="flex justify-between items-center text-sm"><span className="text-slate-400">Discount</span><input type="number" value={discount} onChange={handleDiscountChange} className="w-24 bg-slate-700 p-1 rounded-md text-right border border-slate-600 focus:outline-none focus:ring-1 focus:ring-cyan-500"/></div>
                      <div className="flex justify-between font-bold text-2xl border-t border-slate-700 pt-3"><span className="text-white">Total</span><span className={isRefund ? 'text-red-400' : 'text-cyan-400'}>{formatCurrency(total)}</span></div>
 
-                     <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                         <button onClick={() => setClearConfirmOpen(true)} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Clear</button>
                         {canProcessReturns ? (
                             <button onClick={() => setIsReturnMode(!isReturnMode)} className={`${isReturnMode ? 'bg-red-600 hover:bg-red-500 ring-2 ring-white/70' : 'bg-slate-700 hover:bg-slate-600'} font-semibold py-2 px-4 rounded-md transition-colors`}>
@@ -767,12 +791,22 @@ const PointOfSale: React.FC = () => {
                                 <span className="absolute -top-1 -right-1 h-5 w-5 bg-cyan-500 text-white text-xs font-bold rounded-full flex items-center justify-center">{heldOrders.length}</span>
                             )}
                         </button>
-                        
-                        <button onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0} className={`w-full font-bold py-3 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed col-span-2 ${isRefund ? 'bg-red-600 hover:bg-red-500' : 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'}`}>
+                    </div>
+                    <div className="space-y-2 pt-2 border-t border-slate-700">
+                        <button
+                            onClick={() => setCreditConfirmOpen(true)}
+                            disabled={cart.length === 0 || customer.id === 'cust-walkin' || !canMakeCreditSale || isRefund}
+                            className="w-full bg-amber-600 hover:bg-amber-500 font-semibold py-3 px-4 rounded-md text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                        >
+                            <Icon name="credit-card" className="w-5 h-5 mr-2" />
+                            Charge to Credit
+                        </button>
+                        <button onClick={() => setPaymentModalOpen(true)} disabled={cart.length === 0} className={`w-full font-bold py-3 px-4 rounded-md disabled:opacity-50 disabled:cursor-not-allowed ${isRefund ? 'bg-red-600 hover:bg-red-500' : 'bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600'}`}>
                             {isRefund ? `Process Refund ${formatCurrency(Math.abs(total))}` : 'Pay'}
                         </button>
-                        <button onClick={() => setDepositModalOpen(true)} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md col-span-2">Record Deposit</button>
-                     </div>
+                        <button onClick={() => setDepositModalOpen(true)} className="w-full bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Record Deposit</button>
+                    </div>
+
                 </div>
 
             </aside>
@@ -810,6 +844,16 @@ const PointOfSale: React.FC = () => {
             confirmText="Delete"
         >
             Are you sure you want to delete this held order? This action cannot be undone.
+        </ConfirmationModal>
+
+         <ConfirmationModal
+            isOpen={isCreditConfirmOpen}
+            onClose={() => setCreditConfirmOpen(false)}
+            onConfirm={handleChargeToCredit}
+            title="Confirm Credit Sale"
+            confirmText="Confirm"
+        >
+            Are you sure you want to charge {formatCurrency(total)} to {customer.name}'s account? Their balance will be updated.
         </ConfirmationModal>
     </div>
   );

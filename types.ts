@@ -22,6 +22,7 @@ export interface StaffRole {
 
 export type TenantPermission =
  | 'accessPOS'
+ | 'makeCreditSales'
  | 'manageInventory'
  | 'viewReports'
  | 'manageStaff'
@@ -42,6 +43,7 @@ export type TenantPermission =
 
 export const allTenantPermissions: TenantPermission[] = [
     'accessPOS',
+    'makeCreditSales',
     'manageInventory',
     'viewReports',
     'manageStaff',

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
+import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { Staff as StaffType, StaffRole, TenantPermission, TenantAutomations, Branch } from '../types';
 import { allCurrencies, allLanguages, allTimezones } from '../utils/data';
@@ -12,6 +12,7 @@ type SettingsTab = 'general' | 'branches' | 'staff' | 'roles' | 'automations' | 
 // FIX: Added missing permission labels for 'accessCashierCredit' and 'accessCashierDeposits' to satisfy the Record<TenantPermission, string> type.
 const permissionLabels: Record<TenantPermission, string> = {
     accessPOS: 'Access Point of Sale',
+    makeCreditSales: 'Make Credit Sales',
     manageInventory: 'Manage Inventory',
     viewReports: 'View Reports',
     manageStaff: 'Manage Staff Members',
@@ -33,7 +34,7 @@ const permissionLabels: Record<TenantPermission, string> = {
 
 // FIX: Added cashier permissions to the 'Sales & Operations' group so they appear in the UI.
 const permissionGroups: Record<string, TenantPermission[]> = {
-    'Sales & Operations': ['accessPOS', 'managePurchases', 'makeDeposits', 'accessReturns', 'accessCashierCredit', 'accessCashierDeposits'],
+    'Sales & Operations': ['accessPOS', 'makeCreditSales', 'managePurchases', 'makeDeposits', 'accessReturns', 'accessCashierCredit', 'accessCashierDeposits'],
     'Inventory & Logistics': ['manageInventory', 'manageLogistics'],
     'Administration': ['viewReports', 'manageStaff', 'accessSettings', 'accessAccounting', 'viewAuditLogs', 'manageDeposits', 'accessSupport', 'manageTemplates', 'sendCommunications', 'manageBilling'],
 };

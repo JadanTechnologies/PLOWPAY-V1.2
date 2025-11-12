@@ -1,5 +1,3 @@
-
-
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { 
     AppContextType, Product, Sale, Branch, StockLog, Tenant, SubscriptionPlan, 
@@ -25,7 +23,7 @@ const branches: Branch[] = [
 
 const staffRoles: StaffRole[] = [
     { id: 'role-admin', name: 'Admin', permissions: allTenantPermissions },
-    { id: 'role-cashier', name: 'Cashier', permissions: ['accessPOS', 'makeDeposits', 'viewReports', 'accessCashierCredit', 'accessCashierDeposits'] },
+    { id: 'role-cashier', name: 'Cashier', permissions: ['accessPOS', 'makeDeposits', 'viewReports', 'accessCashierCredit', 'accessCashierDeposits', 'makeCreditSales'] },
     { id: 'role-stock', name: 'Stock Manager', permissions: ['manageInventory', 'managePurchases', 'viewAuditLogs'] },
 ]
 
@@ -572,6 +570,15 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         
         const totalPaid = payments.reduce((sum, p) => sum + p.amount, 0);
         const amountDue = total - totalPaid;
+
+        // Credit Limit Check
+        if (customerId !== 'cust-walkin' && amountDue > 0) {
+            const customer = customersState.find(c => c.id === customerId);
+            if (customer && typeof customer.creditLimit !== 'undefined' && (customer.creditBalance + amountDue > customer.creditLimit)) {
+                return { success: false, message: `Sale exceeds credit limit for ${customer.name}. Limit: ${formatCurrency(customer.creditLimit)}, Current Balance: ${formatCurrency(customer.creditBalance)}, This Sale: ${formatCurrency(amountDue)}` };
+            }
+        }
+        
         const status: Sale['status'] = amountDue <= 0 ? 'PAID' : (totalPaid > 0 ? 'PARTIALLY_PAID' : 'UNPAID');
 
         if(customerId !== 'cust-walkin' && amountDue > 0) {

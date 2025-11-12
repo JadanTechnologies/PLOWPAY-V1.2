@@ -135,7 +135,8 @@ const MapComponent: React.FC<MapProps> = ({ trucks = [], shipments = [], branche
                 iconAnchor: [12, 12],
                 popupAnchor: [0, -12]
             });
-            const popupContent = `<b>${isTenant ? 'Tenant' : 'Staff'}:</b> ${user.name}<br><b>Last Seen:</b> ${user.lastKnownLocation.timestamp.toLocaleString()}`;
+            // FIX: The 'Tenant' type does not have a 'name' property, it has 'ownerName'. Conditionally access the correct property based on the user type.
+            const popupContent = `<b>${isTenant ? 'Tenant' : 'Staff'}:</b> ${isTenant ? user.ownerName : user.name}<br><b>Last Seen:</b> ${user.lastKnownLocation.timestamp.toLocaleString()}`;
 
             if (existingMarker) {
                 existingMarker.setLatLng(position).setPopupContent(popupContent);
