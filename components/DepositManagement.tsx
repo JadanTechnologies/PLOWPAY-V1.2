@@ -1,14 +1,14 @@
 
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
-import { Deposit } from '../types';
+import { useAppContext } from '../../hooks/useAppContext';
+import { Deposit } from '../../types';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../hooks/useCurrency';
+import { useCurrency } from '../../hooks/useCurrency';
 
 type DepositTab = 'ACTIVE' | 'APPLIED' | 'REFUNDED' | 'ALL';
 
 const DepositManagement: React.FC = () => {
-    const { deposits, customers, staff, branches, updateDeposit } = useAppContext();
+    const { deposits, customers, staff, branches, updateDeposit, currentStaffUser } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [activeTab, setActiveTab] = useState<DepositTab>('ACTIVE');
     const [isModalOpen, setModalOpen] = useState(false);
@@ -22,9 +22,15 @@ const DepositManagement: React.FC = () => {
     const branchMap = useMemo(() => new Map(branches.map(b => [b.id, b.name])), [branches]);
 
     const filteredDeposits = useMemo(() => {
-        if (activeTab === 'ALL') return [...deposits].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        return deposits.filter(d => d.status === activeTab).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }, [deposits, activeTab]);
+        const userDeposits = currentStaffUser
+            ? deposits.filter(d => d.branchId === currentStaffUser.branchId)
+            : deposits;
+        
+        const sortedDeposits = [...userDeposits].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+        if (activeTab === 'ALL') return sortedDeposits;
+        return sortedDeposits.filter(d => d.status === activeTab);
+    }, [deposits, activeTab, currentStaffUser]);
 
     const openModal = (deposit: Deposit) => {
         setSelectedDeposit(deposit);

@@ -6,13 +6,23 @@ import { useCurrency } from '../../hooks/useCurrency';
 import ConfirmationModal from './ConfirmationModal';
 
 const CustomerCreditDetailModal: React.FC<{ customer: Customer; onClose: () => void; }> = ({ customer, onClose }) => {
-    const { sales, recordCreditPayment, setNotification, currentStaffUser } = useAppContext();
+    const { sales, recordCreditPayment, setNotification, currentStaffUser, creditPayments, staff } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [paymentAmount, setPaymentAmount] = useState('');
 
     const unpaidSales = useMemo(() => {
         return sales.filter(sale => sale.customerId === customer.id && sale.status !== 'PAID');
     }, [sales, customer.id]);
+
+    const paymentHistory = useMemo(() => {
+        const customerPayments = creditPayments.filter(p => p.customerId === customer.id);
+        const visiblePayments = currentStaffUser 
+            ? customerPayments.filter(p => p.recordedByStaffId === currentStaffUser.id) 
+            : customerPayments;
+        return visiblePayments.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, [creditPayments, customer.id, currentStaffUser]);
+
+    const staffMap = useMemo(() => new Map(staff.map(s => [s.id, s.name])), [staff]);
 
     const handleRecordPayment = () => {
         if (paymentAmount) {
@@ -30,7 +40,7 @@ const CustomerCreditDetailModal: React.FC<{ customer: Customer; onClose: () => v
     
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 z-50 flex justify-center items-center p-4">
-            <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col border border-slate-700">
+            <div className="bg-slate-800 rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col border border-slate-700">
                 <div className="p-4 border-b border-slate-700 flex justify-between items-start">
                     <div>
                         <h3 className="text-xl font-bold text-white">{customer.name}</h3>
@@ -39,10 +49,10 @@ const CustomerCreditDetailModal: React.FC<{ customer: Customer; onClose: () => v
                     <button onClick={onClose} className="text-slate-400 hover:text-white"><Icon name="x-mark" className="w-6 h-6"/></button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
-                    <div className="md:col-span-2 bg-slate-900/50 rounded-lg p-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 flex-grow overflow-y-auto">
+                    <div className="md:col-span-2 bg-slate-900/50 rounded-lg p-4 flex flex-col">
                         <h4 className="font-semibold text-white mb-2">Unpaid Invoices</h4>
-                        <div className="overflow-y-auto max-h-80">
+                        <div className="overflow-y-auto flex-grow">
                             {unpaidSales.length > 0 ? (
                                 <table className="w-full text-left text-sm">
                                     <thead className="sticky top-0 bg-slate-900/50">
@@ -63,6 +73,29 @@ const CustomerCreditDetailModal: React.FC<{ customer: Customer; onClose: () => v
                                 </table>
                             ) : (
                                 <p className="text-slate-500 text-center py-8">No outstanding invoices.</p>
+                            )}
+                        </div>
+                         <h4 className="font-semibold text-white mb-2 mt-4 border-t border-slate-700 pt-4">Payment History {currentStaffUser ? '(By You)' : ''}</h4>
+                         <div className="overflow-y-auto flex-grow">
+                             {paymentHistory.length > 0 ? (
+                                <table className="w-full text-left text-sm">
+                                    <thead className="sticky top-0 bg-slate-900/50">
+                                        <tr className="border-b border-slate-700">
+                                            <th className="p-2">Date</th><th className="p-2">Recorded By</th><th className="p-2 text-right">Amount Paid</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {paymentHistory.map(payment => (
+                                            <tr key={payment.id} className="border-b border-slate-800">
+                                                <td className="p-2 text-slate-400">{new Date(payment.date).toLocaleDateString()}</td>
+                                                <td className="p-2 text-slate-300">{staffMap.get(payment.recordedByStaffId) || 'Unknown'}</td>
+                                                <td className="p-2 text-right font-mono text-green-400">{formatCurrency(payment.amount)}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            ) : (
+                                <p className="text-slate-500 text-center py-8">No payment history found.</p>
                             )}
                         </div>
                     </div>
