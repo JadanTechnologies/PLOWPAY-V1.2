@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
-import { PurchaseOrder, PurchaseOrderItem } from '../types';
+import { useAppContext } from '../../hooks/useAppContext';
+import { PurchaseOrder, PurchaseOrderItem } from '../../types';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../hooks/useCurrency';
+import { useCurrency } from '../../hooks/useCurrency';
 
 const PurchaseOrderManagement: React.FC = () => {
-    const { purchaseOrders, suppliers, branches, products, addPurchaseOrder, updatePurchaseOrderStatus } = useAppContext();
+    const { purchaseOrders, suppliers, branches, products, addPurchaseOrder, updatePurchaseOrderStatus, setNotification } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [isModalOpen, setModalOpen] = useState(false);
 
@@ -51,20 +51,40 @@ const PurchaseOrderManagement: React.FC = () => {
     };
     
     const handleSubmit = () => {
-        if(formState.supplierId && formState.destinationBranchId && formState.items.every(i => i.variantId && i.quantity > 0)) {
-            const itemsWithNames = formState.items.map(item => {
-                const variant = allVariants.find(v => v.id === item.variantId);
-                return {
-                    ...item,
-                    productName: variant?.productName || 'N/A',
-                    variantName: variant?.name || 'N/A'
-                };
-            });
-            addPurchaseOrder({ ...formState, items: itemsWithNames });
-            setModalOpen(false);
-        } else {
-            alert('Please fill all required fields and ensure items are valid.');
+        if(!formState.supplierId || !formState.destinationBranchId) {
+            setNotification({ type: 'error', message: 'Please select a supplier and a destination branch.' });
+            return;
         }
+        
+        for (const [index, item] of formState.items.entries()) {
+            if (!item.variantId) {
+                setNotification({ type: 'error', message: `Please select a product for item #${index + 1}.` });
+                return;
+            }
+            if (item.quantity <= 0) {
+                const variant = allVariants.find(v => v.id === item.variantId);
+                const name = variant ? `${variant.productName} - ${variant.name}` : `item #${index + 1}`;
+                setNotification({ type: 'error', message: `Quantity for ${name} must be greater than zero.` });
+                return;
+            }
+            if (item.cost < 0) {
+                const variant = allVariants.find(v => v.id === item.variantId);
+                const name = variant ? `${variant.productName} - ${variant.name}` : `item #${index + 1}`;
+                setNotification({ type: 'error', message: `Cost for ${name} cannot be negative.` });
+                return;
+            }
+        }
+
+        const itemsWithNames = formState.items.map(item => {
+            const variant = allVariants.find(v => v.id === item.variantId);
+            return {
+                ...item,
+                productName: variant?.productName || 'N/A',
+                variantName: variant?.name || 'N/A'
+            };
+        });
+        addPurchaseOrder({ ...formState, items: itemsWithNames });
+        setModalOpen(false);
     };
     
     const totalCost = useMemo(() => formState.items.reduce((sum, item) => sum + (item.cost * item.quantity), 0), [formState.items]);
