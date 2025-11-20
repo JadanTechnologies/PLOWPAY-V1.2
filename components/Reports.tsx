@@ -479,8 +479,9 @@ const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurren
 };
 
 const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
-    // FIX: Explicitly cast `creditBalance` to a number to allow for comparison and arithmetic operations.
+    // FIX: Operator '>' cannot be applied to types 'unknown' and 'number'.
     const creditCustomers = useMemo(() => customers.filter(c => Number(c.creditBalance) > 0), [customers]);
+    // FIX: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
     const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + Number(c.creditBalance), 0), [creditCustomers]);
 
     return (
