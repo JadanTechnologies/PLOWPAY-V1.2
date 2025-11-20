@@ -68,55 +68,41 @@
       }
 
       @media print {
-        /* Hide non-essential UI components */
-        body > #root > div > aside, 
-        body > #root > div > div > header,
+        /* This rule hides elements like buttons inside the printable area */
         .no-print {
           display: none !important;
         }
 
-        /* Reset main content area for printing */
-        body > #root > div > div > main {
-          padding: 0 !important;
-          margin: 0 !important;
-          overflow: visible !important;
+        /* Hide everything on the page by default */
+        body * {
+          visibility: hidden;
         }
 
-        /* Make the printable modal wrapper take up the whole screen */
+        /* Make the printable area and all its children visible */
+        #invoice-modal-container, #invoice-modal-container *,
+        #report-printable-area, #report-printable-area * {
+          visibility: visible;
+        }
+
+        /* Position the printable area to fill the page */
         #invoice-modal-container, #report-printable-area {
-          position: static !important;
-          display: block !important;
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: auto;
+          margin: 0;
+          padding: 0;
           background: none !important;
           backdrop-filter: none !important;
-          padding: 0 !important;
-          height: auto !important;
-          width: 100% !important;
-          overflow: visible !important;
         }
-
+        
         /* Generic printable area styles */
         #report-printable-area {
-            visibility: visible;
-            display: block !important;
-            position: static !important;
-            width: 100% !important;
-            height: auto !important;
-            overflow: visible !important;
             background: white !important;
             color: black !important;
-            padding: 0 !important;
-            margin: 0 !important;
             border: none !important;
             box-shadow: none !important;
-        }
-
-        /* Ensure all children within printable areas are visible and styled for print */
-        #report-printable-area * {
-            visibility: visible !important;
-            color: black !important;
-            background: transparent !important;
-            box-shadow: none !important;
-            text-shadow: none !important;
         }
         
         /* Specific styles for report printing */
@@ -163,12 +149,8 @@
 
         /* Thermal Receipt Styles for Invoice */
         #invoice-modal {
-            visibility: visible;
-            display: block !important;
-            position: static !important;
             width: 80mm !important;
             height: auto !important;
-            overflow: visible !important;
             background: white !important;
             color: black !important;
             padding: 5mm !important;
@@ -180,7 +162,6 @@
             line-height: 1.4;
         }
         #invoice-content * {
-            visibility: visible !important;
             color: black !important;
             background: transparent !important;
             box-shadow: none !important;

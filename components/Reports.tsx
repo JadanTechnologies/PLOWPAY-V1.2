@@ -479,10 +479,10 @@ const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurren
 };
 
 const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
-    // FIX: Removed redundant Number() casting as creditBalance is already a number type. This resolves a type error where creditBalance was inferred as 'unknown'.
-    const creditCustomers = useMemo(() => customers.filter(c => c.creditBalance > 0), [customers]);
-    // FIX: Removed redundant Number() casting.
-    const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + c.creditBalance, 0), [creditCustomers]);
+    // FIX: Explicitly cast `creditBalance` to a number to resolve a type error where it was being inferred as 'unknown'.
+    const creditCustomers = useMemo(() => customers.filter(c => Number(c.creditBalance) > 0), [customers]);
+    // FIX: Explicitly cast `creditBalance` to a number to resolve the type error.
+    const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + Number(c.creditBalance), 0), [creditCustomers]);
 
     return (
         <table className="w-full text-left">
