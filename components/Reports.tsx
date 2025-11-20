@@ -479,9 +479,8 @@ const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurren
 };
 
 const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
-    // FIX: Explicitly cast `creditBalance` to a number to resolve a type error where it was being inferred as 'unknown'.
+    // FIX: Explicitly cast `creditBalance` to a number to allow for comparison and arithmetic operations.
     const creditCustomers = useMemo(() => customers.filter(c => Number(c.creditBalance) > 0), [customers]);
-    // FIX: Explicitly cast `creditBalance` to a number to resolve the type error.
     const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + Number(c.creditBalance), 0), [creditCustomers]);
 
     return (

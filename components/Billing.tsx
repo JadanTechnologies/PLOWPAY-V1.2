@@ -1,10 +1,8 @@
-
-
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { SubscriptionPlan, TenantStatus } from '../types';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../../hooks/useCurrency';
+import { useCurrency } from '../hooks/useCurrency';
 
 const PlanCard: React.FC<{
     plan: SubscriptionPlan;

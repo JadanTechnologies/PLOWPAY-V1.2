@@ -155,9 +155,8 @@ const Budgeting: React.FC = () => {
         return expenseAccounts.filter(acc => !localBudgets[acc.id] || localBudgets[acc.id] === 0);
     }, [expenseAccounts, localBudgets]);
     
-    // FIX: Explicitly cast `amount` to a number as Object.values may not be strongly typed.
+    // FIX: Explicitly cast `amount` to a number as Object.values may return values of type 'unknown'.
     const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + Number(amount), 0), [localBudgets]);
-    // FIX: Explicitly cast `amount` to a number as Object.values may not be strongly typed.
     const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum, amount) => sum + Number(amount), 0), [monthlyExpenses]);
 
     return (
