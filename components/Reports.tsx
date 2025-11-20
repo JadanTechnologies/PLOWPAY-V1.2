@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
@@ -540,8 +539,8 @@ const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurren
 };
 
 const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
-    const creditCustomers = useMemo(() => customers.filter((c: any) => Number(c.creditBalance) > 0), [customers]);
-    const totalCredit = useMemo(() => creditCustomers.reduce((sum: number, c: any) => sum + Number(c.creditBalance), 0), [creditCustomers]);
+    const creditCustomers = useMemo(() => customers.filter((c) => c.creditBalance > 0), [customers]);
+    const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + c.creditBalance, 0), [creditCustomers]);
 
     return (
         <table className="w-full text-left">

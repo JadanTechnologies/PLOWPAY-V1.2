@@ -111,7 +111,7 @@ const tenant1: Tenant = {
 const tenants: Tenant[] = [ tenant1 ];
 
 const adminUsers: AdminUser[] = [
-    { id: 'admin-super', name: 'Super Admin', email: 'super@flowpay.com', username: 'super', password: 'password', roleId: 'role-super', status: 'ACTIVE', joinDate: new Date(), lastLoginIp: '192.168.1.1' }
+    { id: 'admin-super', name: 'Super Admin', email: 'super@flowpay.com', username: 'super', password: '12345', roleId: 'role-super', status: 'ACTIVE', joinDate: new Date(), lastLoginIp: '192.168.1.1' }
 ];
 
 const adminRoles: AdminRole[] = [
@@ -405,27 +405,31 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     const stopImpersonating = () => setImpersonatedUser(null);
     
     const login = async (u: string, p: string) => {
-        // Simplified login logic
-        if (u === 'super' && p === 'password') {
-            const user = stateAdminUsers.find(au => au.username === 'super');
-            if (user) {
-                const session = { user: { id: user.id, email: user.email }, profile: { id: user.id, is_super_admin: true, tenant_id: null } };
-                setSession(session); setProfile(session.profile);
-                localStorage.setItem('flowpay_session', JSON.stringify(session));
-                return { success: true, message: 'Login successful' };
-            }
+        // Check Admin Users (Super Admins)
+        const adminUser = stateAdminUsers.find(au => au.username === u || au.email === u);
+        if (adminUser && adminUser.password === p) {
+             if (adminUser.status === 'SUSPENDED') return { success: false, message: 'Account suspended' };
+             const session = { user: { id: adminUser.id, email: adminUser.email }, profile: { id: adminUser.id, is_super_admin: true, tenant_id: null } };
+             setSession(session); setProfile(session.profile);
+             localStorage.setItem('flowpay_session', JSON.stringify(session));
+             return { success: true, message: 'Login successful' };
         }
+
         // Check tenants
         const tenant = stateTenants.find(t => t.username === u || t.email === u);
-        if (tenant) { // Any password works for demo
+        if (tenant) { // Any password works for demo if not checking against a real backend
              const session = { user: { id: tenant.id, email: tenant.email }, profile: { id: tenant.id, is_super_admin: false, tenant_id: tenant.id } };
              setSession(session); setProfile(session.profile);
              localStorage.setItem('flowpay_session', JSON.stringify(session));
              return { success: true, message: 'Login successful' };
         }
+        
          // Check staff
         const staffUser = stateStaff.find(s => s.username === u || s.email === u);
         if (staffUser) {
+             // Simple password check for demo
+             if (staffUser.password !== p) return { success: false, message: 'Invalid credentials' };
+             
              const session = { user: { id: staffUser.id, email: staffUser.email }, profile: { id: staffUser.id, is_super_admin: false, tenant_id: 'tenant-123' } }; // Assuming belonging to tenant-123 for demo
              setSession(session); setProfile(session.profile); setCurrentStaffUser(staffUser);
              localStorage.setItem('flowpay_session', JSON.stringify(session));
