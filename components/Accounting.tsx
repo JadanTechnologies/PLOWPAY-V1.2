@@ -1,8 +1,9 @@
+
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
+import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
 import { Account, JournalEntry } from '../types';
-import { useCurrency } from '../../hooks/useCurrency';
+import { useCurrency } from '../hooks/useCurrency';
 
 type AccountingTab = 'dashboard' | 'journal' | 'accounts' | 'reports';
 
