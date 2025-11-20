@@ -182,13 +182,22 @@ const App: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-    const { session, profile, impersonatedUser, notification, setNotification, systemSettings, setSession, setProfile, handleImpersonate } = useAppContext();
+    const { session, profile, impersonatedUser, notification, setNotification, systemSettings, setSession, setProfile, handleImpersonate, theme } = useAppContext();
     const [view, setView] = useState<View>('landing');
     const [viewData, setViewData] = useState<any>(null);
 
     const isMaintenanceMode = systemSettings.maintenanceSettings.isActive;
     const isSuperAdmin = profile?.is_super_admin === true;
     
+    // Sync theme with DOM
+    useEffect(() => {
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }, [theme]);
+
     // Simulate initial auth check
     useEffect(() => {
         const sessionData = localStorage.getItem('flowpay_session');

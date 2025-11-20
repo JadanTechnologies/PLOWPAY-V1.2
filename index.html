@@ -84,13 +84,12 @@
           visibility: visible;
         }
         
-        /* Position the invoice container to take over the printed page */
+        /* === 80mm THERMAL RECEIPT STYLES === */
         #invoice-modal-container {
             position: absolute !important;
             left: 0 !important;
             top: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
+            width: 80mm !important; /* Standard Thermal Paper Width */
             margin: 0 !important;
             padding: 0 !important;
             background: white !important;
@@ -98,151 +97,98 @@
             overflow: visible !important;
         }
         
-        /* Reset report printable container */
+        #invoice-modal {
+            width: 100% !important;
+            max-width: none !important;
+            box-shadow: none !important;
+            border: none !important;
+            background: white !important;
+            color: black !important;
+            padding: 0 !important;
+        }
+
+        #invoice-content {
+            padding: 0 !important;
+            font-family: 'Courier New', Courier, monospace !important; /* Monospace for alignment */
+            color: black !important;
+        }
+
+        #invoice-content * {
+            color: black !important;
+        }
+
+        /* Adjust font sizes for thermal printing */
+        #invoice-content h2 { font-size: 14pt !important; margin-bottom: 5px !important; }
+        #invoice-content p, #invoice-content span, #invoice-content div { font-size: 9pt !important; line-height: 1.2 !important; }
+        #invoice-content .text-xl { font-size: 12pt !important; }
+        #invoice-content .text-2xl { font-size: 14pt !important; }
+        
+        /* Table adjustments for narrow width */
+        #invoice-content table { width: 100% !important; }
+        #invoice-content th, #invoice-content td { font-size: 8pt !important; padding: 2px 0 !important; }
+
+        
+        /* === REPORT PRINTING (A4) === */
         #report-printable-area {
-            position: static !important;
-            display: block !important;
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
             width: 100% !important;
             background: white !important;
             color: black !important;
+            padding: 20px !important;
         }
         
-        /* === REPORT PRINTING STYLES === */
+        /* Remove dark mode backgrounds for print */
+        #report-printable-area .bg-slate-800, 
+        #report-printable-area .bg-slate-900, 
+        #report-printable-area .bg-slate-700 {
+            background-color: white !important;
+            color: black !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        /* Table Styling for Reports */
         #report-printable-area table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 1rem;
             font-size: 10pt;
+            color: black !important;
         }
         #report-printable-area th, #report-printable-area td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
+            border: 1px solid #000;
+            padding: 6px;
+            color: black !important;
         }
         #report-printable-area th {
-            background-color: #f2f2f2 !important;
+            background-color: #f0f0f0 !important;
             font-weight: bold;
-            -webkit-print-color-adjust: exact; /* Force background color printing in Chrome */
-            color-adjust: exact;
-        }
-        #report-printable-area .print-header {
-            display: block !important;
-            padding: 1rem;
-            border-bottom: 2px solid #333;
-            margin-bottom: 1.5rem;
-        }
-        #report-printable-area .print-header .business-name {
-            font-size: 18pt;
-            font-weight: bold;
-            text-align: center;
-        }
-         #report-printable-area .print-header .report-title {
-            font-size: 14pt;
-            font-weight: bold;
-            text-align: center;
-            margin-top: 0.25rem;
-        }
-        #report-printable-area .print-header .report-details {
-            display: flex;
-            justify-content: space-between;
-            font-size: 9pt;
-            margin-top: 1rem;
-            padding-top: 0.5rem;
-            border-top: 1px solid #ccc;
         }
 
-        /* === 80mm THERMAL RECEIPT STYLES FOR INVOICE === */
-        #invoice-modal {
-            width: 80mm !important;
-            height: auto !important;
-            background: white !important;
-            color: black !important;
-            padding: 5mm !important;
-            margin: 0 auto !important; /* Center receipt on the printed page */
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 9pt;
-            line-height: 1.3;
-            box-shadow: none !important;
-            border: none !important;
-        }
-        #invoice-content * {
-            color: black !important;
-            background: transparent !important;
-            box-shadow: none !important;
-            text-shadow: none !important;
-        }
-        #invoice-content .receipt-header {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-        #invoice-content .receipt-header svg.brand-logo {
+        /* Show the print header */
+        #report-printable-area .print-header {
             display: block !important;
-            margin: 0 auto !important;
-            fill: black !important;
-            color: black !important;
-        }
-        #invoice-content .receipt-header h2 {
-            font-size: 12pt;
-            font-weight: bold;
-            margin: 5px 0 0 0;
-            padding: 0;
-        }
-        #invoice-content .receipt-header p {
-            font-size: 8pt;
-            margin: 2px 0;
-        }
-        #invoice-content .receipt-details,
-        #invoice-content .totals-section,
-        #invoice-content .payment-details {
-            border-top: 1px dashed black;
-            padding-top: 5px;
-            margin-top: 5px;
-        }
-        #invoice-content .receipt-details {
-            font-size: 8pt;
-            margin-bottom: 10px;
-        }
-        #invoice-content table {
-            width: 100%;
-        }
-        #invoice-content table thead {
-            border-top: 1px dashed black;
-            border-bottom: 1px dashed black;
-        }
-        #invoice-content table th {
-            text-align: left;
-            padding: 4px 2px;
-            font-size: 8pt;
-            font-weight: bold;
-        }
-        #invoice-content table td {
-            padding: 2px;
-            font-size: 8pt;
-            vertical-align: top;
-        }
-        #invoice-content table td > div {
-            line-height: 1.2;
-        }
-        #invoice-content table .text-xs { /* This targets Tailwind class */
-            font-size: 7pt !important;
-            color: #333 !important;
-        }
-        #invoice-content .totals-section div,
-        #invoice-content .payment-details div {
-            display: flex;
-            justify-content: space-between;
-            font-size: 8pt;
-            padding: 1px 0;
-        }
-        #invoice-content .totals-section .font-bold,
-        #invoice-content .payment-details .font-bold { /* Targets Tailwind class */
-            font-weight: bold;
-            font-size: 9pt;
-        }
-        #invoice-content .footer-message {
+            margin-bottom: 20px;
+            border-bottom: 2px solid black;
+            padding-bottom: 10px;
             text-align: center;
-            margin-top: 15px;
-            font-size: 8pt;
+        }
+        #report-printable-area .print-header h1 { font-size: 20pt; font-weight: bold; color: black; margin: 0; }
+        #report-printable-area .print-header h2 { font-size: 16pt; color: black; margin: 5px 0; }
+        #report-printable-area .print-header .report-details { font-size: 10pt; display: flex; justify-content: space-between; margin-top: 10px; }
+
+        /* Hide specific elements inside reports that don't print well (like charts or inputs) */
+        #report-printable-area input, 
+        #report-printable-area select, 
+        #report-printable-area button {
+            display: none !important;
+        }
+        
+        /* Reset layout containers */
+        html, body {
+            height: auto !important;
+            overflow: visible !important;
         }
       }
     </style>
