@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import Icon from './icons/index.tsx';
 import { View } from '../App';
 import { useAppContext } from '../hooks/useAppContext';
 import { useCurrency } from '../hooks/useCurrency';
+import Landing3D from './Landing3D';
 
 interface LandingPageProps {
   onNavigate: (view: View) => void;
@@ -60,41 +62,51 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
       </header>
 
       <main>
-        <section className="relative pt-20 pb-24 sm:pt-28 sm:pb-32">
+        <section className="relative pt-20 pb-24 sm:pt-28 sm:pb-32 overflow-hidden">
             <div className="absolute inset-0 -z-10 h-full w-full bg-white dark:bg-slate-950 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:14px_24px]"></div>
+            
+            {/* Radial Gradient Effect */}
+            <div className="absolute inset-0 -z-10 pointer-events-none">
+                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-cyan-500/10 blur-[100px] rounded-full"></div>
+            </div>
+
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 grid lg:grid-cols-2 gap-12 items-center">
-                <div className="text-center lg:text-left">
-                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                <div className="text-center lg:text-left z-10">
+                    <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
                         The Future of Retail is
-                        <span className="block bg-gradient-to-r from-cyan-500 to-teal-500 bg-clip-text text-transparent">Flowing with Ease</span>
+                        <span className="block bg-gradient-to-r from-cyan-500 to-teal-500 bg-clip-text text-transparent animate-pulse-slow">Flowing with Ease</span>
                     </h1>
                     <p className="mt-6 max-w-xl mx-auto lg:mx-0 text-lg text-slate-600 dark:text-slate-400">
                       From point of sale to inventory management, {brandConfig.name} provides the tools you need to streamline operations, delight customers, and grow your business.
                     </p>
-                    <div className="mt-8 flex justify-center lg:justify-start gap-4">
-                        <button onClick={() => onNavigate('signup')} className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold px-6 py-3 rounded-lg hover:from-cyan-600 hover:to-teal-600 transition-transform transform hover:scale-105 shadow-lg shadow-cyan-500/30">
-                            Start 14-Day Free Trial
+                    <div className="mt-8 flex flex-col sm:flex-row justify-center lg:justify-start gap-4">
+                        <button onClick={() => onNavigate('signup')} className="bg-gradient-to-r from-cyan-500 to-teal-500 text-white font-semibold px-6 py-3 rounded-lg hover:from-cyan-600 hover:to-teal-600 transition-all transform hover:scale-105 shadow-lg shadow-cyan-500/30 flex items-center justify-center">
+                            Start 14-Day Free Trial <Icon name="chevronRight" className="w-4 h-4 ml-2" />
+                        </button>
+                         <button onClick={() => onNavigate('about')} className="px-6 py-3 rounded-lg font-semibold text-slate-700 dark:text-white border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            Learn More
                         </button>
                     </div>
                 </div>
-                <div className="hidden lg:block">
-                  <img src="https://images.unsplash.com/photo-1556740738-b6a63e27c4df?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" alt="POS System" className="rounded-2xl shadow-2xl aspect-video object-cover" />
+                <div className="relative hidden lg:block">
+                  {/* 3D Component Replacement */}
+                  <Landing3D />
                 </div>
             </div>
         </section>
 
-        <section className="py-16 bg-slate-100 dark:bg-slate-900">
+        <section className="py-16 bg-slate-100 dark:bg-slate-900/50 border-y border-slate-200 dark:border-slate-800">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
-              <div className="p-8 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
+              <div className="p-8 bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
                 <h3 className="text-5xl font-extrabold bg-gradient-to-r from-cyan-500 to-teal-500 bg-clip-text text-transparent">{businesses.value.toLocaleString()}+</h3>
                 <p className="mt-2 text-lg font-medium text-slate-600 dark:text-slate-400">{businesses.label}</p>
               </div>
-              <div className="p-8 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
+              <div className="p-8 bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
                 <h3 className="text-5xl font-extrabold bg-gradient-to-r from-cyan-500 to-teal-500 bg-clip-text text-transparent">{users.value.toLocaleString()}+</h3>
                 <p className="mt-2 text-lg font-medium text-slate-600 dark:text-slate-400">{users.label}</p>
               </div>
-              <div className="p-8 bg-white dark:bg-slate-800 rounded-xl shadow-lg">
+              <div className="p-8 bg-white dark:bg-slate-800 rounded-xl shadow-sm hover:shadow-md transition-shadow border border-slate-100 dark:border-slate-700">
                 <h3 className="text-5xl font-extrabold bg-gradient-to-r from-cyan-500 to-teal-500 bg-clip-text text-transparent">${revenue.value}M+</h3>
                 <p className="mt-2 text-lg font-medium text-slate-600 dark:text-slate-400">{revenue.label}</p>
               </div>
@@ -110,8 +122,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
               {features.map((feature, index) => (
-                <div key={index} className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-slate-200 dark:border-slate-700">
-                  <div className="bg-gradient-to-br from-cyan-100 to-teal-100 text-cyan-600 rounded-lg w-12 h-12 flex items-center justify-center mb-4">
+                <div key={index} className="bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md border border-slate-200 dark:border-slate-700 hover:border-cyan-500/50 transition-colors group">
+                  <div className="bg-gradient-to-br from-cyan-100 to-teal-100 dark:from-cyan-900/30 dark:to-teal-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg w-12 h-12 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                     <Icon name={feature.icon} className="w-6 h-6" />
                   </div>
                   <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">{feature.title}</h3>
@@ -136,14 +148,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
               {subscriptionPlans.map((plan) => (
-                <div key={plan.id} className={`bg-white dark:bg-slate-800 p-8 rounded-lg border-2 ${plan.recommended ? 'border-cyan-500' : 'border-slate-200 dark:border-slate-700'} relative flex flex-col shadow-lg`}>
-                  {plan.recommended && <span className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Recommended</span>}
+                <div key={plan.id} className={`bg-white dark:bg-slate-800 p-8 rounded-lg border-2 ${plan.recommended ? 'border-cyan-500 scale-105 z-10' : 'border-slate-200 dark:border-slate-700'} relative flex flex-col shadow-lg transition-transform`}>
+                  {plan.recommended && <span className="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 bg-cyan-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider shadow-lg">Recommended</span>}
                   <h3 className="text-2xl font-semibold text-slate-900 dark:text-white">{plan.name}</h3>
                   <p className="text-slate-600 dark:text-slate-400 mt-2 h-10">{plan.description}</p>
                   <div className="mt-4">
                     <span className="text-5xl font-extrabold text-slate-900 dark:text-white">{formatCurrency(billingCycle === 'monthly' ? plan.price : plan.priceYearly / 12).replace(/\.00$/, '')}</span>
                     <span className="text-lg text-slate-500 dark:text-slate-400">/mo</span>
-                    {billingCycle === 'yearly' && <p className="text-sm text-slate-500 dark:text-slate-400">Billed as {formatCurrency(plan.priceYearly)} per year</p>}
+                    {billingCycle === 'yearly' && <p className="text-sm text-green-500 font-semibold mt-1">Billed {formatCurrency(plan.priceYearly)} yearly</p>}
                   </div>
                   <ul className="mt-6 space-y-3 text-slate-600 dark:text-slate-400 flex-grow">
                     {plan.features.map((feature, i) => ( <li key={i} className="flex items-center"><Icon name="check" className="w-5 h-5 text-green-500 mr-2 flex-shrink-0" />{feature}</li> ))}
