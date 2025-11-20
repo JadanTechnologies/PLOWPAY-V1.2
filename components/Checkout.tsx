@@ -1,10 +1,9 @@
-
-
 import React, { useState } from 'react';
 import { SubscriptionPlan } from '../types';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../../hooks/useCurrency';
+// FIX: Changed to a named import for useCurrency as it's not a default export.
+import { useCurrency } from '../hooks/useCurrency';
 
 interface CheckoutProps {
     plan: SubscriptionPlan;
