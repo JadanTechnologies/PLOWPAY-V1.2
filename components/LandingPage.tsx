@@ -194,7 +194,10 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-slate-500">&copy; {new Date().getFullYear()} {brandConfig.name}, Inc. All rights reserved.</p>
+            <div className="text-center sm:text-left">
+              <p className="text-sm text-slate-500">&copy; {new Date().getFullYear()} {brandConfig.name}, Inc. All rights reserved.</p>
+              <p className="text-xs text-slate-500 mt-1">Developed by Jadan Technologies</p>
+            </div>
             <div className="flex space-x-4 mt-4 sm:mt-0">
                 <a href="#" className="text-slate-500 hover:text-slate-900 dark:hover:text-white"><Icon name="twitter" className="w-5 h-5" /></a>
                 <a href="#" className="text-slate-500 hover:text-slate-900 dark:hover:text-white"><Icon name="linkedin" className="w-5 h-5" /></a>
