@@ -1,8 +1,7 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
+import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../../hooks/useCurrency';
+import { useCurrency } from '../hooks/useCurrency';
 import { Account } from '../types';
 
 const ProgressBar: React.FC<{ value: number; max: number }> = ({ value, max }) => {
@@ -156,10 +155,10 @@ const Budgeting: React.FC = () => {
         return expenseAccounts.filter(acc => !localBudgets[acc.id] || localBudgets[acc.id] === 0);
     }, [expenseAccounts, localBudgets]);
     
-    // FIX: Operator '+' cannot be applied to types 'unknown' and 'number'. Cast to Number.
-    const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + Number(amount), 0), [localBudgets]);
-    // FIX: Operator '+' cannot be applied to types 'unknown' and 'number'. Cast to Number.
-    const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum, amount) => sum + Number(amount), 0), [monthlyExpenses]);
+    // FIX: Removed redundant Number() casting. `Object.values(localBudgets)` returns an array of numbers, so the cast is unnecessary and caused a type error.
+    const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + amount, 0), [localBudgets]);
+    // FIX: Removed redundant Number() casting. `Object.values(monthlyExpenses)` returns an array of numbers, so the cast is unnecessary and caused a type error.
+    const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum, amount) => sum + amount, 0), [monthlyExpenses]);
 
     return (
         <div className="space-y-6">

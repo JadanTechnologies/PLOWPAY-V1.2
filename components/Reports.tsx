@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
@@ -480,10 +479,10 @@ const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurren
 };
 
 const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
-    // FIX: Operator '>' cannot be applied to types 'unknown' and 'number'. Cast to Number to ensure correct type.
-    const creditCustomers = useMemo(() => customers.filter(c => Number(c.creditBalance) > 0), [customers]);
-    // FIX: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type. Cast to Number to ensure correct type.
-    const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + Number(c.creditBalance), 0), [creditCustomers]);
+    // FIX: Removed redundant Number() casting. The `creditBalance` property is already a number, and the cast was causing a type error.
+    const creditCustomers = useMemo(() => customers.filter(c => c.creditBalance > 0), [customers]);
+    // FIX: Removed redundant Number() casting. The `creditBalance` property is already a number.
+    const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + c.creditBalance, 0), [creditCustomers]);
 
     return (
         <table className="w-full text-left">
