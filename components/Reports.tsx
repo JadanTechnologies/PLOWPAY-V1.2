@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
@@ -479,9 +480,9 @@ const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurren
 };
 
 const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
-    // FIX: Operator '>' cannot be applied to types 'unknown' and 'number'.
+    // FIX: Operator '>' cannot be applied to types 'unknown' and 'number'. Cast to Number to ensure correct type.
     const creditCustomers = useMemo(() => customers.filter(c => Number(c.creditBalance) > 0), [customers]);
-    // FIX: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type.
+    // FIX: The left-hand side of an arithmetic operation must be of type 'any', 'number', 'bigint' or an enum type. Cast to Number to ensure correct type.
     const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + Number(c.creditBalance), 0), [creditCustomers]);
 
     return (

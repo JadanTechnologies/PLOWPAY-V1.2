@@ -1,7 +1,8 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../hooks/useCurrency';
+import { useCurrency } from '../../hooks/useCurrency';
 import { Account } from '../types';
 
 const ProgressBar: React.FC<{ value: number; max: number }> = ({ value, max }) => {
@@ -155,9 +156,9 @@ const Budgeting: React.FC = () => {
         return expenseAccounts.filter(acc => !localBudgets[acc.id] || localBudgets[acc.id] === 0);
     }, [expenseAccounts, localBudgets]);
     
-    // FIX: Operator '+' cannot be applied to types 'unknown' and 'number'.
+    // FIX: Operator '+' cannot be applied to types 'unknown' and 'number'. Cast to Number.
     const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + Number(amount), 0), [localBudgets]);
-    // FIX: Operator '+' cannot be applied to types 'unknown' and 'number'.
+    // FIX: Operator '+' cannot be applied to types 'unknown' and 'number'. Cast to Number.
     const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum, amount) => sum + Number(amount), 0), [monthlyExpenses]);
 
     return (
