@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { 
     AppContextType, Product, Sale, Branch, StockLog, Tenant, SubscriptionPlan, 
@@ -23,7 +24,7 @@ const branches: Branch[] = [
 
 const staffRoles: StaffRole[] = [
     { id: 'role-admin', name: 'Admin', permissions: allTenantPermissions },
-    { id: 'role-cashier', name: 'Cashier', permissions: ['accessPOS', 'makeDeposits', 'viewReports', 'accessCashierCredit', 'accessCashierDeposits', 'makeCreditSales'] },
+    { id: 'role-cashier', name: 'Cashier', permissions: ['accessPOS', 'makeDeposits', 'viewReports', 'accessCashierCredit', 'accessCashierDeposits', 'makeCreditSales', 'accessReturns'] },
     { id: 'role-stock', name: 'Stock Manager', permissions: ['manageInventory', 'managePurchases', 'viewAuditLogs'] },
 ]
 
@@ -199,6 +200,7 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
     const [currentLanguage, setCurrentLanguage] = useState('en');
     const [currentCurrency, setCurrentCurrency] = useState('NGN');
     const [currentStaffUser, setCurrentStaffUser] = useState<Staff | null>(null);
+    const [saleToReturn, setSaleToReturn] = useState<Sale | null>(null);
 
     // Derived State
     const currentTenant = useMemo(() => impersonatedUser || (profile?.tenant_id ? stateTenants.find(t => t.id === profile.tenant_id) || null : null), [impersonatedUser, profile, stateTenants]);
@@ -278,10 +280,6 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         // Deduct from deposit if used
         const depositPayment = saleData.payments.find(p => p.method === 'Deposit');
         if (depositPayment && saleData.customerId) {
-             // Find active deposits and deduct
-             // This is a simplified logic. Ideally, we match specific deposits.
-             // Here we just reduce the available deposit balance by updating deposits or creating a negative deposit record/usage record.
-             // For simplicity in this demo, we won't mutate past deposits but assumes validation happened before.
              const usageRecord: Deposit = {
                  id: `dep-use-${Date.now()}`,
                  customerId: saleData.customerId,
@@ -641,7 +639,8 @@ export const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children
         session, setSession, profile, setProfile, isLoading, handleImpersonate, stopImpersonating, login, logout,
         allTenantPermissions, allPermissions, currentStaffUser, setCurrentStaffUser, activateSubscription,
         updateBrandConfig, updatePageContent, updateFaqs, updatePaymentSettings, updateNotificationSettings, updateSystemSettings, updateMaintenanceSettings, updateAccessControlSettings, updateLandingPageMetrics, updateTenant, updateCurrentTenantSettings, updateTenantLogisticsConfig, updateTenantAutomations, addSubscriptionPlan, updateSubscriptionPlan, deleteSubscriptionPlan, addTruck, updateTruck, deleteTruck, updateTruckVitals, addShipment, updateShipmentStatus, updateTrackerProviders, addBranch, updateBranchLocation, addStaff, deleteStaff, sellShipment, receiveShipment, addPurchaseOrder, updatePurchaseOrderStatus, addStaffRole, updateStaffRole, deleteStaffRole, addAccount, addJournalEntry, addTenant, verifyTenant, updateTenantProfile, updateAdminProfile, addAnnouncement, markAnnouncementAsRead, addCustomer, deleteCustomer, recordCreditPayment, addDeposit, updateDeposit, addConsignment, addCategory, updateCategory, deleteCategory, extendTrial, changeSubscriptionPlan, processExpiredTrials, sendExpiryReminders, processSubscriptionPayment, updatePaymentTransactionStatus, updateEmailTemplate, updateSmsTemplate, markInAppNotificationAsRead, submitSupportTicket, replyToSupportTicket, updateTicketStatus, addBlogPost, updateBlogPost, deleteBlogPost, updateLastLogin, updateUserLocation, generateInsights, updateBudget, deleteBudget,
-        addTenantEmailTemplate, updateTenantEmailTemplate, deleteTenantEmailTemplate, addTenantSmsTemplate, updateTenantSmsTemplate, deleteTenantSmsTemplate, sendBulkMessage, sendBulkMessageToTenants
+        addTenantEmailTemplate, updateTenantEmailTemplate, deleteTenantEmailTemplate, addTenantSmsTemplate, updateTenantSmsTemplate, deleteTenantSmsTemplate, sendBulkMessage, sendBulkMessageToTenants,
+        saleToReturn, setSaleToReturn
     };
 
     return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

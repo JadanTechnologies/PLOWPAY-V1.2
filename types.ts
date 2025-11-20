@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 // FIX: The 'L' variable from Leaflet.js needs to be declared in the global scope for TypeScript to recognize it on the 'window' object across all files.
@@ -695,4 +696,7 @@ export interface AppContextType {
     deleteTenantSmsTemplate: (templateId: string) => void;
     sendBulkMessage: (type: 'email' | 'sms', customerIds: string[], message: string, subject?: string) => Promise<{ success: boolean; message: string }>;
     sendBulkMessageToTenants: (type: 'email' | 'sms', tenantIds: string[], message: string, subject?: string) => Promise<{ success: boolean; message: string }>;
+    
+    saleToReturn: Sale | null;
+    setSaleToReturn: React.Dispatch<React.SetStateAction<Sale | null>>;
 }

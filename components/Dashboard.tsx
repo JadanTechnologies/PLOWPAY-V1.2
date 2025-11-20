@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { ResponsiveContainer } from 'recharts';
 import { useAppContext } from '../hooks/useAppContext';
@@ -7,6 +8,11 @@ import { useCurrency } from '../hooks/useCurrency';
 import { useTranslation } from '../hooks/useTranslation';
 import AIInsights from './AIInsights';
 import MapComponent from './GoogleMap';
+import { Page } from '../App';
+
+interface DashboardProps {
+    onNavigate?: (page: Page) => void;
+}
 
 const Skeleton: React.FC<{ className?: string }> = ({ className }) => (
     <div className={`animate-pulse bg-slate-200 dark:bg-slate-700 rounded ${className}`} />
@@ -52,7 +58,7 @@ const MetricCard: React.FC<{ title: string; value: string | number; iconName: st
 );
 
 type ModalDataType = Sale | Staff | (ProductVariant & { productName: string, stock: number });
-const DashboardDetailModal: React.FC<{ title: string; data: ModalDataType[]; type: string; onClose: () => void; }> = ({ title, data, type, onClose }) => {
+const DashboardDetailModal: React.FC<{ title: string; data: ModalDataType[]; type: string; onClose: () => void; onReturn?: (sale: Sale) => void; }> = ({ title, data, type, onClose, onReturn }) => {
     const { formatCurrency } = useCurrency();
     const { customers, branches, staff } = useAppContext();
     
@@ -65,7 +71,7 @@ const DashboardDetailModal: React.FC<{ title: string; data: ModalDataType[]; typ
             case 'sales':
                 return (
                     <table className="w-full text-left text-sm">
-                        <thead className="border-b border-slate-600"><tr><th className="p-2">Date</th><th className="p-2">Customer</th><th className="p-2">Branch</th><th className="p-2 text-right">Total</th></tr></thead>
+                        <thead className="border-b border-slate-600"><tr><th className="p-2">Date</th><th className="p-2">Customer</th><th className="p-2">Branch</th><th className="p-2 text-right">Total</th>{onReturn && <th className="p-2 text-center">Actions</th>}</tr></thead>
                         <tbody>
                             {(data as Sale[]).map(sale => (
                                 <tr key={sale.id} className="border-b border-slate-700/50">
@@ -73,6 +79,11 @@ const DashboardDetailModal: React.FC<{ title: string; data: ModalDataType[]; typ
                                     <td className="p-2">{customers.find(c => c.id === sale.customerId)?.name}</td>
                                     <td className="p-2">{branches.find(b => b.id === sale.branchId)?.name}</td>
                                     <td className="p-2 text-right font-mono">{formatCurrency(sale.total)}</td>
+                                    {onReturn && (
+                                        <td className="p-2 text-center">
+                                            <button onClick={() => onReturn(sale)} className="text-xs bg-red-600/20 text-red-400 px-2 py-1 rounded hover:bg-red-600/30">Return</button>
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                         </tbody>
@@ -149,8 +160,8 @@ const DashboardDetailModal: React.FC<{ title: string; data: ModalDataType[]; typ
     );
 };
 
-const Dashboard: React.FC = () => {
-  const { sales, branches, customers, staff, isLoading, products, deposits } = useAppContext();
+const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+  const { sales, branches, customers, staff, isLoading, products, deposits, setSaleToReturn } = useAppContext();
   const { formatCurrency } = useCurrency();
   const { t } = useTranslation();
   const [modalState, setModalState] = useState<{ title: string; data: any[]; type: string } | null>(null);
@@ -222,6 +233,13 @@ const Dashboard: React.FC = () => {
 
   }, [sales, staff, products, deposits]);
 
+  const handleReturn = (sale: Sale) => {
+      setSaleToReturn(sale);
+      if (onNavigate) {
+          onNavigate('POS');
+      }
+  };
+
   if (isLoading) {
     return <DashboardSkeleton />;
   }
@@ -264,7 +282,8 @@ const Dashboard: React.FC = () => {
             title={modalState.title} 
             data={modalState.data} 
             type={modalState.type} 
-            onClose={() => setModalState(null)} 
+            onClose={() => setModalState(null)}
+            onReturn={handleReturn}
         />
       )}
     </div>

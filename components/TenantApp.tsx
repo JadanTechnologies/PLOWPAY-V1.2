@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useMemo } from 'react';
 import Sidebar from './Sidebar';
 import Header from './Header';
@@ -80,7 +81,7 @@ const TenantApp: React.FC = () => {
   const renderPage = () => {
     switch (currentPage) {
       case 'DASHBOARD':
-        return isCashier ? <CashierDashboard /> : <Dashboard />;
+        return isCashier ? <CashierDashboard onNavigate={handleSetPage} /> : <Dashboard onNavigate={handleSetPage} />;
       case 'POS':
         return <PointOfSale />;
       case 'INVENTORY':
@@ -122,7 +123,7 @@ const TenantApp: React.FC = () => {
       case 'COMMUNICATIONS':
         return <Communications />;
       default:
-        return isCashier ? <CashierDashboard /> : <Dashboard />;
+        return isCashier ? <CashierDashboard onNavigate={handleSetPage} /> : <Dashboard onNavigate={handleSetPage} />;
     }
   };
 

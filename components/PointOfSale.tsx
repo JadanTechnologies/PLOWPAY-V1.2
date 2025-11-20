@@ -377,7 +377,7 @@ const CustomerSearchModal: React.FC<{
 
 
 const PointOfSale: React.FC = () => {
-  const { products, searchTerm, addSale, branches, categories, addDeposit, customers, deposits, currentStaffUser } = useAppContext();
+  const { products, searchTerm, addSale, branches, categories, addDeposit, customers, deposits, currentStaffUser, saleToReturn, setSaleToReturn } = useAppContext();
   const { formatCurrency } = useCurrency();
   const { hasTenantPermission } = useTenantPermissions();
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -455,6 +455,36 @@ const PointOfSale: React.FC = () => {
         setIsReturnMode(false);
     }
   }, [cart]);
+  
+  // Handle sale to return from context
+  useEffect(() => {
+      if (saleToReturn) {
+          if (cart.length > 0) {
+              if (window.confirm('Clearing current cart to process return. Continue?')) {
+                  setCart([]);
+              } else {
+                  setSaleToReturn(null);
+                  return;
+              }
+          }
+          
+          setIsReturnMode(true);
+          const customerInfo = customers.find(c => c.id === saleToReturn.customerId);
+          if (customerInfo) {
+              setCustomer({ ...customerInfo, phone: customerInfo.phone || '' });
+          }
+          
+          // Invert quantities for return
+          const returnItems = saleToReturn.items.map(item => ({
+              ...item,
+              quantity: -Math.abs(item.quantity)
+          }));
+          setCart(returnItems);
+          
+          setSaleStatus({ message: 'Sale loaded for return.', type: 'success' });
+          setSaleToReturn(null);
+      }
+  }, [saleToReturn, customers, setSaleToReturn, cart]);
 
 
   const handleAddToCart = useCallback((product: Product, variant: ProductVariant) => {

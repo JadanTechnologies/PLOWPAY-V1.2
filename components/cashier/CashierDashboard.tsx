@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 import Icon from '../icons';
@@ -5,6 +6,11 @@ import { useCurrency } from '../../hooks/useCurrency';
 import { Sale, Deposit, Customer, ProductVariant, CartItem } from '../../types';
 import DashboardDetailModal from './DashboardDetailModal';
 import InvoiceModal from '../InvoiceModal';
+import { Page } from '../../App';
+
+interface CashierDashboardProps {
+    onNavigate?: (page: Page) => void;
+}
 
 interface MetricCardProps {
     title: string;
@@ -30,8 +36,8 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, iconName, iconBgC
 type ProductInfo = ProductVariant & { productName: string; stock: number; };
 type SoldItemInfo = CartItem & { saleDate: Date };
 
-const CashierDashboard: React.FC = () => {
-    const { sales, deposits, products, customers, currentStaffUser } = useAppContext();
+const CashierDashboard: React.FC<CashierDashboardProps> = ({ onNavigate }) => {
+    const { sales, deposits, products, customers, currentStaffUser, setSaleToReturn } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [modalState, setModalState] = useState<{ title: string; data: any[], type: 'sale' | 'deposit' | 'customer' | 'product' | 'sold_item' } | null>(null);
     const [reprintSale, setReprintSale] = useState<Sale | null>(null);
@@ -99,6 +105,13 @@ const CashierDashboard: React.FC = () => {
         };
     }, [cashierSales, branchDeposits, branchCreditSales, customers]);
 
+    const handleReturn = (sale: Sale) => {
+        setSaleToReturn(sale);
+        if (onNavigate) {
+            onNavigate('POS');
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -134,8 +147,9 @@ const CashierDashboard: React.FC = () => {
                             <td className="p-3 whitespace-nowrap">{customers.find(c => c.id === sale.customerId)?.name || 'N/A'}</td>
                             <td className="p-3 whitespace-nowrap">{sale.date.toLocaleDateString()}</td>
                             <td className="p-3 whitespace-nowrap text-right font-medium text-cyan-400">{formatCurrency(sale.total)}</td>
-                            <td className="p-3 text-center">
-                                <button onClick={() => setReprintSale(sale)} className="text-cyan-400 hover:text-cyan-300 text-sm font-semibold">Reprint Invoice</button>
+                            <td className="p-3 text-center space-x-2">
+                                <button onClick={() => setReprintSale(sale)} className="text-cyan-400 hover:text-cyan-300 text-xs font-semibold px-2 py-1 rounded hover:bg-slate-700">Reprint</button>
+                                <button onClick={() => handleReturn(sale)} className="text-red-400 hover:text-red-300 text-xs font-semibold px-2 py-1 rounded hover:bg-slate-700">Return</button>
                             </td>
                         </tr>
                     ))}
@@ -151,6 +165,7 @@ const CashierDashboard: React.FC = () => {
                     type={modalState.type}
                     onClose={() => setModalState(null)}
                     onReprint={setReprintSale}
+                    onReturn={handleReturn}
                 />
             )}
             {reprintSale && <InvoiceModal sale={reprintSale} onClose={() => setReprintSale(null)} />}

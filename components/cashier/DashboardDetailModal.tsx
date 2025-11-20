@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Sale, Deposit, Customer, ProductVariant, CartItem } from '../../types';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -13,9 +14,10 @@ interface DashboardDetailModalProps {
     type: 'sale' | 'deposit' | 'customer' | 'product' | 'sold_item';
     onClose: () => void;
     onReprint: (sale: Sale) => void;
+    onReturn: (sale: Sale) => void;
 }
 
-const DashboardDetailModal: React.FC<DashboardDetailModalProps> = ({ title, data, type, onClose, onReprint }) => {
+const DashboardDetailModal: React.FC<DashboardDetailModalProps> = ({ title, data, type, onClose, onReprint, onReturn }) => {
     const { customers } = useAppContext();
     const { formatCurrency } = useCurrency();
     const [dateFilter, setDateFilter] = useState('');
@@ -46,7 +48,10 @@ const DashboardDetailModal: React.FC<DashboardDetailModalProps> = ({ title, data
                                     <td className="p-2">{customers.find(c => c.id === sale.customerId)?.name}</td>
                                     <td className="p-2 text-right font-mono">{formatCurrency(sale.total)}</td>
                                     <td className="p-2 text-right font-mono text-red-400">{formatCurrency(sale.amountDue)}</td>
-                                    <td className="p-2 text-center"><button onClick={() => onReprint(sale)} className="text-cyan-400 text-xs font-semibold">Reprint</button></td>
+                                    <td className="p-2 text-center space-x-2">
+                                        <button onClick={() => onReprint(sale)} className="text-cyan-400 text-xs font-semibold">Reprint</button>
+                                        <button onClick={() => onReturn(sale)} className="text-red-400 text-xs font-semibold">Return</button>
+                                    </td>
                                 </tr>
                             ))}
                         </tbody>
