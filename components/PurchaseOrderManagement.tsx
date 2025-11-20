@@ -52,7 +52,15 @@ const PurchaseOrderManagement: React.FC = () => {
 
     const handleSubmit = () => {
         if(formState.supplierId && formState.destinationBranchId && formState.items.every(i => i.variantId && i.quantity > 0)) {
-            addPurchaseOrder({ ...formState, status: 'PENDING' });
+            const items = formState.items.map(item => {
+                const variant = allVariants.find(v => v.id === item.variantId);
+                return {
+                    ...item,
+                    productName: variant?.productName || '',
+                    variantName: variant?.name || '',
+                };
+            });
+            addPurchaseOrder({ ...formState, items, status: 'PENDING' });
             setModalOpen(false);
         } else {
             setNotification({type: 'error', message: 'Please fill all required fields.'});
