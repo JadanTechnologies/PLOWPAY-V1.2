@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import { Product, CartItem, ProductVariant, Payment, Sale, Deposit, TenantPermission, Customer } from '../types';
@@ -733,6 +734,17 @@ const PointOfSale: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                    {/* Visual Indicator for Return Mode */}
+                    {isReturnMode && (
+                        <div className="bg-red-600/20 border border-red-500/50 text-red-200 text-center p-3 rounded-md mb-4 animate-pulse">
+                            <p className="font-bold flex items-center justify-center">
+                                <Icon name="refresh" className="w-5 h-5 mr-2" />
+                                RETURN MODE ACTIVE
+                            </p>
+                            <p className="text-xs mt-1">Items returned will be automatically restocked.</p>
+                        </div>
+                    )}
+
                     {cart.length === 0 ? (
                         <div className="text-center text-slate-500 py-16">
                            <Icon name={isReturnMode ? 'minus' : 'pos'} className="w-16 h-16 mx-auto mb-2"/>
@@ -763,7 +775,7 @@ const PointOfSale: React.FC = () => {
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <button onClick={() => handleUpdateQuantity(item.variantId, -1)} className="bg-slate-700 rounded-full p-1 w-6 h-6 flex items-center justify-center"><Icon name="minus" className="w-4 h-4"/></button>
-                                    <span className="font-bold w-4 text-center">{Math.abs(item.quantity)}</span>
+                                    <span className={`font-bold w-8 text-center ${item.quantity < 0 ? 'text-red-400' : 'text-white'}`}>{Math.abs(item.quantity)}</span>
                                     <button onClick={() => handleUpdateQuantity(item.variantId, 1)} className="bg-slate-700 rounded-full p-1 w-6 h-6 flex items-center justify-center"><Icon name="plus" className="w-4 h-4"/></button>
                                 </div>
                             </div>
@@ -781,7 +793,7 @@ const PointOfSale: React.FC = () => {
                         <button onClick={() => setClearConfirmOpen(true)} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Clear</button>
                         {canProcessReturns ? (
                             <button onClick={() => setIsReturnMode(!isReturnMode)} className={`${isReturnMode ? 'bg-red-600 hover:bg-red-500 ring-2 ring-white/70' : 'bg-slate-700 hover:bg-slate-600'} font-semibold py-2 px-4 rounded-md transition-colors`}>
-                                Return Mode
+                                {isReturnMode ? 'Exit Return Mode' : 'Return Mode'}
                             </button>
                         ) : <div />}
                         <button onClick={handleHoldOrder} className="bg-slate-700 hover:bg-slate-600 font-semibold py-2 px-4 rounded-md">Hold</button>
