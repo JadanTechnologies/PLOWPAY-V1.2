@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react';
 import { useAppContext } from '../../hooks/useAppContext';
 // FIX: Aliased the NotificationSettings type to NotificationSettingsType to avoid a name collision with the component.

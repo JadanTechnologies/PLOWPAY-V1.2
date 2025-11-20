@@ -614,7 +614,9 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         
         // Update stock and logs
         newSale.items.forEach(item => {
-            adjustStock(item.productId, item.variantId, newSale.branchId, item.quantity, item.quantity < 0 ? 'Return' : 'Sale');
+            // The quantity in cart is positive for sale, negative for return.
+            // Stock change is the opposite sign.
+            adjustStock(item.productId, item.variantId, newSale.branchId, -item.quantity, item.quantity < 0 ? 'Return' : 'Sale');
         });
 
         logAction('CREATED_SALE', `Created sale #${newSale.id} for ${formatCurrency(newSale.total)}`, {id: newSale.staffId, name: 'Staff User', type: 'STAFF'});
@@ -766,12 +768,12 @@ const AppContextProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         updateBrandConfig: useCallback((newConfig: Partial<BrandConfig>) => setBrandConfigState(prev => ({...prev, ...newConfig})), []),
         updatePageContent: useCallback((newPageContent: Partial<PageContent>) => setPageContentState(prev => ({...prev, ...newPageContent})), []),
         updateFaqs: useCallback((newFaqs: FaqItem[]) => setPageContentState(prev => ({...prev, faqs: newFaqs})), []),
-        updatePaymentSettings: useCallback((newSettings: PaymentSettings) => setPaymentSettingsState(newSettings), []),
-        updateNotificationSettings: useCallback((newSettings: NotificationSettings) => setNotificationSettingsState(newSettings), []),
+        updatePaymentSettings: useCallback((newSettings: PaymentSettings>) => setPaymentSettingsState(newSettings), []),
+        updateNotificationSettings: useCallback((newSettings: NotificationSettings>) => setNotificationSettingsState(newSettings), []),
         updateSystemSettings: useCallback((newSettings: Partial<SystemSettings>) => setSystemSettingsState(prev => ({...prev, ...newSettings})), []),
-        updateMaintenanceSettings: useCallback((settings: MaintenanceSettings) => setSystemSettingsState(prev => ({...prev, maintenanceSettings: settings})), []),
-        updateAccessControlSettings: useCallback((settings: AccessControlSettings) => setSystemSettingsState(prev => ({...prev, accessControlSettings: settings})), []),
-        updateLandingPageMetrics: useCallback((metrics: LandingPageMetrics) => setSystemSettingsState(prev => ({...prev, landingPageMetrics: metrics})), []),
+        updateMaintenanceSettings: useCallback((settings: MaintenanceSettings>) => setSystemSettingsState(prev => ({...prev, maintenanceSettings: settings})), []),
+        updateAccessControlSettings: useCallback((settings: AccessControlSettings>) => setSystemSettingsState(prev => ({...prev, accessControlSettings: settings})), []),
+        updateLandingPageMetrics: useCallback((metrics: LandingPageMetrics>) => setSystemSettingsState(prev => ({...prev, landingPageMetrics: metrics})), []),
         updateTenantLogisticsConfig: useCallback((config) => {
              if (currentTenant) {
                 const newConfig = { ...currentTenant.logisticsConfig, ...config };

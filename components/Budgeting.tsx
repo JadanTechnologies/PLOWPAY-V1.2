@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext } from '../hooks/useAppContext';
+import { useAppContext } from '../../hooks/useAppContext';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../hooks/useCurrency';
+import { useCurrency } from '../../hooks/useCurrency';
 import { Account } from '../types';
 
 const ProgressBar: React.FC<{ value: number; max: number }> = ({ value, max }) => {
