@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
+import { useAppContext } from '../hooks/useAppContext';
 import { Truck, Shipment, TrackerProvider, Customer } from '../types';
 import Icon from './icons/index.tsx';
 import MapComponent from './GoogleMap';
