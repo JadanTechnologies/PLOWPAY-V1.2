@@ -60,6 +60,7 @@ const SuperAdminSidebar: React.FC<SidebarProps> = ({ currentPage, setPage, isOpe
   const navItems = [
     { page: 'PLATFORM_DASHBOARD', icon: 'chart-pie', label: 'Dashboard', permission: 'viewPlatformDashboard' },
     { page: 'TENANTS', icon: 'briefcase', label: 'Tenants', permission: 'manageTenants' },
+    { page: 'FLEET_OVERVIEW', icon: 'truck', label: 'Fleet Overview', permission: 'manageTenants' },
     { page: 'SUBSCRIPTIONS', icon: 'credit-card', label: 'Subscriptions', permission: 'manageSubscriptions' },
     { page: 'PAYMENT_TRANSACTIONS', icon: 'calculator', label: 'Transactions', permission: 'managePaymentGateways' },
     { page: 'ANNOUNCEMENTS', icon: 'chat-bubble-left-right', label: 'Announcements', permission: 'manageAnnouncements' },

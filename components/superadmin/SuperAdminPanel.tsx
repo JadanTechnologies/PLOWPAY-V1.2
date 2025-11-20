@@ -24,6 +24,7 @@ import SupportManagement from './SupportManagement';
 import BlogManagement from './BlogManagement';
 import Communications from './Communications';
 import { allTimezones } from '../../utils/data';
+import FleetOverview from './FleetOverview';
 
 const Toggle: React.FC<{ enabled: boolean; onChange: (enabled: boolean) => void }> = ({ enabled, onChange }) => {
     return (
@@ -603,7 +604,6 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onImpersonate }) => {
     SUPPORT_TICKETS: 'Support Tickets',
     BLOG_MANAGEMENT: 'Blog Management',
     COMMUNICATIONS: 'Communications',
-    // FIX: Added missing 'FLEET_OVERVIEW' property to satisfy the 'Record<SuperAdminPage, string>' type.
     FLEET_OVERVIEW: 'Fleet Overview',
   };
 
@@ -611,6 +611,7 @@ const SuperAdminPanel: React.FC<SuperAdminPanelProps> = ({ onImpersonate }) => {
     switch (currentPage) {
       case 'PLATFORM_DASHBOARD': return hasPermission('viewPlatformDashboard') && <PlatformDashboard />;
       case 'TENANTS': return hasPermission('manageTenants') && <TenantManagement onImpersonate={onImpersonate}/>;
+      case 'FLEET_OVERVIEW': return hasPermission('manageTenants') && <FleetOverview />;
       case 'SUBSCRIPTIONS': return hasPermission('manageSubscriptions') && <SubscriptionManagement />;
       case 'PAYMENT_TRANSACTIONS': return hasPermission('managePaymentGateways') && <PaymentTransactions />;
       case 'TEAM_MANAGEMENT': return hasPermission('manageTeam') && <TeamManagement />;
