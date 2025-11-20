@@ -1,10 +1,8 @@
-
-
 import React, { useState, useMemo } from 'react';
-import { useAppContext } from '../../hooks/useAppContext';
-import { Deposit } from '../../types';
+import { useAppContext } from '../hooks/useAppContext';
+import { Deposit } from '../types';
 import Icon from './icons/index.tsx';
-import { useCurrency } from '../../hooks/useCurrency';
+import { useCurrency } from '../hooks/useCurrency';
 
 type DepositTab = 'ACTIVE' | 'APPLIED' | 'REFUNDED' | 'ALL';
 
