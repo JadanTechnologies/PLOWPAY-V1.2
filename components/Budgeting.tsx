@@ -156,8 +156,8 @@ const Budgeting: React.FC = () => {
         return expenseAccounts.filter(acc => !localBudgets[acc.id] || localBudgets[acc.id] === 0);
     }, [expenseAccounts, localBudgets]);
     
-    const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum, amount) => sum + Number(amount), 0), [localBudgets]);
-    const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum, amount) => sum + Number(amount), 0), [monthlyExpenses]);
+    const totalBudgeted = useMemo(() => Object.values(localBudgets).reduce((sum: number, amount: any) => sum + Number(amount), 0), [localBudgets]);
+    const totalSpent = useMemo(() => Object.values(monthlyExpenses).reduce((sum: number, amount: any) => sum + Number(amount), 0), [monthlyExpenses]);
 
     return (
         <div className="space-y-6">

@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useEffect } from 'react';
 import { useAppContext } from '../hooks/useAppContext';
 import Icon from './icons/index.tsx';
@@ -56,7 +57,7 @@ const ReportsSkeleton = () => (
     </div>
 );
 
-type ReportTab = 'profit_loss' | 'sales' | 'credit' | 'purchases' | 'consignment' | 'deposit_sales' | 'inventory_valuation' | 'sales_by_staff' | 'customer_credit';
+type ReportTab = 'profit_loss' | 'sales' | 'credit' | 'purchases' | 'consignment' | 'deposit_sales' | 'inventory_valuation' | 'sales_by_staff' | 'customer_credit' | 'returns';
 
 const MetricCard: React.FC<{ title: string; value: string | number; iconName: string; iconBgColor: string }> = ({ title, value, iconName, iconBgColor }) => (
   <div className="p-4 bg-slate-800 rounded-lg shadow-md flex items-center">
@@ -144,6 +145,66 @@ const DetailedSalesReport: React.FC<{ data: any[], totals: any, formatCurrency: 
         </table>
     </div>
 );
+
+const ReturnsReport: React.FC<{ sales: Sale[], staff: Staff[], customers: Customer[], formatCurrency: (val: number) => string }> = ({ sales, staff, customers, formatCurrency }) => {
+    const returnsData = useMemo(() => {
+        return sales.flatMap(sale => 
+            sale.items
+                .filter(item => item.quantity < 0)
+                .map(item => ({
+                    date: sale.date,
+                    saleId: sale.id,
+                    customerName: customers.find(c => c.id === sale.customerId)?.name || 'N/A',
+                    itemName: `${item.name} (${item.variantName})`,
+                    quantity: Math.abs(item.quantity),
+                    refundAmount: Math.abs(item.sellingPrice * item.quantity),
+                    staffName: staff.find(s => s.id === sale.staffId)?.name || 'N/A'
+                }))
+        );
+    }, [sales, customers, staff]);
+
+    const totalRefunded = returnsData.reduce((sum, item) => sum + item.refundAmount, 0);
+
+    return (
+        <div>
+            <table className="w-full text-left text-sm">
+                <thead className="border-b border-slate-700 sticky top-0 bg-slate-800">
+                    <tr>
+                        <th className="p-3">Date</th>
+                        <th className="p-3">Return ID</th>
+                        <th className="p-3">Customer</th>
+                        <th className="p-3">Item</th>
+                        <th className="p-3 text-right">Quantity</th>
+                        <th className="p-3 text-right">Refunded Amount</th>
+                        <th className="p-3">Processed By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {returnsData.map((item, index) => (
+                        <tr key={`${item.saleId}-${index}`} className="border-b border-slate-700 hover:bg-slate-700/50">
+                            <td className="p-3 text-slate-400">{new Date(item.date).toLocaleString()}</td>
+                            <td className="p-3 font-mono">{item.saleId}</td>
+                            <td className="p-3">{item.customerName}</td>
+                            <td className="p-3">{item.itemName}</td>
+                            <td className="p-3 text-right font-bold">{item.quantity}</td>
+                            <td className="p-3 text-right font-mono text-red-400">{formatCurrency(item.refundAmount)}</td>
+                            <td className="p-3">{item.staffName}</td>
+                        </tr>
+                    ))}
+                </tbody>
+                <tfoot className="font-bold border-t-2 border-slate-600">
+                    <tr>
+                        <td colSpan={5} className="p-3 text-right">Total Refunded</td>
+                        <td className="p-3 text-right font-mono text-red-400">{formatCurrency(totalRefunded)}</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+             {returnsData.length === 0 && <p className="text-center text-slate-500 py-8">No returns found in this period.</p>}
+        </div>
+    );
+};
+
 
 const CreditSalesReport: React.FC<{ data: (Sale & { customerName: string })[], formatCurrency: (val: number) => string }> = ({ data, formatCurrency }) => {
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -479,10 +540,8 @@ const SalesByStaffReport: React.FC<{ sales: Sale[], staff: Staff[], formatCurren
 };
 
 const CustomerCreditReport: React.FC<{ customers: Customer[], formatCurrency: (val: number) => string }> = ({ customers, formatCurrency }) => {
-    // FIX: The type of `creditBalance` was being inferred incorrectly. Explicitly cast to Number to allow comparison and arithmetic operations.
-    const creditCustomers = useMemo(() => customers.filter(c => Number(c.creditBalance) > 0), [customers]);
-    // FIX: The type of `creditBalance` was being inferred incorrectly. Explicitly cast to Number to allow comparison and arithmetic operations.
-    const totalCredit = useMemo(() => creditCustomers.reduce((sum, c) => sum + Number(c.creditBalance), 0), [creditCustomers]);
+    const creditCustomers = useMemo(() => customers.filter((c: any) => Number(c.creditBalance) > 0), [customers]);
+    const totalCredit = useMemo(() => creditCustomers.reduce((sum: number, c: any) => sum + Number(c.creditBalance), 0), [creditCustomers]);
 
     return (
         <table className="w-full text-left">
@@ -653,59 +712,107 @@ const Reports: React.FC = () => {
   const handlePrint = () => window.print();
 
   const handleExportCSV = () => {
-    if (detailedReportData.length === 0) {
-        setNotification({ type: 'info', message: 'No data to export for the current filters.' });
-        return;
-    }
-
-    const headers = [ "S/N", "Branch", "Customer", "Item", "Qty Sold", "Sell Price", "Total Sell", "Discount", "Net Price", "Attendant", "Date & Time" ];
-    if (!isCashier) {
-        headers.splice(5, 0, "Cost Price", "Total Cost");
-        headers.splice(10, 0, "Profit");
-    }
-
-    const escapeCsvCell = (cell: any): string => {
-        const str = String(cell == null ? '' : cell);
-        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-            return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-    };
-
-    const csvRows = [headers.join(',')];
-
-    detailedReportData.forEach((row, index) => {
-        const values = [
-            index + 1, row.branchName, row.customerName, row.itemName, row.quantitySold,
-        ];
-        if (!isCashier) {
-            values.push(row.costPrice.toFixed(2) as any, row.totalCostPrice.toFixed(2) as any);
-        }
-        values.push(
-            row.sellingPrice.toFixed(2) as any, row.totalSellingPrice.toFixed(2) as any, row.discount.toFixed(2) as any, row.balanceAfterDiscount.toFixed(2) as any
+    if (activeReport === 'returns') {
+         const returnsData = filteredSales.flatMap(sale => 
+            sale.items
+                .filter(item => item.quantity < 0)
+                .map(item => ({
+                    Date: new Date(sale.date).toLocaleString(),
+                    ReturnID: sale.id,
+                    Customer: customers.find(c => c.id === sale.customerId)?.name || 'N/A',
+                    Item: `${item.name} (${item.variantName})`,
+                    Quantity: Math.abs(item.quantity),
+                    RefundAmount: (Math.abs(item.sellingPrice * item.quantity)).toFixed(2),
+                    Staff: staff.find(s => s.id === sale.staffId)?.name || 'N/A'
+                }))
         );
-        if (!isCashier) {
-            values.push(row.profit.toFixed(2) as any);
-        }
-        values.push(row.attendant as any, row.dateTime as any);
         
-        csvRows.push(values.map(escapeCsvCell).join(','));
-    });
+        if (returnsData.length === 0) {
+             setNotification({ type: 'info', message: 'No return data to export.' });
+             return;
+        }
+        
+        const headers = Object.keys(returnsData[0]);
+        const csvRows = [headers.join(',')];
+        
+        returnsData.forEach(row => {
+            const values = headers.map(header => {
+                const val = (row as any)[header];
+                 const str = String(val == null ? '' : val);
+                if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                    return `"${str.replace(/"/g, '""')}"`;
+                }
+                return str;
+            });
+            csvRows.push(values.join(','));
+        });
+        
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `returns_report_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+    } else {
+        if (detailedReportData.length === 0) {
+            setNotification({ type: 'info', message: 'No data to export for the current filters.' });
+            return;
+        }
 
-    const csvString = csvRows.join('\n');
-    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `detailed_sales_report_${new Date().toISOString().slice(0, 10)}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+        const headers = [ "S/N", "Branch", "Customer", "Item", "Qty Sold", "Sell Price", "Total Sell", "Discount", "Net Price", "Attendant", "Date & Time" ];
+        if (!isCashier) {
+            headers.splice(5, 0, "Cost Price", "Total Cost");
+            headers.splice(10, 0, "Profit");
+        }
+
+        const escapeCsvCell = (cell: any): string => {
+            const str = String(cell == null ? '' : cell);
+            if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+            }
+            return str;
+        };
+
+        const csvRows = [headers.join(',')];
+
+        detailedReportData.forEach((row, index) => {
+            const values = [
+                index + 1, row.branchName, row.customerName, row.itemName, row.quantitySold,
+            ];
+            if (!isCashier) {
+                values.push(row.costPrice.toFixed(2) as any, row.totalCostPrice.toFixed(2) as any);
+            }
+            values.push(
+                row.sellingPrice.toFixed(2) as any, row.totalSellingPrice.toFixed(2) as any, row.discount.toFixed(2) as any, row.balanceAfterDiscount.toFixed(2) as any
+            );
+            if (!isCashier) {
+                values.push(row.profit.toFixed(2) as any);
+            }
+            values.push(row.attendant as any, row.dateTime as any);
+            
+            csvRows.push(values.map(escapeCsvCell).join(','));
+        });
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `detailed_sales_report_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
   };
 
   const reportTitles: Record<ReportTab, string> = { 
-    sales: 'Detailed Sales Report', credit: 'Credit Sales Report', purchases: 'Purchase Order Report', consignment: 'Consignment Report', profit_loss: 'Profit & Loss Summary', deposit_sales: 'Deposit Sales Report', inventory_valuation: 'Inventory Valuation Report', sales_by_staff: 'Sales by Staff Report', customer_credit: 'Customer Credit Report',
+    sales: 'Detailed Sales Report', credit: 'Credit Sales Report', purchases: 'Purchase Order Report', consignment: 'Consignment Report', profit_loss: 'Profit & Loss Summary', deposit_sales: 'Deposit Sales Report', inventory_valuation: 'Inventory Valuation Report', sales_by_staff: 'Sales by Staff Report', customer_credit: 'Customer Credit Report', returns: 'Returns Report'
 };
 
  const reportBranchName = useMemo(() => {
@@ -721,9 +828,9 @@ const generatedBy = useMemo(() => {
   const dateFilters = ['Today', 'This Week', 'This Month', 'Last Month', 'This Year'];
   const TabButton: React.FC<{tab: ReportTab, label: string}> = ({ tab, label }) => (<button onClick={() => setActiveReport(tab)} className={`px-4 py-2 font-medium text-sm rounded-md ${activeReport === tab ? 'bg-cyan-600 text-white' : 'text-slate-300 hover:bg-slate-700'}`}>{label}</button>);
 
-  const allowedReportsForCashier: ReportTab[] = ['sales', 'credit', 'deposit_sales'];
+  const allowedReportsForCashier: ReportTab[] = ['sales', 'credit', 'deposit_sales', 'returns'];
   const allReports: {tab: ReportTab, label: string}[] = [
-    {tab: 'profit_loss', label: 'Profit & Loss'}, {tab: 'sales', label: 'Detailed Sales'}, {tab: 'sales_by_staff', label: 'Sales by Staff'}, {tab: 'inventory_valuation', label: 'Inventory Valuation'}, {tab: 'customer_credit', label: 'Customer Credit'}, {tab: 'credit', label: 'Credit Sales'}, {tab: 'deposit_sales', label: 'Deposit Sales'}, {tab: 'purchases', label: 'Purchase Orders'}, {tab: 'consignment', label: 'Consignment'},
+    {tab: 'profit_loss', label: 'Profit & Loss'}, {tab: 'sales', label: 'Detailed Sales'}, {tab: 'returns', label: 'Returns'}, {tab: 'sales_by_staff', label: 'Sales by Staff'}, {tab: 'inventory_valuation', label: 'Inventory Valuation'}, {tab: 'customer_credit', label: 'Customer Credit'}, {tab: 'credit', label: 'Credit Sales'}, {tab: 'deposit_sales', label: 'Deposit Sales'}, {tab: 'purchases', label: 'Purchase Orders'}, {tab: 'consignment', label: 'Consignment'},
   ];
   const visibleReports = isCashier ? allReports.filter(r => allowedReportsForCashier.includes(r.tab)) : allReports;
 
@@ -770,7 +877,7 @@ const generatedBy = useMemo(() => {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        {activeReport === 'sales' && (
+                        {(activeReport === 'sales' || activeReport === 'returns') && (
                             <button onClick={handleExportCSV} className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded-md flex items-center">
                                 <Icon name="clipboard-document-list" className="w-5 h-5 mr-2"/>Export CSV
                             </button>
@@ -797,6 +904,7 @@ const generatedBy = useMemo(() => {
                 </div>
                 {activeReport === 'profit_loss' && !isCashier && <ProfitLossSummary data={grandTotals} formatCurrency={formatCurrency} />}
                 {activeReport === 'sales' && <DetailedSalesReport data={detailedReportData} totals={grandTotals} formatCurrency={formatCurrency} isCashier={isCashier} />}
+                {activeReport === 'returns' && <ReturnsReport sales={filteredSales} staff={staff} customers={customers} formatCurrency={formatCurrency} />}
                 {activeReport === 'sales_by_staff' && <SalesByStaffReport sales={filteredSales} staff={staff} formatCurrency={formatCurrency} />}
                 {activeReport === 'inventory_valuation' && !isCashier && <InventoryValuationReport products={products} branches={branchMap} branchFilter={branchFilter} formatCurrency={formatCurrency} />}
                 {activeReport === 'customer_credit' && <CustomerCreditReport customers={customers} formatCurrency={formatCurrency} />}
